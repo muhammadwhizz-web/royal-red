@@ -276,7 +276,7 @@ function WorkspaceFileDialog({
             <span className="truncate" title={path}>{path}</span>
           </DialogTitle>
           <DialogDescription className="font-mono text-[10px]">
-            sandboxed workspace file / {isImage ? 'image asset' : editable ? 'text file, editable' : 'binary, download only'}
+            workspace file (userland-scoped root) / {isImage ? 'image asset' : editable ? 'text file, editable' : 'binary, download only'}
           </DialogDescription>
         </DialogHeader>
         {isImage ? (
@@ -342,7 +342,7 @@ function WorkspaceFileDialog({
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <HardDrive className="h-5 w-5 text-muted-foreground/50" />
             <p className="font-mono text-xs text-muted-foreground">
-              binary file: the sandbox does not render it inline.
+              binary file: no inline preview in the workspace viewer.
             </p>
             <Button asChild size="sm" variant="outline" className="font-mono text-xs">
               <a
@@ -422,7 +422,7 @@ function WorkspaceBrowser() {
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b bg-muted/20 px-3 py-1.5">
         <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground">
-          {q ? `${visible.length} OF ${files.length} FILES` : `${files.length} FILE${files.length === 1 ? '' : 'S'} / SANDBOXED`}
+          {q ? `${visible.length} OF ${files.length} FILES` : `${files.length} FILE${files.length === 1 ? '' : 'S'} / USERLAND-SCOPED`}
         </span>
         <span className="flex items-center gap-0.5">
           <Button

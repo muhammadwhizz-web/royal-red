@@ -51,7 +51,8 @@ Keyboard: \`ctrl+b\` toggles the preview panel, \`ctrl+j\` opens sessions,
 
 Everything else you type goes to the agent. Drop files on the composer or use
 the paperclip to attach them; shell, fs, eyes, ears and the web reader are all
-sandboxed.`
+userland-constrained - workspace filesystem, whitelisted shell, enforced by
+this app process, not kernel-level isolation.`
 
 // shared by /export, /pdf and /csv: open the exporter for the active session
 function exportTranscript(fmt: 'md' | 'pdf' | 'csv', push: (item: ChatItem) => void) {
@@ -214,7 +215,7 @@ function handleLocalCommand(raw: string, push: (item: ChatItem) => void): boolea
           '| shape | an operating system for agents, living inside this page |',
           '| modes | builder, research, system, assist |',
           '| senses | image generation, vision checks, video watching, web search, page reading |',
-          '| hands | sandboxed shell, workspace filesystem, account management |',
+          '| hands | whitelisted shell, workspace filesystem, account management - all userland-scoped, not kernel isolation |',
           '| memory | every session, artifact and workspace file survives reloads |',
           '',
           'it plans, builds, verifies its own work to a score, and ships artifacts',

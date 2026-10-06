@@ -19,7 +19,8 @@ import { db } from '@/lib/db'
 import { BOX_TRASH, BOX_HOME, resolveVirtual, verifyReal, statVirtual, ensureBoxTree } from './prison'
 import { planOperations, type DryRunPlan, type PlanStep, type RawOp } from './dryrun'
 import { requestConsent, findMatchingRule, type ConsentAnswer } from './consent'
-import { isAborted as checkAbort, markRunAborted, setGlobalAbort } from './abort-state'
+import { isAborted as checkAbort, markRunAborted, setGlobalAbort, runIsAbortedInDb } from './abort-state'
+import { reserveRun, releaseRun } from './budget'
 
 // re-export the shared checker so existing importers keep working
 export function isAborted(runId: string): boolean {
@@ -60,11 +61,18 @@ export async function beginRun(sessionId: string, tool: string, plan: DryRunPlan
       actionsTotal: plan.summary.proposable,
     },
   })
+  // budget gate (Phase 5 prep): fail-closed concurrency cap
+  const reservation = await reserveRun(id)
+  if (!reservation.ok) {
+    await db.awonRun.update({ where: { id }, data: { status: 'aborted', endedAt: new Date(), abortReason: `budget: ${reservation.reason}` } }).catch(() => null)
+    throw new Error(`run refused by budget policy: ${reservation.reason}`)
+  }
   return id
 }
 
 export async function finishRun(runId: string, status: 'done' | 'aborted'): Promise<void> {
   await db.awonRun.update({ where: { id: runId }, data: { status, endedAt: new Date() } }).catch(() => null)
+  await releaseRun(runId).catch(() => null) // budget ledger receipt; never breaks finishRun
 }
 
 // ─── write-ahead journal (4.5) ───────────────────────────────────────────────
@@ -267,7 +275,10 @@ export async function executePlan(
   emit({ type: 'desktop_run', runId, status: 'running', total: steps.length })
 
   for (const step of steps) {
-    if (isAborted(runId)) {
+    // DURABLE kill switch check: in-memory flags PLUS the run row's DB status
+    // (the abort may have been issued from a different route bundle / process,
+    // which never shares this loop's in-memory state)
+    if (checkAbort(runId) || (await runIsAbortedInDb(runId))) {
       aborted = true
       lines.push('ABORTED by kill switch - remaining steps untouched, journal intact')
       break
@@ -276,7 +287,7 @@ export async function executePlan(
     // Tier 3: trash steps ask PER ACTION. A typed permanent rule can match and
     // skip the dialog; every rule match is still audited.
     if (step.op === 'trash') {
-      const rule = await findMatchingRule('box_trash', step.from)
+      const rule = await findMatchingRule('box_trash', step.from, sessionId)
       if (!rule) {
         const ans = await requestConsent(
           {

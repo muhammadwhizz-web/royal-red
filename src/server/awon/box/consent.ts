@@ -20,7 +20,7 @@
 // covered by the consent-stacking regression test (Phase 3 soft spot #2).
 import { randomUUID } from 'crypto'
 import { db } from '@/lib/db'
-import { isAborted } from './abort-state'
+import { isAborted, runIsAbortedInDb } from './abort-state'
 
 export const CONSENT_TIMEOUT_MS = 120_000
 
@@ -82,8 +82,9 @@ export interface ConsentAnswer {
 type Emit = (e: unknown) => void
 
 export async function requestConsent(req: ConsentRequest, emit: Emit): Promise<{ id: string; status: 'approved' | 'denied' | 'expired' | 'frozen'; decision?: string; ruleText?: string; modifiedPayload?: unknown }> {
-  // abort wins before anything is even written (kill switch beats the queue)
-  if (req.runId && isAborted(req.runId)) {
+  // abort wins before anything is even written (kill switch beats the queue).
+  // DB-backed: honors aborts issued from ANY route bundle / process.
+  if (req.runId && ((isAborted(req.runId) || (await runIsAbortedInDb(req.runId))))) {
     return { id: 'aborted', status: 'frozen' }
   }
   const id = `con_${randomUUID().slice(0, 12)}`
@@ -104,8 +105,8 @@ export async function requestConsent(req: ConsentRequest, emit: Emit): Promise<{
     }),
   )
   // close the race: the abort may land between the executor's loop check and
-  // this row insert - the request is frozen the moment it exists
-  if (req.runId && isAborted(req.runId)) {
+  // this row insert - the request is frozen the moment it exists (DB-backed)
+  if (req.runId && (isAborted(req.runId) || (await runIsAbortedInDb(req.runId)))) {
     await db.awonConsent.update({ where: { id }, data: { status: 'frozen' } }).catch(() => null)
     return { id, status: 'frozen' }
   }
@@ -148,6 +149,17 @@ export async function requestConsent(req: ConsentRequest, emit: Emit): Promise<{
     const poller = setInterval(async () => {
       if (settled) return
       try {
+        // DURABLE kill switch: if the RUN was aborted (from any route bundle
+        // or process — the DB is the source of truth), this consent freezes
+        // NOW, even if the row was created after the abort and even if the
+        // in-memory flags live in a different module graph.
+        if (req.runId && (await runIsAbortedInDb(req.runId))) {
+          await db.awonConsent.updateMany({ where: { id, status: 'pending' }, data: { status: 'frozen' } }).catch(() => null)
+          emit({ type: 'consent_result', id, status: 'frozen' })
+          broadcast(req.sessionId, { type: 'consent_result', id, status: 'frozen' })
+          finish({ id, status: 'frozen' })
+          return
+        }
         const row = await db.awonConsent.findUnique({ where: { id }, select: { status: true, decision: true, ruleText: true, expiresAt: true } })
         if (!row) return
         if (row.status === 'pending' && row.expiresAt.getTime() < Date.now()) {
@@ -230,12 +242,16 @@ export async function decideConsent(id: string, answer: ConsentAnswer): Promise<
 }
 
 // parse "always allow <op> for <pattern>" out of the typed rule; anything else
-// falls back to the consent's own title tokens. Conservative: an unparseable
-// rule is stored but matches almost nothing (documented behavior).
+// falls back to a NEVER-MATCHING op (fail-closed, documented behavior: an
+// unparseable rule is stored but can never skip a dialog).
 export function extractRuleScope(ruleText: string, fallbackTitle: string): { op: string; pattern: string } {
   const t = ruleText.toLowerCase()
   const ops = ['box_trash', 'trash', 'shell_exec', 'screen_click', 'screen_type', 'box_move', 'box_write', 'box_copy', 'delete']
-  const op = ops.find((o) => t.includes(o)) ?? 'box_trash'
+  // fail-closed: an unparseable rule must NEVER default to an executable op.
+  // ('' matches nothing - findMatchingRule filters by exact op, and no caller
+  // ever asks for op=''. The old default 'box_trash' turned e.g. "always allow
+  // git push for *" into a live auto-approve-everything-trash rule.)
+  const op = ops.find((o) => t.includes(o)) ?? ''
   const opName = op === 'trash' || op === 'delete' ? 'box_trash' : op
   const forMatch = ruleText.match(/\bfor\s+(?:paths?\s+like\s+)?["']?([^"']+)["']?$/i)
   const pattern = forMatch?.[1]?.trim() || fallbackTitle.split(':').pop()?.trim() || '*'
@@ -248,8 +264,12 @@ export function ruleMatches(pattern: string, candidate: string): boolean {
   return re.test(candidate)
 }
 
-export async function findMatchingRule(op: string, candidatePath: string) {
-  const rules = await db.awonConsentRule.findMany({ where: { op, enabled: true } })
+// Typed grants are SCOPED to the session that typed them (fail-closed):
+// a rule typed in session A must never auto-approve actions in session B.
+// When sessionId is absent or unknown, NOTHING matches - the dialog fires.
+export async function findMatchingRule(op: string, candidatePath: string, sessionId?: string) {
+  if (!sessionId) return null
+  const rules = await db.awonConsentRule.findMany({ where: { op, enabled: true, sessionId } })
   return rules.find((r) => ruleMatches(r.pattern, candidatePath)) ?? null
 }
 

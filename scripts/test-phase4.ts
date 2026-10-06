@@ -16,6 +16,7 @@ import { planOperations, cleanupPlanFor, type RawOp } from '../src/server/awon/b
 import { tokenizeCommand } from '../src/server/awon/box/box'
 import { ruleMatches, extractRuleScope } from '../src/server/awon/box/consent'
 import { beginRun, finishRun, undoRun, isAborted } from '../src/server/awon/box/ops'
+import { resetAbortState } from '../src/server/awon/box/abort-state'
 
 let pass = 0
 let fail = 0
@@ -203,6 +204,41 @@ check('rule glob rejects subdirs', !ruleMatches('/home/awon/Downloads/*.tmp', '/
 const scope = extractRuleScope('always allow box_trash for ~/Downloads/*.tmp', 'Trash "x"')
 check('rule scope parses op', scope.op === 'box_trash', scope.op)
 check('rule scope parses pattern', scope.pattern.includes('*.tmp'), scope.pattern)
+
+// ── durable abort (DB is the source of truth) ───────────────────────────────
+// Acceptance re-run finding (Task 21): Next.js compiles EACH route as its own
+// module graph, so the chat route's executor and the desktop abort route can
+// hold DIFFERENT copies of the in-memory abort flags. A DB-only abort (no
+// in-memory flag) MUST still freeze consents and stop execution.
+console.log('durable abort (cross-module-graph):')
+resetAbortState() // isolate from the kill-switch section's 30s global refuse window
+const { runIsAbortedInDb, recentAbortForSessionInDb } = await import('../src/server/awon/box/abort-state')
+const { requestConsent } = await import('../src/server/awon/box/consent')
+const DUR_SID = 'unit-durable-abort'
+const durRunId = await beginRun(DUR_SID, 'unit-durable', planOperations([{ op: 'mkdir', to: '~/unit-durable-dir' }]))
+// create a consent FIRST (pending, waits), then abort via DB ONLY - exactly
+// what a kill-switch click from another route bundle looks like to us
+const durWaiter = requestConsent({ sessionId: DUR_SID, runId: durRunId, tier: 3, title: 'durable freeze test' }, noopEmit)
+// wait until the row is actually on disk (creation goes through the FIFO chain)
+let pendingBefore: { id: string } | null = null
+for (let i = 0; i < 20 && !pendingBefore; i++) {
+  await new Promise((r) => setTimeout(r, 200))
+  pendingBefore = await db.awonConsent.findFirst({ where: { runId: durRunId, status: 'pending' }, select: { id: true } })
+}
+check('durable: pending consent exists pre-abort', pendingBefore !== null)
+await db.awonRun.update({ where: { id: durRunId }, data: { status: 'aborted', endedAt: new Date(), abortReason: 'unit: db-only abort' } })
+check('durable: runIsAbortedInDb sees the db-only abort', await runIsAbortedInDb(durRunId))
+check('durable: session refuse-window sees the db-only abort', await recentAbortForSessionInDb(DUR_SID))
+const durFrozen = await Promise.race([durWaiter, new Promise<'TIMEOUT'>((r) => setTimeout(() => r('TIMEOUT'), 6000))])
+check('durable: pending consent resolves FROZEN via poll-back (no in-memory flag)', durFrozen !== 'TIMEOUT' && (durFrozen as { status: string }).status === 'frozen', String(durFrozen))
+// a NEW consent for the db-aborted run must be refused at the gate, no row
+const refused = await requestConsent({ sessionId: DUR_SID, runId: durRunId, tier: 3, title: 'post-abort request' }, noopEmit)
+check('durable: new consent for a db-aborted run returns frozen pre-insert', refused.status === 'frozen')
+const postAbortPending = await db.awonConsent.count({ where: { runId: durRunId, status: 'pending' } })
+check('durable: zero pending rows remain for the aborted run', postAbortPending === 0, String(postAbortPending))
+await db.awonConsent.deleteMany({ where: { sessionId: DUR_SID } })
+await db.awonRun.deleteMany({ where: { id: durRunId } })
+resetAbortState()
 
 // cleanup: remove unit fixtures (test hygiene for its own scaffolding)
 fs.rmSync(fixtureDir, { recursive: true, force: true })

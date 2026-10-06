@@ -17,7 +17,7 @@ import {
 } from './workspace'
 import type { ArtifactPatch, ToolOutcome, ToolRequest } from '@/lib/awon/types'
 import { runBoxPrimitive } from './box/primitives'
-import { isAborted } from './box/ops'
+import { isAborted, recentAbortForSessionInDb } from './box/abort-state'
 
 const pexec = promisify(execFile)
 
@@ -488,7 +488,10 @@ export async function runTool(
       if (!ctx.emit) {
         return { name: req.name, ok: false, summary: 'desktop primitives require a live console connection (no emit stream)' }
       }
-      if (isAborted('*')) {
+      // refuse window: in-memory global flag (30s one-shot) PLUS the durable
+      // DB check — any run of this session aborted in the last 30s refuses
+      // new box primitives, across route bundles and processes
+      if (isAborted('*') || (await recentAbortForSessionInDb(ctx.sessionId))) {
         return { name: req.name, ok: false, summary: 'ABORTED by kill switch - all box primitives refuse to run' }
       }
       return await runBoxPrimitive(req.name, (req.args ?? {}) as Record<string, unknown>, {

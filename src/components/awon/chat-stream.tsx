@@ -445,6 +445,14 @@ function ConsentCard({ item }: { item: Extract<ChatItem, { kind: 'consent' }> })
         {statusBadge()}
       </div>
 
+      {/* every tier dialog carries the honest isolation label exactly once:
+          either this strip, or the detail text that already discloses it */}
+      {!item.detail?.includes('PATH PRISON') && (
+        <p className="mt-1.5 rounded border border-amber-600/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] font-bold tracking-wide text-amber-700 dark:text-amber-300">
+          PATH PRISON — userland isolation, not kernel-level
+        </p>
+      )}
+
       {item.detail && <p className="mt-1.5 whitespace-pre-wrap text-[11px] leading-relaxed text-muted-foreground">{item.detail}</p>}
 
       {item.payload?.kind === 'plan' && <PlanStepsTable payload={item.payload} />}

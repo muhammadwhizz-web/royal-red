@@ -201,13 +201,16 @@ export function DesktopTab() {
         <section>
           <SectionHeader icon={Cpu} title="AWON BOX" />
           <div className="space-y-1.5 rounded border border-border/60 bg-muted/20 p-2.5 font-mono text-[11px]">
-            <div className="flex items-start gap-2">
-              <span className={cn('mt-0.5 inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-bold tracking-widest', state?.runtime.kind === 'container' ? 'border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-amber-600/40 bg-amber-500/10 text-amber-700 dark:text-amber-300')}>
+            <div>
+              <span className={cn('inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[11px] font-bold tracking-widest', state?.runtime.kind === 'container' ? 'border-emerald-600/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-amber-600/40 bg-amber-500/10 text-amber-700 dark:text-amber-300')}>
                 {state?.runtime.kind === 'container' ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
-                {state?.runtime.kind === 'container' ? 'CONTAINER' : 'PATH-PRISON EMULATION'}
+                {state?.runtime.kind === 'container' ? 'CONTAINER' : 'PATH PRISON — userland isolation, not kernel-level'}
               </span>
-              <p className="min-w-0 flex-1 leading-relaxed text-muted-foreground">{state?.runtime.description}</p>
             </div>
+            <p className="leading-relaxed text-muted-foreground">{state?.runtime.description}</p>
+            <p className="text-muted-foreground">
+              enforced by this same Node process, not by the kernel - if this process is compromised, the prison is compromised with it.
+            </p>
             <p className="text-muted-foreground">
               root <span className="text-foreground/80">{state?.boxRoot}</span>
             </p>
@@ -286,7 +289,7 @@ export function DesktopTab() {
 
         {/* SCREEN (virtual display) */}
         <section>
-          <SectionHeader icon={Eye} title="VIRTUAL SCREEN" />
+          <SectionHeader icon={Eye} title="TARGET: VIRTUAL SCREEN (no real apps installed yet)" />
           <div className="rounded border border-border/60 bg-muted/20 p-2.5 font-mono text-[11px] text-muted-foreground">
             <p>
               Xvfb displays: <span className="text-foreground/85">{state?.screen.displays ?? 0}</span> · supervised processes: <span className="text-foreground/85">{state?.screen.children ?? 0}</span>
@@ -294,7 +297,7 @@ export function DesktopTab() {
             <p className="mt-1 flex items-start gap-1.5">
               <MouseHint /> input backend: <span className={state?.screen.input ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}>{state?.screen.input ? 'available' : 'NOT INSTALLED - click/type fail closed honestly'}</span>
             </p>
-            <p className="mt-1 text-[10px]">all screenshots come from virtual displays only. nothing here can touch a physical screen, pointer, or keyboard.</p>
+            <p className="mt-1 text-[10px]">any click, keystroke or screenshot here happens on a virtual Xvfb display with NO real applications installed - never on your desktop. nothing in the box can touch your physical screen, pointer, or keyboard.</p>
           </div>
         </section>
 

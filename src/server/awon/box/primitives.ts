@@ -57,7 +57,7 @@ async function consentRead(ctx: BoxPrimitiveCtx, detail: string, payload: unknow
       sessionId: ctx.sessionId,
       tier: 1,
       title: T1_READ_TITLE,
-      detail: `${detail} The box is the emulated home inside AWON's sandbox - the real host filesystem is not mounted, not even read-only.`,
+      detail: `${detail} The box is the emulated home inside AWON's userland path prison - the real host filesystem is not mounted, not even read-only.\nPATH PRISON — userland isolation, not kernel-level.`,
       payload,
     },
     ctx.emit,
@@ -84,8 +84,8 @@ async function planCardFlow(
       title: `Approve ${toolName} plan (${plan.summary.proposable} actions)`,
       detail:
         plan.summary.refused > 0
-          ? `${plan.summary.refused} operation(s) could not produce a dry-run and will NOT run. Every executed step is journaled for undo.`
-          : 'Every step is journaled before it executes; one command undoes the whole run.',
+          ? `${plan.summary.refused} operation(s) could not produce a dry-run and will NOT run. Every executed step is journaled for undo.\nPATH PRISON — userland isolation, not kernel-level.`
+          : 'Every step is journaled before it executes; one command undoes the whole run.\nPATH PRISON — userland isolation, not kernel-level.',
       payload: { kind: 'plan', plan, toolName },
     },
     ctx.emit,
@@ -266,7 +266,7 @@ async function boxPlan(args: Record<string, unknown>, ctx: BoxPrimitiveCtx): Pro
         tier: 2,
         title: `Approve cleanup plan for ${resolveVirtual(dir).virtual} (${plan.summary.proposable} actions)`,
         detail:
-          'Default policy: junk and installers -> .awon-trash (Tier 3, asked per item), documents -> ~/Documents, images -> ~/Pictures, archives -> ~/Documents/archives. Refused items (if any) will NOT run. Every step is journaled and undoable.',
+          'Default policy: junk and installers -> .awon-trash (Tier 3, asked per item), documents -> ~/Documents, images -> ~/Pictures, archives -> ~/Documents/archives. Refused items (if any) will NOT run. Every step is journaled and undoable.\nPATH PRISON — userland isolation, not kernel-level.',
         payload: { kind: 'plan', plan, toolName: 'cleanup' },
       },
       ctx.emit,
@@ -333,7 +333,7 @@ async function boxTrash(args: Record<string, unknown>, ctx: BoxPrimitiveCtx): Pr
     }
   }
   // typed permanent rule check (the ONLY way to skip the dialog)
-  const rule = await findMatchingRule('box_trash', targets[0])
+  const rule = await findMatchingRule('box_trash', targets[0], ctx.sessionId)
   if (!rule) {
     const res = await executeSingleTrash(targets[0], ctx.sessionId, ctx.emit)
     return { name: 'box_trash', ok: res.ok, summary: res.line }
@@ -368,14 +368,14 @@ async function shellExec(args: Record<string, unknown>, ctx: BoxPrimitiveCtx): P
   }
   // EXTREME consent: a typed rule match may skip the dialog; otherwise the
   // card requires typing the exact command as a rule - no checkbox anywhere
-  const rule = await findMatchingRule('shell_exec', command)
+  const rule = await findMatchingRule('shell_exec', command, ctx.sessionId)
   if (!rule) {
     const ans = await requestConsent(
       {
         sessionId: ctx.sessionId,
         tier: 3,
         title: 'Run a command inside the box (Tier 3 EXTREME)',
-        detail: `Command: ${command.slice(0, 300)}\n\nShell-less (no chaining, no redirection), whitelisted binaries, 15s timeout, supervised. To allow this command permanently, choose TYPE A RULE and type exactly: always allow shell_exec: ${command.slice(0, 80)}`,
+        detail: `Command: ${command.slice(0, 300)}\n\nShell-less (no chaining, no redirection), whitelisted binaries, 15s timeout, supervised. PATH PRISON — userland isolation, not kernel-level.\nTo allow this command permanently, choose TYPE A RULE and type exactly: always allow shell_exec: ${command.slice(0, 80)}`,
         payload: { kind: 'shell', command },
       },
       ctx.emit,
