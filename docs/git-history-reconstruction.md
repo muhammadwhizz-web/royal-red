@@ -49,3 +49,4 @@ possible (enforced server-side on the bare remote). A weekly tarball of `.git` l
 `/home/sync/` via a standing scheduled task. Every phase assumes the sandbox can eat
 history again.
 2026-10-04T13:26:00+0000
+2026-10-04T13:26:00+0000
