@@ -494,3 +494,16 @@ Work Log:
 
 Stage Summary:
 - 23.1% now has a starting line: a bucket table with costs, a today-pilotable A3 class covered by the Box, and a one-command regeneration path for the full row-level sheet once the payload returns
+
+---
+Task ID: 20.6 (PHASE 4 COMPLETE - final verification battery + ship)
+Agent: main orchestrator (Z.ai Code)
+Task: final verification, commit, recovery snapshot, standing cron
+
+Work Log:
+- FINAL BATTERY: lint 0/0; phase2 unit 28/28 (osworld payload-absent branch now SKIPS with the harness's honest reason instead of failing - env, not code); phase4 kernel unit 47/47; soft-spot suite 4/4 (42 checks); acceptance 19/19 (9/9 steps); dev.log scan clean; artifact preview pipeline regression-green (preview + artifact-file 200); chat SSE proven end-to-end by the acceptance run itself
+- SHIPPED: git commit v1.3 (Phase 4 + regressions + roadmap); /home/sync/repo.tar refreshed (2.5MB, 210 entries incl. box kernel, qa suites, docs); standing webDevReview cron created (every 15 min, runs qa/qa-softspots.sh first)
+- Phase 4 acceptance criteria from the directive: step 6 (per-action audit) PASS, step 8 (undo) PASS, step 9 (kill switch) PASS -> Phase 4 is COMPLETE by the directive's own standard
+
+Stage Summary:
+- AWON v1.3: Permitted PC Control is real, consented, journaled, undoable, and abortable - with the honesty labels a user can audit (path-prison, no input backend, virtual home, heuristic segmentation). All six prohibitions held. Next: Phase 5 multi-agent orchestration (preconditions listed in the final report).
