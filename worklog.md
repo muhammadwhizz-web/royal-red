@@ -507,3 +507,15 @@ Work Log:
 
 Stage Summary:
 - AWON v1.3: Permitted PC Control is real, consented, journaled, undoable, and abortable - with the honesty labels a user can audit (path-prison, no input backend, virtual home, heuristic segmentation). All six prohibitions held. Next: Phase 5 multi-agent orchestration (preconditions listed in the final report).
+
+---
+Task ID: git-protection (weekly drill, Job ID 440107, 2026-10-06)
+Agent: cron git-protection drill
+Task: weekly commit / push / tarball / prune / record
+
+Work Log:
+- Pushed commit b56239b (chore: capture tool-results artifact [worklog.md Task ID 20.6]) to /home/sync/awon-remote.git main (fast-forward, no force; remote protections held)
+- Tarball /home/sync/awon-git-20261006-135224.tgz (8,795,418 bytes, non-empty OK); retention kept newest 2 (<=6), 1 prior tarball from earlier run today
+
+Stage Summary:
+- REMOTE OK, TARBALL OK — /home/sync write path healthy; git history protected this cycle (HEAD b56239b)
