@@ -398,3 +398,99 @@ Stage Summary:
 - v1.1: Phase 1 of the master directive is DONE - all six Tier-1 gaps closed with zero regressions to the SSE loop or preview system. AWON's diff view now reads immutable version history (every artifact write snapshots), the session index paginates, transcripts export three ways from the sheet, videos are watched at their actual scene cuts, and the console is PWA-installable
 - New payload on disk: 6 competitor codebases (zed, cline monorepo, OpenJarvis, OSWorld-V2, LiveKit agents, PersonalJarvis) awaiting the Phase 2-7 pattern analysis (OpenJarvis flagged "most architecturally important" by the directive)
 - Known gaps / next: Phase 2 (Verification 2.0: adversarial self-critique, constraint ledger, visual regression, 10-site benchmark, CMS login verification, honest score dashboard) is the moat - start next round; OSWorld-V2 harness after Phase 3 browser hands; the old 12-repo analysis (Task 1-7) still valid but those snapshots were lost in the sandbox reset - re-download only if needed for file:line re-checks; DB backup retention: keep custom.db.backup-v1.0-* until v1.2 is stable
+
+---
+Task ID: 20 (Phase 4 build: Permitted PC Control complete, Section 1 done)
+Agent: main orchestrator (Z.ai Code)
+Task: Finish the cut-off DESKTOP panel by building the entire Phase 4 stack it controls (4.1-4.7), stop UI coding at first successful render
+
+Work Log:
+- AUDIT FIRST: found Phase 2/3 intact (verify/* + osworld harness + qa-v12 scripts, v1.2) but ZERO Phase 4 artifacts (no consent/undo/kill/box code anywhere). Git history reset to initial commit (sandbox event); worklog entries 20+ lost in a session cutoff. DB backed up (custom.db.backup-v1.2-20261006-054353) BEFORE schema change
+- SCHEMA (additive, db:push clean): AwonRun (plan hash + actions counters), AwonConsent (tier, status incl. frozen, typed ruleText, expiresAt), AwonConsentRule (typed-rule overrides, no checkbox anywhere), AwonUndoEntry (write-ahead journal, seq-ordered, undone flag)
+- 4.1 src/server/awon/box/prison.ts: HONEST path prison - mount table (emulated home rw, host FS absent), traversal rejection, realpath containment (symlink-escape blocked), BOX_ROOT=/home/z/my-project/awon-box, VIRTUAL_HOME=/home/awon
+- 4.1 runtime.ts: pluggable BoxRuntime (ContainerRuntime probes podman/docker - absent here; PathPrisonRuntime active, describes itself honestly in the panel), supervised child process table for the kill switch + leak tests
+- 4.1 box.ts: shell-less exec (tokenizeCommand rejects ;|&<>`$(){}[]!*?~\n), binary whitelist WITHOUT rm/mv/cp (file lifecycle only via primitives so journal/consent cannot be bypassed), 15s timeout, output caps, cwd=box home, registerChild
+- 4.2 dryrun.ts: the planner never mutates. Classifies (junk/installers/documents/images/archives/code/data), flags junk, refuses what cannot be proposed (missing source, target collision, in-plan duplicate targets, prison escape), dir-into moves resolve to dir/basename, planHash=sha256(steps). cleanupPlanFor = default Downloads policy. Pending-plan cache carries write-content post-approval (cards show bytes, not 4MB of text)
+- 4.3 screen.ts: Xvfb lifecycle (supervised, 1280x800x24, -nolisten tcp), ffmpeg x11grab screenshots, dependency-free grid+variance segmentation with clamped confidence (labeled heuristic, not a model), inputBackendAvailable()=false -> click/type FAIL CLOSED with honest error
+- 4.4 consent.ts: kernel TRUE PAUSE (promise per request resolved by POST /api/awon/desktop/consent/[id]), 120s fail-closed expiry, FIFO queue w/ per-request timers (head expiry never auto-decides later ones), freezeAllPending for the kill switch, typed-rule storage + glob matching
+- 4.5+4.6 ops.ts: executor obeys ABORT > plan-hash > write-ahead journal > per-step audit (desktop_step SSE + AwonAudit row) > trash-only deletion. executePlan refuses hash mismatch (approved dry-run must be the executed one). undoRun replays journal newest-first (panel-initiated undo = the user's click IS the consent, audited). triggerAbort: SIGTERM all supervised children + freeze pendings + mark runs aborted + audit + 30s global refuse window
+- 4.7 primitives.ts: EXACTLY 13 agent-facing primitives (box_list/box_read T1, box_plan free-by-construction, box_write/box_mkdir/box_move/box_copy T2 plan cards, box_trash T3 per-action never batched, box_undo T2, shell_exec T3 EXTREME typed-rule, screen_shot T1 virtual-only, screen_click/screen_type T3 fail-closed). Wired into tools.ts dispatch (requires live emit; refuses when aborted)
+- prompts.ts: PC_RULES gains the BOX protocol (13 primitives, job protocol for "clean up my Downloads", never claim unreported actions); detectMode routes cleanup/tidy/organize commands to SYSTEM
+- API: /api/awon/desktop/state (mission-control JSON), /consent/[id] (decide), /abort (kill switch, un-gated by design), /undo (panel-initiated)
+- CONSOLE: SSE events consent_request/consent_result/desktop_plan/desktop_step/desktop_run; ConsentCard in chat (tier badges, live countdown, plan table w/ FLAG marks, T2 four-option approve/modify/type-a-rule/deny, T3 per-action + typed rule input, T1 approve-read, status badges incl. FROZEN BY KILL SWITCH); store answerConsent w/ honest revert on late answers; /desktop command + /help row
+- DESKTOP PANEL (desktop-tab.tsx, Section 1 deliverable): ACTIVE RUN w/ always-visible red ABORT + confirm dialog (states exactly what it does), AWON BOX honest identity card, mounts table, trash stats (7-day TTL, manual purge), CONSENT QUEUE (FIFO), RECENT RUNS+UNDO buttons, VIRTUAL SCREEN (input honestly NOT INSTALLED), supervised processes, audit tail. 2.5s polling. Rendered + screenshot-verified dark AND light (qa/phase4-desktop-*.png). /desktop lands on it; boot overlay v1.3 with 6 Phase-4 lines; footer V1.3
+- BUGS FOUND+FIXED during build: (1) planner refused moves INTO existing directories - now resolves to dir/basename w/ collision check (dryrun.ts planOne); (2) spawnSupervised imported from wrong module (runtime.ts -> box.ts) broke the state route boot; (3) propposable typo in dry-run dup-check silently disabled in-plan collision refusal; (4) start-stop-daemon needed for the dev server after the platform instance was killed (sandbox reaps session children)
+- UNIT TESTED: scripts/test-phase4.ts 47/47 (prison escapes incl. symlink, classification, refusals, hash discipline, T3 kernel true-pause PROVEN (fs untouched while pending), trash->.awon-trash->undo roundtrip, hash-mismatch refusal, kill switch freezes a live consent waiter, shell tokenizer rejects chaining/redirection/substitution/globs, typed-rule glob matching)
+- Verified: lint 0/0; dev server healthy (start-stop-daemon); state API JSON correct; DESKTOP tab renders all sections (agent-browser); screenshots saved
+
+Stage Summary:
+- Phase 4 4.1-4.7 built and unit-proven; the DESKTOP mission-control panel renders (Section 1 of the continuation directive COMPLETE; UI coding stopped per directive). ~ = emulated home; host FS not mounted; rm does not exist in the box. Next: four honesty answers, then the 9-step acceptance test
+
+---
+Task ID: 20.2 (Section 2: the four honesty questions, answered BEFORE acceptance testing)
+Agent: main orchestrator (Z.ai Code)
+Task: Answer the four honesty questions in plain English, from the actual code, no guessing
+
+Work Log:
+- ANSWER 1 - "What is the container actually doing?"
+  It is NOT a container and AWON never calls it one. There is no docker/podman in this environment (probed: no binaries, no socket), so there are no kernel namespaces, no cgroups, no seccomp, and nothing is "isolated" at the OS level. What actually runs is a USERLAND PATH PRISON (src/server/awon/box/prison.ts + runtime.ts): (a) every agent path is normalized and matched against an explicit mount table that maps an emulated home (/home/awon/*) to a real directory inside the project (awon-box/home/awon); (b) realpath containment checks block symlink escape; (c) every child process is registered in a supervised table; (d) the runtime module ADVERTISES this in the DESKTOP panel verbatim: "path-prison emulation (mount table + containment + supervised processes). NOT a container: no kernel namespaces, no cgroups, same uid as the console." A real container runtime can be plugged in later through the same BoxRuntime interface - that is why the emulation layer is honest about its name.
+- ANSWER 2 - "What does rootless emulation prevent, and what does it NOT prevent?"
+  PREVENTS: agent reads/writes outside awon-box/ (path prison on every operation); access to the real host home (NOT mounted - not even read-only - by default); ../ traversal and symlink escape (realpath containment); un-journaled deletion (rm is not whitelisted anywhere and cannot be consented into existence - the only "delete" is a move into .awon-trash); shell chaining/redirection/substitution in shell_exec (tokenizeCommand rejects metacharacters); un-consented action (all 13 primitives tier-gated, kernel-enforced regardless of model behavior); executing anything the user did not see (plan-hash discipline: the executed batch must be byte-identical to the approved dry-run).
+  DOES NOT PREVENT: attacks at the kernel level; a compromised Node/Next.js process (the prison is enforced BY that same process - if the process is compromised the prison is compromised with it); kernel-level resource exhaustion (no cgroups - only wall-clock timeouts and output caps); side channels; encryption at rest (trash files are plain files). The DESKTOP panel states this in the runtime description line rather than burying it.
+- ANSWER 3 - "Is ~/Downloads in the Phase 4 test the user's real home directory or a virtual one?"
+  It is a VIRTUAL emulated home INSIDE the box: awon-box/home/awon/Downloads. The real /home/z/Downloads is never mounted, never read, never written by any Phase 4 code path (the mount table has no entry for it and the prison refuses /home/z/* by construction - unit-tested: 'statVirtual outside box is an escape'). The agent's ~ resolves to the emulated home. Nothing about the acceptance test touches the user's real Downloads folder.
+- ANSWER 4 - "Confirm Xvfb touches nothing real."
+  Confirmed, from code: all grounding runs on Xvfb virtual displays (screen.ts) - private framebuffers with no connection to any physical output. There is no /dev/input access anywhere in the codebase; xdotool/xinput are not even installed, and the click/type primitives FAIL CLOSED with an honest "input backend unavailable" error instead of pretending (unit-testable via inputBackendAvailable()=false). Screenshots come from ffmpeg x11grab against the virtual display only. No Phase 4 test moves the host pointer, presses host keys, or reads the host screen.
+
+Stage Summary:
+- Four honesty answers locked into the record: honest emulation naming, real protection boundaries (incl. what it does NOT protect), virtual Downloads (real home untouched, proven by the prison + tests), and zero host-input/display contact. Ready for the 9-step acceptance test.
+
+---
+Task ID: 20.3 (Section 3: the 9-step acceptance test - ALL PASS)
+Agent: main orchestrator (Z.ai Code)
+Task: Run the 9-step acceptance test ("Clean up my Downloads folder.") through the real console + kernel, report pass/fail per step
+
+Work Log:
+- Fixtures: 8 files seeded in the EMULATED box home (awon-box/home/awon/Downloads): pdf, jpg, deb, crdownload, Thumbs.db, zip, txt, mystery.xyz. Real /home/z/Downloads untouched (zero code paths reach it)
+- qa/qa-phase4.sh drives the REAL UI (agent-browser) against the REAL kernel: no mocks, no test backdoors. Result: 19/19 checks green, all 9 steps pass
+- Step results: (1) T1 read-consent card rendered+approved PASS; (2) approve honored by kernel PASS; (3) dry-run plan card rendered (7 actions, step table, FLAG marks) PASS; (4) four options present APPROVE|MODIFY|TYPE A RULE|DENY PASS; (5) plan approved PASS; (6) Tier 3 asked PER ACTION (3 separate trash dialogs - batching is structurally impossible) + 7 per-action audit rows + disk layout exact (2 docs, 1 image, 1 archive, 3 in .awon-trash, mystery.xyz untouched) PASS; (7) write-ahead journal recorded all 7 entries (from->to, seq, ts) PASS; (8) "undo the cleanup." -> undo card -> approved -> all 8 files restored, 7 undo audit rows PASS; (9) second run ABORTED mid-execution via the DESKTOP panel ABORT: run marked aborted 1/7, desktop.abort audit row, pending T3 card FROZEN BY KILL SWITCH (visible on the card), consent queue drained, and the agent honestly reported "cleanup was partially executed... interrupted after trashing Thumbs.db but before processing big-download.crdownload" - screenshot qa/phase4-step9-abort.png
+- Kernel state after the test (DB): run1 done 7/7, run2 aborted 1/7 with abortReason "kill switch pressed on the DESKTOP panel", 1 frozen consent, 8 journal entries
+- TEST HARNESS bugs found+fixed (the kernel had ZERO of the failures): (a) agent-browser eval returns double-JSON-encoded strings - single json.loads yields a string, causing silent case-match failures (the qa-v10 aria-lesson strikes again, now recorded properly: decode twice); (b) the script's own reset fired the kill switch whose 30s refuse window then rejected the test's own box_list - now waits it out; (c) wait_idle must probe the composer with a character (the send button is disabled when EMPTY, not just when streaming); (d) DB reset used bash-expanded \$disconnect and silently no-op'd; (e) the ABORT button lives on the DESKTOP tab - the script must open the tab first
+- KERNEL bugs found+fixed by this test: (f) the model ended its turn after box_list instead of proposing the plan - prompt protocol now REQUIRES box_plan in the same turn + box_list's result carries a contextual nudge; (g) hot-reload could orphan in-flight in-memory consent waiters (dev-only, but real) - requestConsent now polls its DB row every 2s as a durability net (the DB is the source of truth); (h) an abort landing between the executor's loop check and a T3 consent row insert left a pending row forever - requestConsent now re-checks abort before AND after the row insert and freezes instantly; (i) freeze now BROADCASTS consent_result through registered session emitters so cards flip to FROZEN live
+- Verified: lint 0/0; server flow re-proven via raw SSE (mode pc -> say -> box_list -> consent_request); screenshots: phase4-desktop-dark.png, phase4-desktop-light.png, phase4-step9-abort.png
+
+Stage Summary:
+- The 9-step acceptance test is GREEN end to end through the real console: consent gating (T1 batch, T2 plan card with 4 options, T3 per-action), dry-run-is-the-product, write-ahead journal, single-command undo, and a kill switch that stops the queue, freezes pendings forever, and makes the agent report honestly. Step 6/8/9 all pass - by the directive's own standard, Phase 4 is complete.
+
+---
+Task ID: 20.4 (Section 4: the four Phase 3 soft spots CLOSED with permanent regressions)
+Agent: main orchestrator (Z.ai Code)
+Task: leak regression, consent stacking, loop-death sweep, Cedar & Leaf as permanent
+
+Work Log:
+- #1 LEAK REGRESSION (qa/qa-softspots.sh suite 1, scripts/test-phase4-leak.ts) 6/6: browser daemon 10 scoped cycles -> process count 14->14, RSS 1404MB->1407MB (flat, +0.2%); box subsystem 10 exec cycles -> supervised table returns to ZERO, zero OS orphans; Xvfb spawn -> registered -> kill-switch SIGTERM -> table zero + OS process gone
+- #2 CONSENT STACKING (scripts/test-phase4-stacking.ts) 14/14: 2xT1 + 1xT3 concurrent -> all stack pending; queue FIFO by request order; T3 (queue #3) answerable while T1s wait - cards are independent; head-expiry fail-closes ONLY its own request (the one behind keeps its own clock); kill-switch freeze resolves all waiters FROZEN and a frozen card can NEVER be answered afterwards. ANSWER TO THE DIRECTIVE'S UX QUESTION: the user sees every request as a separate card in chat + a FIFO queue with tier badges on the DESKTOP panel; answering order is free; each card has its own 120s fail-closed clock; a timeout never auto-decides the requests behind it; ABORT freezes everything pending instantly and permanently
+- #3 LOOP-DEATH SWEEP (scripts/test-phase4-loopdeath.ts) 9/9: (a) empty tools array parses + dispatches + turn ends cleanly; (b) unknown tool AND unknown box primitive -> graceful ok=false refusals; (c) critic hanging on an unreachable provider -> bounded ~60s AbortController -> honest 'unverified' receipt (returned in exactly 60.0s); (d) SSE mid-stream drop -> turn stops, rows stabilize (no zombie loop)
+- #4 CEDAR & LEAF PERMANENT (scripts/test-cedar-leaf.ts) 13/13: the 7/10 builder + 7/10 critic scenario -> honest 7, disagreement 0 (delta 0), kernel verdicts win the labeled merge; disagreement edges honest (9v7 fires, null builder never, unverified critic never); visual regression deterministic; receipt row persisted so the VERIFY tab shows the regression ran
+- qa/qa-softspots.sh runs all four as ONE suite: 4/4 green (42 checks total) - run every round from now on
+- REAL KERNEL BUGS THE NEW REGRESSIONS CAUGHT + FIXED:
+  (j) SECURITY: decideConsent resolved the in-process waiter with a HARDCODED 'approved' status - a DENIED action would have EXECUTED ANYWAY. Now resolves with the actual outcome (consent.ts)
+  (k) FIFO race: concurrent requestConsent calls raced row creation -> queue order undefined. Fixed with a per-session creation chain (consent.ts)
+  (l) DURABLE deadline: the 120s fail-closed clock existed only in-memory; the DB poll-back now also enforces the row's own expiresAt (survives hot-reload/multi-process)
+  (m) ZOMBIE LOOP: a client disconnecting mid-turn did NOT stop the agent loop (req.signal does not fire reliably for cancelled streams) - the chat route now runs the turn on its own AbortController bridged from BOTH req.signal AND the stream cancel() path (chat/route.ts)
+
+Stage Summary:
+- All four Phase 3 soft spots are closed with permanent, repeatable regressions (qa/qa-softspots.sh, 42 checks). The new tests immediately paid for themselves: one security bug (deny-as-approve), one FIFO race, one durability gap, and one zombie-loop bug found and fixed before ship.
+
+---
+Task ID: 20.5 (Section 5: OSWorld 352-task roadmap)
+Agent: main orchestrator (Z.ai Code)
+Task: deliver the roadmap table for all 352 tasks (Task ID | Bucket | Blocker | Fix | Cost)
+
+Work Log:
+- DATA PROVENANCE STATED PLAINLY: the OSWorld-V2 payload (/home/z/wh-work/extracted/OSWorld-V2-main) was WIPED by the sandbox reset; loadOsworldIndex() honestly returns available:false with that reason. Per-task row data cannot be regenerated from nothing, and the directive's own rules forbid inflation - so the roadmap ships at bucket+blocker granularity with a scripted regeneration path
+- DELIVERED docs/osworld-roadmap.md: A(323) split A1 no-input-backend 128 / A2 no-desktop-apps 96 / A3 file-manager class 71 - UNLOCKABLE TODAY by the Phase 4 Box / A4 deep-OS 28 (17 rewrites + 11 honest non-runs); B(25) evaluator app-state; D(4) bot-walls = permanent honest non-run. Cost table: ~16 eng-days to cover the reachable set once an appliance image exists; A3 is pilotable now
+- The Xvfb-unlockable subset is stated EXACTLY: screenshots+segmentation unlock grounding reads only; input primitives fail closed (no xdotool, no root) - documented as such rather than faked
+
+Stage Summary:
+- 23.1% now has a starting line: a bucket table with costs, a today-pilotable A3 class covered by the Box, and a one-command regeneration path for the full row-level sheet once the payload returns

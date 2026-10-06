@@ -16,6 +16,8 @@ import {
   WORKSPACE_ROOT,
 } from './workspace'
 import type { ArtifactPatch, ToolOutcome, ToolRequest } from '@/lib/awon/types'
+import { runBoxPrimitive } from './box/primitives'
+import { isAborted } from './box/ops'
 
 const pexec = promisify(execFile)
 
@@ -469,8 +471,31 @@ async function analyzeVideo(req: Extract<ToolRequest, { name: 'analyze_video' }>
   }
 }
 
-export async function runTool(req: ToolRequest, ctx: { sessionId: string }): Promise<ToolOutcome> {
+export async function runTool(
+  req: ToolRequest,
+  ctx: { sessionId: string; emit?: (e: unknown) => void },
+): Promise<ToolOutcome> {
   try {
+    // Phase 4: the 13 permitted desktop primitives. The kernel (box/*) enforces
+    // tiers, dry-run, journal and the kill switch regardless of model behavior.
+    if (
+      [
+        'box_list', 'box_read', 'box_plan', 'box_write', 'box_mkdir', 'box_move',
+        'box_copy', 'box_trash', 'box_undo', 'shell_exec', 'screen_shot',
+        'screen_click', 'screen_type',
+      ].includes(req.name)
+    ) {
+      if (!ctx.emit) {
+        return { name: req.name, ok: false, summary: 'desktop primitives require a live console connection (no emit stream)' }
+      }
+      if (isAborted('*')) {
+        return { name: req.name, ok: false, summary: 'ABORTED by kill switch - all box primitives refuse to run' }
+      }
+      return await runBoxPrimitive(req.name, (req.args ?? {}) as Record<string, unknown>, {
+        sessionId: ctx.sessionId,
+        emit: ctx.emit,
+      })
+    }
     switch (req.name) {
       case 'web_search':
         return await runSearch(String(req.args.query).slice(0, 300), Math.min(Number(req.args.num) || 6, 10))

@@ -41,6 +41,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { VerifyTab } from './verify-tab'
+import { DesktopTab } from './desktop-tab'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1319,14 +1320,19 @@ export function RightPanel() {
   const panelTab = useAwon((s) => s.panelTab)
   const setPanelTab = useAwon((s) => s.setPanelTab)
   return (
-    <Tabs value={panelTab} onValueChange={(v) => setPanelTab(v as 'preview' | 'files' | 'verify' | 'system')} className="flex h-full flex-col">
-      <TabsList className="mx-3 mt-3 grid w-auto grid-cols-4 gap-1 bg-muted/50 p-1">
+    <Tabs
+      value={panelTab}
+      onValueChange={(v) => setPanelTab(v as 'preview' | 'files' | 'verify' | 'system' | 'desktop')}
+      className="flex h-full flex-col"
+    >
+      <TabsList className="mx-3 mt-3 grid w-auto grid-cols-5 gap-1 bg-muted/50 p-1">
         {(
           [
             { id: 'preview', label: 'PREVIEW' },
             { id: 'files', label: artifact ? `FILES (${artifact.files.length})` : 'FILES' },
             { id: 'verify', label: 'VERIFY' },
             { id: 'system', label: 'SYSTEM' },
+            { id: 'desktop', label: 'DESKTOP' },
           ] as const
         ).map((t) => (
           <TabsTrigger
@@ -1351,6 +1357,9 @@ export function RightPanel() {
       </TabsContent>
       <TabsContent value="system" className="mt-0 min-h-0 flex-1">
         <SystemTab />
+      </TabsContent>
+      <TabsContent value="desktop" className="mt-0 min-h-0 flex-1">
+        <DesktopTab />
       </TabsContent>
     </Tabs>
   )

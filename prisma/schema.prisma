@@ -130,3 +130,84 @@ model AwonProviderConfig {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 4 — Permitted PC Control. Every desktop/box action belongs to a Run,
+// every mutation is journaled before it happens, every consent decision is a
+// row that outlives the run, and an abort freezes everything mid-flight.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// a desktop run: one user command that produced a dry-run plan and executed
+// (or was aborted). status: running | done | aborted
+model AwonRun {
+  id           String   @id @default(cuid())
+  sessionId    String
+  status       String   @default("running") // running | done | aborted
+  tool         String // which primitive started the run (e.g. box_move batch)
+  planJson     String? // full dry-run plan snapshot at approval time
+  planHash     String? // sha256 of the plan; execution must match or refuse
+  actionsTotal Int      @default(0)
+  actionsDone  Int      @default(0)
+  startedAt    DateTime @default(now())
+  endedAt      DateTime?
+  abortReason  String?
+
+  @@index([sessionId, startedAt])
+}
+
+// a consent request. tier: 1 (read) | 2 (write/move batch) | 3 (destructive,
+// per-action, never batchable). status: pending | approved | denied | expired
+// | frozen (kill switch) | superseded (a newer decision replaced it)
+model AwonConsent {
+  id         String    @id @default(cuid())
+  sessionId  String
+  runId      String?
+  tier       Int
+  title      String
+  detail     String? // human-readable summary shown on the card
+  payload    String? // JSON: the dry-run plan or op list being consented
+  status     String    @default("pending")
+  decision   String? // approve | deny | modify | rule
+  ruleText   String? // for T3 override: the rule the user TYPED, verbatim
+  scope      String? // rule scope: e.g. "move *.tmp -> .awon-trash"
+  createdAt  DateTime  @default(now())
+  decidedAt  DateTime?
+  expiresAt  DateTime // createdAt + 120s; expiry fails closed
+
+  @@index([sessionId, status, createdAt])
+  @@index([runId])
+}
+
+// permanent consent rules. Only created by the user TYPING the rule verbatim
+// in the consent card (no checkbox anywhere in the product). The kernel matches
+// incoming ops against enabled rules; a match still logs an audit row.
+model AwonConsentRule {
+  id        String   @id @default(cuid())
+  sessionId String?
+  ruleText  String // verbatim typed text, shown back to the user forever
+  op        String // primitive name this rule covers (e.g. box_trash)
+  pattern   String // glob-ish scope: "Downloads/*.tmp"
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([op, enabled])
+}
+
+// write-ahead undo journal. EVERY mutating box op writes its inverse here
+// BEFORE executing. Trash files live under the box .awon-trash/<runId>/ tree;
+// nothing is ever unlinked by the agent - trash is the only "delete".
+model AwonUndoEntry {
+  id        String   @id @default(cuid())
+  runId     String
+  sessionId String
+  seq       Int // order within the run (replay is reverse)
+  op        String // move | copy | trash | mkdir | write
+  fromPath  String // box-virtual path the content came from
+  toPath    String // box-virtual path the content went to
+  trashPath String? // real path inside .awon-trash when op=trash
+  undone    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([runId, seq])
+  @@index([sessionId, createdAt])
+}

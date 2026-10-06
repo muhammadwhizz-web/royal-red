@@ -41,7 +41,7 @@ function compactHistory(
     .slice(-14000)
 }
 
-function extractJson(raw: string): Directive | null {
+export function extractJson(raw: string): Directive | null {
   let text = raw.trim()
   // strip fences if a model adds them despite instructions
   text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')
@@ -428,7 +428,7 @@ export async function runAwonTurn(opts: {
       if (stopped()) break
       if (!t || typeof t.name !== 'string') continue
       emit({ type: 'tool_start', name: t.name, label: TOOL_LABELS[t.name] ?? t.name })
-      const out = await runTool(t, { sessionId })
+      const out = await runTool(t, { sessionId, emit })
       if (stopped()) break
       outcomes.push(out)
       emit({

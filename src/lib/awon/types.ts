@@ -44,6 +44,20 @@ export type ToolRequest =
   | { name: 'analyze_image'; args: { path?: string; url?: string; question?: string } }
   | { name: 'analyze_video'; args: { url?: string; path?: string; question?: string } }
   | { name: 'read_page'; args: { url: string } }
+  // Phase 4 - the 13 permitted desktop primitives (kernel enforces the tiers)
+  | { name: 'box_list'; args: { path?: string } }
+  | { name: 'box_read'; args: { path: string } }
+  | { name: 'box_plan'; args: { kind?: string; path?: string; ops?: unknown[] } }
+  | { name: 'box_write'; args: { path: string; content: string } }
+  | { name: 'box_mkdir'; args: { path: string } }
+  | { name: 'box_move'; args: { items?: { from: string; to: string }[]; from?: string; to?: string } }
+  | { name: 'box_copy'; args: { items?: { from: string; to: string }[]; from?: string; to?: string } }
+  | { name: 'box_trash'; args: { path?: string; paths?: string[] } }
+  | { name: 'box_undo'; args: { runId?: string } }
+  | { name: 'shell_exec'; args: { command: string } }
+  | { name: 'screen_shot'; args: { analyze?: boolean } }
+  | { name: 'screen_click'; args: { x?: number; y?: number } }
+  | { name: 'screen_type'; args: { text?: string } }
 
 // constraint ledger item as streamed to the console before a build starts
 export interface LedgerItemView {
@@ -92,6 +106,12 @@ export type AwonSseEvent =
   | { type: 'constraints'; items: LedgerItemView[] }
   | { type: 'verify'; kind: string; status: string; summary?: string; data?: unknown }
   | { type: 'error'; message: string }
+  // Phase 4 - permitted PC control
+  | { type: 'consent_request'; id: string; tier: number; title: string; detail?: string; payload?: unknown; createdAt: string; expiresAt: string }
+  | { type: 'consent_result'; id: string; status: string }
+  | { type: 'desktop_plan'; planId: string; toolName: string; summary: { total: number; proposable: number; refused: number; flagged: number; byClass: Record<string, number>; bytes: number }; steps: unknown[] }
+  | { type: 'desktop_step'; runId: string; seq: number; op: string; detail: string; ok: boolean }
+  | { type: 'desktop_run'; runId: string; status: string; total: number; executed?: number }
   | { type: 'done' }
 
 // UI chat items
@@ -107,6 +127,42 @@ export type ChatItem =
       status: 'run' | 'ok' | 'err'
     }
   | { kind: 'phase'; id: string; value: string }
+  // Phase 4: a kernel consent request rendered as an interactive card
+  | {
+      kind: 'consent'
+      id: string // consent id (con_...)
+      tier: number
+      title: string
+      detail?: string
+      payload?: ConsentPayload
+      status: 'pending' | 'approved' | 'denied' | 'expired' | 'frozen'
+      decision?: string
+      expiresAt?: string
+    }
+
+// the payload shapes the consent card knows how to render
+export interface ConsentPayload {
+  kind: 'plan' | 'single' | 'shell' | 'undo' | 'list' | 'read' | 'screen_shot'
+  plan?: {
+    planId: string
+    summary: { total: number; proposable: number; refused: number; flagged: number; byClass: Record<string, number>; bytes: number }
+    steps: {
+      seq: number
+      op: string
+      from: string
+      to: string
+      class?: string
+      flagged?: boolean
+      reason?: string
+      proposable: boolean
+    }[]
+  }
+  step?: { seq: number; op: string; from: string; to: string; class?: string; flagged?: boolean; reason?: string }
+  steps?: string[]
+  command?: string
+  op?: string
+  path?: string
+}
 
 export interface ArtifactView {
   id: string
@@ -147,6 +203,20 @@ export const TOOL_LABELS: Record<string, string> = {
   analyze_image: 'vision check',
   analyze_video: 'video watch',
   read_page: 'page read',
+  // Phase 4 desktop primitives
+  box_list: 'box list',
+  box_read: 'box read',
+  box_plan: 'dry-run plan',
+  box_write: 'box write',
+  box_mkdir: 'box mkdir',
+  box_move: 'box move',
+  box_copy: 'box copy',
+  box_trash: 'box trash',
+  box_undo: 'undo run',
+  shell_exec: 'box shell',
+  screen_shot: 'screen shot',
+  screen_click: 'screen click',
+  screen_type: 'screen type',
 }
 
 export function isMode(v: string): v is AwonMode {

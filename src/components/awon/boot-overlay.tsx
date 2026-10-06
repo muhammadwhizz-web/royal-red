@@ -6,7 +6,7 @@ import { Signature } from './signature'
 import { useAwon } from './store'
 
 const BOOT_LINES = [
-  'awon kernel v1.2.0 (linux-native)',
+  'awon kernel v1.3.0 (linux-native)',
   'mounting sandbox workspace ......... ok',
   'loading tool bus: search fs shell accounts ok',
   'linking vision core: image gen + vlm eyes ok',
@@ -23,6 +23,12 @@ const BOOT_LINES = [
   'constraint ledger: extracting testable assertions ok',
   'verification 2.0: adversarial critic + visual regression ok',
   'proof bus: cms panel + 10-site benchmark harness ok',
+  'awon box: path-prison emulation mount table rw/ro ok',
+  'dry-run is the product: unproposable ops never run ok',
+  'consent tiers: T1 read / T2 write / T3 per-action ok',
+  'undo journal: .awon-trash 7-day ttl no rm ok',
+  'kill switch: abort queue + sigterm + freeze ok',
+  'desktop mission control: /desktop tab always-abort ok',
   'linking llm core .................. ok',
   'all systems nominal',
 ]
@@ -53,7 +59,7 @@ export function BootOverlay() {
             <p className="font-mono text-xs text-muted-foreground tracking-widest uppercase">
               the operating system for agents
             </p>
-            <div className="mt-2 h-[408px] w-full max-w-md font-mono text-[11px] leading-5 text-emerald-600 dark:text-emerald-400">
+            <div className="mt-2 h-[460px] w-full max-w-md font-mono text-[11px] leading-5 text-emerald-600 dark:text-emerald-400">
               {BOOT_LINES.slice(0, shown).map((l) => (
                 <div key={l} className="whitespace-nowrap">
                   <span className="text-muted-foreground">[</span> ok{' '}

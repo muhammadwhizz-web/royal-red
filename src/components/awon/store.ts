@@ -7,6 +7,7 @@ import type {
   AwonMode,
   AwonSseEvent,
   ChatItem,
+  ConsentPayload,
   LedgerItemView,
   PlanItem,
   SessionSummary,
@@ -36,6 +37,7 @@ const HELP_MARKDOWN = `### local command line
 | /files | jump to the FILES tab |
 | /files workspace | FILES tab, workspace scope |
 | /system | jump to the SYSTEM tab |
+| /desktop | jump to the DESKTOP mission control tab |
 | /preview | jump to the PREVIEW tab |
 
 Mode shortcuts with no arguments switch the console instantly:
@@ -252,9 +254,10 @@ function handleLocalCommand(raw: string, push: (item: ChatItem) => void): boolea
       return true
     }
     case 'system':
+    case 'desktop':
     case 'preview': {
       push({ kind: 'user', id: nextId(), text })
-      const tab = cmd === 'system' ? 'system' : 'preview'
+      const tab = cmd === 'system' ? 'system' : cmd === 'desktop' ? 'desktop' : 'preview'
       useAwon.setState({ panelTab: tab })
       push({ kind: 'event', id: nextId(), label: 'panel', detail: `right panel switched to ${tab.toUpperCase()}`, status: 'ok' })
       return true
@@ -315,7 +318,7 @@ export interface AwonState {
   artifacts: ArtifactView[]
   activeFile: string | null
   previewKey: number
-  panelTab: 'preview' | 'files' | 'verify' | 'system'
+  panelTab: 'preview' | 'files' | 'verify' | 'system' | 'desktop'
   filesScope: 'artifact' | 'workspace'
   panelHidden: boolean
   systemOpen: boolean
@@ -335,7 +338,7 @@ export interface AwonState {
   refreshSessions: () => Promise<void>
   loadMoreSessions: () => Promise<void>
   setActiveFile: (p: string | null) => void
-  setPanelTab: (t: 'preview' | 'files' | 'verify' | 'system') => void
+  setPanelTab: (t: 'preview' | 'files' | 'verify' | 'system' | 'desktop') => void
   setFilesScope: (s: 'artifact' | 'workspace') => void
   setPanelHidden: (v: boolean) => void
   selectArtifact: (id: string) => void
@@ -344,6 +347,7 @@ export interface AwonState {
   loadVerifications: (sessionId: string) => Promise<void>
   rerunVerification: (benchmark?: string) => Promise<void>
   applyEvent: (e: AwonSseEvent) => void
+  answerConsent: (id: string, decision: 'approve' | 'deny' | 'modify' | 'rule', ruleText?: string) => Promise<void>
   send: (text: string) => Promise<void>
   stop: () => void
 }
@@ -739,6 +743,87 @@ export const useAwon = create<AwonState>((set, get) => ({
         turnStart = 0
         void refreshSessions(set)
         break
+      // ── Phase 4: permitted PC control ───────────────────────────────
+      case 'consent_request': {
+        const item: ChatItem = {
+          kind: 'consent',
+          id: e.id,
+          tier: e.tier,
+          title: e.title,
+          detail: e.detail,
+          payload: (e.payload ?? undefined) as ConsentPayload | undefined,
+          status: 'pending',
+          expiresAt: e.expiresAt,
+        }
+        const items = s.items.filter((i) => i.kind !== 'phase')
+        items.push(item)
+        set({ items })
+        break
+      }
+      case 'consent_result': {
+        const items = s.items.map((i) =>
+          i.kind === 'consent' && i.id === e.id
+            ? { ...i, status: e.status as 'approved' | 'denied' | 'expired' | 'frozen' }
+            : i,
+        )
+        set({ items })
+        break
+      }
+      case 'desktop_plan':
+        // the plan arrives with its consent card; nothing extra to render here
+        break
+      case 'desktop_step': {
+        const items = s.items.filter((i) => i.kind !== 'phase')
+        items.push({
+          kind: 'event',
+          id: nextId(),
+          label: `step ${e.seq} · ${e.op}`,
+          detail: e.detail,
+          status: e.ok ? 'ok' : 'err',
+        })
+        set({ items })
+        break
+      }
+      case 'desktop_run': {
+        const items = s.items.filter((i) => i.kind !== 'phase')
+        items.push({
+          kind: 'event',
+          id: nextId(),
+          label: e.status === 'running' ? `run ${e.runId} started` : e.status === 'aborted' ? `run ${e.runId} ABORTED` : `run ${e.runId} done`,
+          detail: e.status === 'running' ? `0/${e.total} actions` : `${e.executed ?? 0}/${e.total} actions executed`,
+          status: e.status === 'aborted' ? 'err' : 'ok',
+        })
+        set({ items })
+        break
+      }
+    }
+  },
+
+  answerConsent: async (id, decision, ruleText) => {
+    // optimistic: the card flips immediately; the kernel resolves the paused turn
+    const items = get().items.map((i) =>
+      i.kind === 'consent' && i.id === id ? { ...i, status: decision === 'deny' ? 'denied' : 'approved', decision } : i,
+    )
+    set({ items })
+    try {
+      const res = await fetch(`/api/awon/desktop/consent/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision, ruleText }),
+      })
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string; status?: string }
+        // the kernel refused (late answer, already expired/frozen): show truth
+        const reverted = get().items.map((i) =>
+          i.kind === 'consent' && i.id === id
+            ? { ...i, status: (data.status as 'expired' | 'frozen' | 'denied') ?? 'expired', decision: undefined }
+            : i,
+        )
+        set({ items: reverted })
+        toast({ title: 'Consent not applied', description: data.error ?? 'the request is no longer answerable' })
+      }
+    } catch (e) {
+      toast({ title: 'Consent error', description: (e as Error).message.slice(0, 120) })
     }
   },
 

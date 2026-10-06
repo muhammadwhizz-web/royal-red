@@ -41,6 +41,17 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder()
   const sid = sessionId
 
+  // ABORT BRIDGE: client disconnects (stop button, tab close, cancelled reader)
+  // must end the loop server side. req.signal alone does not fire reliably for
+  // cancelled streams in every runtime, so the turn runs on its OWN controller
+  // that is aborted by BOTH req.signal and the stream's cancel() path.
+  const turnAbort = new AbortController()
+  const abortTurn = () => {
+    if (!turnAbort.signal.aborted) turnAbort.abort()
+  }
+  if (req.signal.aborted) abortTurn()
+  else req.signal.addEventListener('abort', abortTurn, { once: true })
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let closed = false
@@ -56,12 +67,11 @@ export async function POST(req: NextRequest) {
       }
       emit({ type: 'session', id: sid, title: message.slice(0, 70) })
       try {
-        // req.signal aborts when the client disconnects (stop button, tab close),
-        // which ends the agent loop server side instead of burning iterations
-        await runAwonTurn({ sessionId: sid, userText: message, requestedMode: mode, emit, signal: req.signal })
+        // the loop honors the bridge signal: client disconnects stop iterations
+        await runAwonTurn({ sessionId: sid, userText: message, requestedMode: mode, emit, signal: turnAbort.signal })
         // first turn of a new session: replace the raw command-slice title with
         // a generated one; runs after 'done' so the UI is already responsive
-        if (isNewSession && !req.signal.aborted) {
+        if (isNewSession && !turnAbort.signal.aborted) {
           const title = await generateSessionTitle(message, lastSay)
           if (title) {
             await db.awonSession.update({ where: { id: sid }, data: { title } }).catch(() => null)
@@ -77,6 +87,10 @@ export async function POST(req: NextRequest) {
           controller.close()
         } catch {}
       }
+    },
+    // reader.cancel() (stop button, tab close, fetch abort) also lands here
+    cancel() {
+      abortTurn()
     },
   })
 
