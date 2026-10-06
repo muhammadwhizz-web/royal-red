@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SnapVault - Secure Linux Backup Solution">
+    <meta property="og:title" content="SnapVault - Logo Gallery">
+    <meta property="og:description" content="Logo gallery for SnapVault, the secure Linux backup solution">
+    <meta property="og:type" content="website">
+    <title>SnapVault - Logo Gallery</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-emerald: #10b981;
+            --primary-emerald-dark: #059669;
+            --primary-emerald-light: #34d399;
+            --charcoal: #1f2937;
+            --charcoal-light: #4b5563;
+            --charcoal-lighter: #6b7280;
+            --charcoal-lightest: #f3f4f6;
+            --white: #ffffff;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--charcoal-lightest);
+            color: var(--charcoal);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+        
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--charcoal-light);
+            margin-bottom: 1.5rem;
+        }
+        
+        .logo-showcase {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--white);
+            border-radius: 12px;
+            padding: 3rem;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 3rem;
+        }
+        
+        .logo-container {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: var(--charcoal-lightest);
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        .logo-container img {
+            max-width: 300px;
+            height: auto;
+            display: block;
+        }
+        
+        .logo-description {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .logo-description h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            color: var(--charcoal);
+            margin-bottom: 1rem;
+        }
+        
+        .logo-description p {
+            font-size: 1.125rem;
+            color: var(--charcoal-light);
+            margin-bottom: 1.5rem;
+        }
+        
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .color-swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 500;
+            box-shadow: var(--shadow);
+        }
+        
+        .color-swatch.emerald {
+            background-color: var(--primary-emerald);
+        }
+        
+        .color-swatch.emerald-dark {
+            background-color: var(--primary-emerald-dark);
+        }
+        
+        .color-swatch.emerald-light {
+            background-color: var(--primary-emerald-light);
+            color: var(--charcoal);
+        }
+        
+        .color-swatch.charcoal {
+            background-color: var(--charcoal);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--charcoal-lighter);
+            font-size: 0.875rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .logo-showcase {
+                padding: 2rem 1rem;
+            }
+            
+            .logo-container img {
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SnapVault</h1>
+            <p class="subtitle">Secure Linux Backup Solution</p>
+        </header>
+        
+        <main>
+            <div class="logo-showcase">
+                <div class="logo-container">
+                    <img src="assets/logo.png" alt="SnapVault Logo">
+                </div>
+                
+                <div class="logo-description">
+                    <h2>Logo Design</h2>
+                    <p>Our SnapVault logo combines a protective shield with sharp geometric elements to represent both security and speed. The emerald green accent conveys safety and reliability while the modern design reflects the cutting-edge nature of our backup solution.</p>
+                    
+                    <div class="color-palette">
+                        <div class="color-swatch emerald">Emerald</div>
+                        <div class="color-swatch emerald-dark">Dark</div>
+                        <div class="color-swatch emerald-light">Light</div>
+                        <div class="color-swatch charcoal">Charcoal</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>© 2023 SnapVault. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artisan Bindery - Handcrafted Books & Workshops</title>
+    <meta name="description" content="Discover the art of bookbinding with our handcrafted books and workshops. Learn traditional techniques from master artisans.">
+    <meta property="og:title" content="Artisan Bindery - Handcrafted Books & Workshops">
+    <meta property="og:description" content="Discover the art of bookbinding with our handcrafted books and workshops. Learn traditional techniques from master artisans.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6B4E3D;
+            --secondary: #C9ADA7;
+            --accent: #9A8C98;
+            --light: #F4EAE6;
+            --dark: #2C2416;
+            --text-light: #333;
+            --text-dark: #F4EAE6;
+            --bg-light: #FAF6F2;
+            --bg-dark: #1E1A16;
+        }
+        
+        [data-theme="dark"] {
+            --text-light: #F4EAE6;
+            --text-dark: #333;
+            --bg-light: #1E1A16;
+            --bg-dark: #FAF6F2;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--bg-light);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: var(--text-dark);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Crimson Text', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+        
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-dark);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+            background-color: var(--bg-light);
+        }
+        
+        .hero h1 {
+            font-family: 'Crimson Text', serif;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            color: var(--text-light);
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--secondary);
+            color: var(--dark);
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .services {
+            padding: 4rem 0;
+            background-color: var(--bg-light);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-family: 'Crimson Text', serif;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--primary);
+        }
+        
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .service-card {
+            background-color: var(--bg-light);
+            border: 1px solid var(--secondary);
+            border-radius: 8px;
+            padding: 2rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .service-card h3 {
+            font-family: 'Crimson Text', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        footer {
+            background-color: var(--primary);
+            color: var(--text-dark);
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-links a {
+            color: var(--text-dark);
+            text-decoration: none;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">Artisan Bindery</div>
+                <ul class="nav-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#workshops">Workshops</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="cms.html">Admin</a></li>
+                </ul>
+                <button class="theme-toggle" aria-label="Toggle theme">🌓</button>
+            </nav>
+        </div>
+    </header>
+    
+    <section class="hero" id="home">
+        <div class="container">
+            <h1>Handcrafted Books & Timeless Techniques</h1>
+            <p>Discover the ancient art of bookbinding with our master artisans. Learn traditional techniques while creating beautiful, personalized books that last generations.</p>
+            <a href="#workshops" class="btn">Explore Workshops</a>
+        </div>
+    </section>
+    
+    <section class="services" id="services">
+        <div class="container">
+            <h2 class="section-title">Our Services</h2>
+            <div class="service-grid">
+                <div class="service-card">
+                    <h3>Book Restoration</h3>
+                    <p>Bring your treasured volumes back to life with our expert restoration services. We carefully repair damaged bindings and pages while preserving historical integrity.</p>
+                </div>
+                <div class="service-card">
+                    <h3>Custom Binding</h3>
+                    <p>Create one-of-a-kind books with our custom binding services. Choose from various styles, materials, and embellishments to match your unique vision.</p>
+                </div>
+                <div class="service-card">
+                    <h3>Workshops</h3>
+                    <p>Learn the fundamentals of bookbinding in our hands-on workshops. Suitable for beginners and experienced crafters alike.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="#">Home</a>
+                <a href="#services">Services</a>
+                <a href="#workshops">Workshops</a>
+                <a href="#contact">Contact</a>
+            </div>
+            <p>&copy; 2023 Artisan Bindery. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.querySelector('.theme-toggle');
+        const html = document.documentElement;
+        
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', currentTheme);
+        
+        themeToggle.addEventListener('click', () => {
+            const theme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        });
+    </script>
+</body>
+</html>

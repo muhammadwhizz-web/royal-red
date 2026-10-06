@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AwonSession {
+  id        String         @id @default(cuid())
+  title     String         @default("New session")
+  mode      String         @default("build")
+  pinned    Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  messages  AwonMessage[]
+  artifacts AwonArtifact[]
+}
+
+model AwonMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   AwonSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  meta      String?
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId, createdAt])
+}
+
+model AwonArtifact {
+  id        String                @id @default(cuid())
+  sessionId String
+  session   AwonSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name      String
+  kind      String                @default("site")
+  entry     String                @default("index.html")
+  files     String
+  score     Int?
+  review    String?
+  createdAt DateTime              @default(now())
+  versions  AwonArtifactVersion[]
+
+  @@index([sessionId, createdAt])
+}
+
+// immutable snapshot of an artifact's files after every write; the diff view
+// reads from this history instead of the mutable artifact row
+model AwonArtifactVersion {
+  id         String       @id @default(cuid())
+  artifactId String
+  artifact   AwonArtifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  version    Int
+  files      String
+  note       String?
+  createdAt  DateTime     @default(now())
+
+  @@unique([artifactId, version])
+  @@index([artifactId, createdAt])
+}
+
+model AwonAccount {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  role      String   @default("user")
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model AwonAudit {
+  id        String   @id @default(cuid())
+  action    String
+  detail    String?
+  ok        Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// constraint ledger (Phase 2.1): structured, testable requirements extracted
+// from the user prompt BEFORE the build starts; every entry gets a stable id
+// and is graded individually at verification time
+model AwonConstraint {
+  id        String   @id @default(cuid())
+  sessionId String
+  cid       String // C1, C2, ... stable within the session
+  category  String // feature | style | content | technical | exclusion
+  text      String // the requirement in the user's words
+  assertion String // the testable assertion the verifier grades
+  weight    Int      @default(1) // 1 = normal, 2 = user emphasized ("must")
+  source    String   @default("extracted") // extracted | manual
+  createdAt DateTime @default(now())
+
+  @@index([sessionId, createdAt])
+}
+
+// verification receipts (Phase 2): one row per verification run per kind.
+// kind: ledger | critique | visual | benchmark | cms
+// status: pass | fail | partial | error | unverified
+// data: JSON report payload rendered by the console VERIFY tab
+model AwonVerification {
+  id         String   @id @default(cuid())
+  sessionId  String
+  artifactId String?
+  kind       String
+  status     String
+  score      Float? // honest 0-10 where applicable (never inflated: min of judges)
+  data       String
+  createdAt  DateTime @default(now())
+
+  @@index([sessionId, createdAt])
+  @@index([artifactId])
+}
+
+// second-model provider config (Phase 2.2): a critique-only model endpoint the
+// user brings. API keys are stored AES-256-GCM encrypted and are NEVER returned
+// by any API (only a masked hint). purpose is always "critique" in Phase 2.
+model AwonProviderConfig {
+  id        String   @id @default(cuid())
+  provider  String // openai | anthropic | custom
+  label     String
+  baseUrl   String
+  model     String
+  apiKeyEnc String? // base64(iv + tag + ciphertext)
+  keyHint   String? // masked, e.g. sk-...ab12
+  purpose   String   @default("critique")
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
