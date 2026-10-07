@@ -658,3 +658,4 @@ Stage Summary:
 - All four DeepSeek-harness primitives ported (4 commits, citations + license verdicts in each message); the kernel now has a durable replayable event log, a monotonic policy waterfall, a single LLM seam, and declarative sandbox roots.
 - Kernel v1.4 shipped with a new EVENTS panel; one critical CSS-pipeline regression found by visual QA and fixed.
 - Verification fully green: 28/28 units, 27/27 router, 4/4 soft-spot suites (42 checks), 19/19 acceptance, lint clean, live E2E proven.
+- OFF-SITE BACKUP (post-recovery): fresh full backup with the RESTORED 23-commit history uploaded 2026-10-07 → https://wormhole.app/xmakeA#5HDtxfuA3OeZaiwwXktxQQ (royalred-r2-backup.tar.gz, ~350MB, 24h / 100 downloads, sha256 47994a154d0f52eac05ae3ee…). Previous round's backup (JW85Lx…) recovered this round's history; this one protects everything since.
