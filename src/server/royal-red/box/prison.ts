@@ -16,6 +16,7 @@
 // kernel level. This is stated in the DESKTOP panel, not buried here.
 import fs from 'fs'
 import path from 'path'
+import { scopeSpec as rootsScopeSpec } from './roots'
 
 // the box lives INSIDE the project directory so a sandbox reset still finds it
 // next to the code, and the host home is never part of its tree
@@ -50,6 +51,30 @@ export function defaultMounts(): BoxMount[] {
     { virtual: `${VIRTUAL_HOME}/Documents`, real: path.join(BOX_HOME, 'Documents'), mode: 'rw', label: 'Documents (rw)' },
     { virtual: `${VIRTUAL_HOME}/Pictures`, real: path.join(BOX_HOME, 'Pictures'), mode: 'rw', label: 'Pictures (rw)' },
   ]
+}
+
+// ---- sandbox roots (harness port #4): declarative per-scope exposure ----
+// mountsForScope() merges the roots registry's grants for one scope into the
+// mount table. Until a scope is registered via roots.setScopeRoots(), every
+// run sees exactly defaultMounts() — zero behavior change. Grants map to
+// read-only virtual folders under the box home (the prison still enforces
+// containment; roots only declare what a run may see).
+export function mountsForScope(scope: { sessionId?: string; runId?: string; mode?: string }): BoxMount[] {
+  const base = defaultMounts()
+  try {
+    const spec = rootsScopeSpec(scope)
+    if (!spec || spec.mode !== 'workspace-write') return base
+    const extra: BoxMount[] = []
+    for (const g of spec.grants) {
+      if (!g.path.startsWith(BOX_ROOT)) continue // a grant can never escape the box
+      const virtual = `${VIRTUAL_HOME}/sandbox/${g.label.replace(/[^a-zA-Z0-9_-]/g, '-')}`
+      if (base.some((m) => m.real === g.path)) continue
+      extra.push({ virtual, real: g.path, mode: g.mode, label: `sandbox grant: ${g.label} (${g.mode})` })
+    }
+    return [...base, ...extra]
+  } catch {
+    return base
+  }
 }
 
 export class PrisonEscapeError extends Error {
