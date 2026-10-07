@@ -6,7 +6,7 @@ import { Signature } from './signature'
 import { useRoyalRed } from './store'
 
 const BOOT_LINES = [
-  'royal red kernel v1.3.0 (linux-native)',
+  'royal red kernel v1.4.0 (linux-native · deepseek primitives aboard)',
   'mounting sandbox workspace ......... ok',
   'loading tool bus: search fs shell accounts ok',
   'linking vision core: image gen + vlm eyes ok',
@@ -29,6 +29,13 @@ const BOOT_LINES = [
   'undo journal: .awon-trash 7-day ttl no rm ok',
   'kill switch: abort queue + sigterm + freeze ok',
   'desktop mission control: /desktop tab always-abort ok',
+  'provider matrix: 66 providers x 7 modalities ok',
+  'router: capability requests + fallback chain ok',
+  'rotation: 5 mid-stream drops survive, partial kept ok',
+  'dsh port 1: session event log append-only replayable ok',
+  'dsh port 2: policy waterfall 5 layers monotonic ok',
+  'dsh port 3: llm seam all calls behind one door ok',
+  'dsh port 4: sandbox roots declarative per-scope ok',
   'linking llm core .................. ok',
   'all systems nominal',
 ]
@@ -59,7 +66,7 @@ export function BootOverlay() {
             <p className="font-mono text-xs text-muted-foreground tracking-widest uppercase">
               the operating system for agents
             </p>
-            <div className="mt-2 h-[460px] w-full max-w-md font-mono text-[11px] leading-5 text-red-600 dark:text-red-400">
+            <div className="mt-2 h-[520px] w-full max-w-md overflow-y-auto pr-1 font-mono text-[11px] leading-5 text-red-600 [scrollbar-color:theme(colors.red.600)_transparent] [scrollbar-width:thin] dark:text-red-400">
               {BOOT_LINES.slice(0, shown).map((l) => (
                 <div key={l} className="whitespace-nowrap">
                   <span className="text-muted-foreground">[</span> ok{' '}

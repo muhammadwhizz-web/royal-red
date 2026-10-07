@@ -318,7 +318,7 @@ export interface RoyalRedState {
   artifacts: ArtifactView[]
   activeFile: string | null
   previewKey: number
-  panelTab: 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router'
+  panelTab: 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events'
   filesScope: 'artifact' | 'workspace'
   panelHidden: boolean
   systemOpen: boolean
@@ -338,7 +338,7 @@ export interface RoyalRedState {
   refreshSessions: () => Promise<void>
   loadMoreSessions: () => Promise<void>
   setActiveFile: (p: string | null) => void
-  setPanelTab: (t: 'preview' | 'files' | 'verify' | 'system' | 'desktop') => void
+  setPanelTab: (t: 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events') => void
   setFilesScope: (s: 'artifact' | 'workspace') => void
   setPanelHidden: (v: boolean) => void
   selectArtifact: (id: string) => void
