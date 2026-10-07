@@ -20,29 +20,29 @@ for i in $(seq 1 30); do
 done
 [ "$OK" = "1" ] || { echo "FAIL: overlay never rendered"; agent-browser close --all >/dev/null 2>&1; exit 1; }
 sleep 1
-BOOT=$(agent-browser eval "document.body.innerText.includes('awon kernel v1.0.0') && document.body.innerText.includes('export engines: markdown pdf csv diff view ok') && document.body.innerText.includes('console focus: panel toggle workspace search ok')" 2>/dev/null | tail -1)
+BOOT=$(agent-browser eval "document.body.innerText.includes('royal red kernel v1.0.0') && document.body.innerText.includes('export engines: markdown pdf csv diff view ok') && document.body.innerText.includes('console focus: panel toggle workspace search ok')" 2>/dev/null | tail -1)
 [ "$BOOT" = "true" ] && echo "PASS: boot overlay v1.0 lines" || echo "FAIL: boot v1.0 lines"
-agent-browser click "button.awon-glow" >/dev/null 2>&1
+agent-browser click "button.royalred-glow" >/dev/null 2>&1
 sleep 2.5
 GONE=$(agent-browser eval "!document.body.innerText.includes('all systems nominal')" 2>/dev/null | tail -1)
 [ "$GONE" = "true" ] && echo "PASS: INITIALIZE dismisses overlay" || echo "FAIL: overlay stuck"
 
 # /about local command
-agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"AWON command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/about'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
+agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/about'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
 agent-browser click '[aria-label="Send command"]' >/dev/null 2>&1
 sleep 1.5
-ABOUT=$(agent-browser eval "document.body.innerText.includes('about this console') && document.body.innerText.includes('AWON V1.0, linux native')" 2>/dev/null | tail -1)
+ABOUT=$(agent-browser eval "document.body.innerText.includes('about this console') && document.body.innerText.includes('ROYAL RED V1.0, linux native')" 2>/dev/null | tail -1)
 [ "$ABOUT" = "true" ] && echo "PASS: /about card" || echo "FAIL: /about card"
 
 # /plan empty state
-agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"AWON command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/plan'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
+agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/plan'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
 agent-browser click '[aria-label="Send command"]' >/dev/null 2>&1
 sleep 1.2
 PLAN=$(agent-browser eval "document.body.innerText.includes('no active plan')" 2>/dev/null | tail -1)
 [ "$PLAN" = "true" ] && echo "PASS: /plan empty state" || echo "FAIL: /plan"
 
 # /pdf with no session yet: correct err row
-agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"AWON command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/pdf'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
+agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/pdf'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
 agent-browser click '[aria-label="Send command"]' >/dev/null 2>&1
 sleep 1.5
 PDFROW=$(agent-browser eval "document.body.innerText.includes('no session to export yet')" 2>/dev/null | tail -1)
@@ -68,26 +68,26 @@ agent-browser press Escape >/dev/null 2>&1
 sleep 1
 
 # find a session with >= 2 artifacts for the diff view
-DIFFSID=$(curl -s http://localhost:3000/api/awon/session | python3 -c "
+DIFFSID=$(curl -s http://localhost:3000/api/royal-red/session | python3 -c "
 import json,sys,urllib.request
 d=json.load(sys.stdin)
 for s in d['sessions']:
     try:
-        j=json.loads(urllib.request.urlopen(f\"http://localhost:3000/api/awon/session/{s['id']}\").read())
+        j=json.loads(urllib.request.urlopen(f\"http://localhost:3000/api/royal-red/session/{s['id']}\").read())
         if len(j.get('artifacts',[]))>=2 and len(j.get('messages',[]))>4:
             print(s['id']); break
     except Exception: pass
 ")
 echo "diff session: ${DIFFSID:-none}"
 if [ -n "${DIFFSID:-}" ]; then
-  agent-browser eval "fetch('/api/awon/session').then(r=>r.json()).then(()=>{ 'ok' })" >/dev/null 2>&1
+  agent-browser eval "fetch('/api/royal-red/session').then(r=>r.json()).then(()=>{ 'ok' })" >/dev/null 2>&1
   agent-browser press Control+j >/dev/null 2>&1
   sleep 1.5
   agent-browser eval "var inp=document.querySelector('[aria-label=\"Filter sessions by title\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set; set.call(inp,'__none__'); inp.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
   agent-browser eval "var inp=document.querySelector('[aria-label=\"Filter sessions by title\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set; set.call(inp,''); inp.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
   CLICKED=$(agent-browser eval "var btns=[...document.querySelectorAll('[aria-label^=\"Open session\"]')]; var i=btns.findIndex(b=>b.getAttribute('aria-label').includes('$DIFFSID')); 'label-search-done'" 2>/dev/null)
   # aria labels carry titles, not ids; match by fetching the title instead
-  DTITLE=$(curl -s "http://localhost:3000/api/awon/session/$DIFFSID" | python3 -c "import json,sys; print(json.load(sys.stdin)['session']['title'][:30])")
+  DTITLE=$(curl -s "http://localhost:3000/api/royal-red/session/$DIFFSID" | python3 -c "import json,sys; print(json.load(sys.stdin)['session']['title'][:30])")
   PICK=$(agent-browser eval "var btns=[...document.querySelectorAll('[aria-label^=\"Open session\"]')]; var t=btns.find(b=>b.getAttribute('aria-label').includes(JSON.stringify('$DTITLE').slice(1,-1))); if(t){t.click();'clicked'}else{'miss'}" 2>/dev/null | tail -1)
   echo "picked: $PICK ($DTITLE)"
   sleep 3
@@ -107,7 +107,7 @@ else
 fi
 
 # /files workspace: search input + filter count
-agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"AWON command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/files workspace'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
+agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/files workspace'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
 agent-browser click '[aria-label="Send command"]' >/dev/null 2>&1
 sleep 1.5
 WS=$(agent-browser eval "!!document.querySelector('[aria-label=\"Filter workspace files by path\"]')" 2>/dev/null | tail -1)
@@ -119,7 +119,7 @@ echo "workspace filter counter: $WSF"
 [[ "$WSF" == *"OF"* ]] && echo "PASS: workspace filter counter" || echo "WARN: counter not shown (maybe 0 ws files)"
 
 # live /ask regression
-agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"AWON command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/ask In exactly one short sentence, say the console is alive.'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
+agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/ask In exactly one short sentence, say the console is alive.'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
 agent-browser click '[aria-label="Send command"]' >/dev/null 2>&1
 DONE=0
 for i in $(seq 1 40); do
@@ -130,7 +130,7 @@ done
 [ "$DONE" = "1" ] && echo "PASS: live /ask round trip after all changes" || echo "FAIL: /ask"
 
 # /pdf again now a session exists: success row
-agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"AWON command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/pdf'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
+agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/pdf'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
 agent-browser click '[aria-label="Send command"]' >/dev/null 2>&1
 sleep 1.5
 PDFROW2=$(agent-browser eval "document.body.innerText.includes('PDF transcript opened in a new tab')" 2>/dev/null | tail -1)

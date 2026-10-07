@@ -21,15 +21,15 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { Signature } from '@/components/awon/signature'
-import { BootOverlay } from '@/components/awon/boot-overlay'
-import { ChatStream, PlanRail } from '@/components/awon/chat-stream'
-import { Composer } from '@/components/awon/composer'
-import { RightPanel } from '@/components/awon/right-panel'
-import { CommandPalette } from '@/components/awon/palette'
-import { useAwon } from '@/components/awon/store'
-import type { ChatItem } from '@/lib/awon/types'
-import { MODE_LABELS, type AwonMode, type SessionSummary } from '@/lib/awon/types'
+import { Signature } from '@/components/royal-red/signature'
+import { BootOverlay } from '@/components/royal-red/boot-overlay'
+import { ChatStream, PlanRail } from '@/components/royal-red/chat-stream'
+import { Composer } from '@/components/royal-red/composer'
+import { RightPanel } from '@/components/royal-red/right-panel'
+import { CommandPalette } from '@/components/royal-red/palette'
+import { useRoyalRed } from '@/components/royal-red/store'
+import type { ChatItem } from '@/lib/royal-red/types'
+import { MODE_LABELS, type RoyalRedMode, type SessionSummary } from '@/lib/royal-red/types'
 import {
   Sheet,
   SheetContent,
@@ -71,19 +71,20 @@ function ThemeToggle() {
 // context; this always-mounted bridge performs the actual toggle for it and
 // rewrites the placeholder event row with the ACTUAL new theme
 function ThemeCommandBridge() {
-  const request = useAwon((s) => s.themeToggleRequest)
+  const request = useRoyalRed((s) => s.themeToggleRequest)
   const { resolvedTheme, setTheme } = useTheme()
   useEffect(() => {
     if (!request) return
     const next = resolvedTheme === 'dark' ? 'light' : 'dark'
     setTheme(next)
-    useAwon.setState((st) => ({
+    useRoyalRed.setState((st) => ({
       items: st.items.map((i): ChatItem =>
         i.kind === 'event' && i.label === 'theme' && i.detail === 'theme switching...'
           ? { ...i, detail: `console surface switched to ${next} mode` }
           : i,
       ),
     }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: the bridge re-runs only when a new theme request lands
   }, [request])
   return null
 }
@@ -107,7 +108,7 @@ function relTime(iso: string): string {
 }
 
 // per-mode chip colors for the sessions filter row (matches composer accents)
-const MODE_CHIP: Record<'all' | AwonMode, string> = {
+const MODE_CHIP: Record<'all' | RoyalRedMode, string> = {
   all: 'border-emerald-600/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   build: 'border-emerald-600/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
   research: 'border-amber-600/60 bg-amber-500/10 text-amber-700 dark:text-amber-300',
@@ -126,20 +127,20 @@ function GroupLabel({ text }: { text: string }) {
 }
 
 function SessionsSheet() {
-  const sessions = useAwon((s) => s.sessions)
-  const sessionsOpen = useAwon((s) => s.sessionsOpen)
-  const sessionsHasMore = useAwon((s) => s.sessionsHasMore)
-  const sessionsLoadingMore = useAwon((s) => s.sessionsLoadingMore)
-  const setSessionsOpen = useAwon((s) => s.setSessionsOpen)
-  const refreshSessions = useAwon((s) => s.refreshSessions)
-  const loadSession = useAwon((s) => s.loadSession)
-  const sessionId = useAwon((s) => s.sessionId)
-  const reset = useAwon((s) => s.reset)
+  const sessions = useRoyalRed((s) => s.sessions)
+  const sessionsOpen = useRoyalRed((s) => s.sessionsOpen)
+  const sessionsHasMore = useRoyalRed((s) => s.sessionsHasMore)
+  const sessionsLoadingMore = useRoyalRed((s) => s.sessionsLoadingMore)
+  const setSessionsOpen = useRoyalRed((s) => s.setSessionsOpen)
+  const refreshSessions = useRoyalRed((s) => s.refreshSessions)
+  const loadSession = useRoyalRed((s) => s.loadSession)
+  const sessionId = useRoyalRed((s) => s.sessionId)
+  const reset = useRoyalRed((s) => s.reset)
   const [renaming, setRenaming] = useState<string | null>(null)
   const [renameText, setRenameText] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
-  const [modeFilter, setModeFilter] = useState<'all' | AwonMode>('all')
+  const [modeFilter, setModeFilter] = useState<'all' | RoyalRedMode>('all')
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   const refreshList = async () => {
@@ -148,7 +149,7 @@ function SessionsSheet() {
 
   const togglePin = async (id: string, pinned: boolean) => {
     try {
-      const res = await fetch(`/api/awon/session/${id}`, {
+      const res = await fetch(`/api/royal-red/session/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pinned }),
@@ -162,6 +163,7 @@ function SessionsSheet() {
   useEffect(() => {
     if (!sessionsOpen) return
     void refreshList()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: fetch ONLY when the sheet opens (see comment above)
   }, [sessionsOpen])
 
   // infinite scroll: the sentinel sits at the bottom of the list; the observer
@@ -172,7 +174,7 @@ function SessionsSheet() {
     if (!el) return
     const ob = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) void useAwon.getState().loadMoreSessions()
+        if (entries.some((e) => e.isIntersecting)) void useRoyalRed.getState().loadMoreSessions()
       },
       {
         root: el.closest('[data-radix-scroll-area-viewport]') ?? null,
@@ -187,11 +189,11 @@ function SessionsSheet() {
     if (busyId) return
     setBusyId(id)
     try {
-      const res = await fetch(`/api/awon/session/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/royal-red/session/${id}`, { method: 'DELETE' })
       if (res.ok) {
         toast({ title: 'Session deleted', description: title })
         // deleting the open session returns the console to a clean slate
-        if (useAwon.getState().sessionId === id) reset()
+        if (useRoyalRed.getState().sessionId === id) reset()
         await refreshList()
       } else {
         toast({ title: 'Delete failed', variant: 'destructive' })
@@ -206,13 +208,13 @@ function SessionsSheet() {
     setRenaming(null)
     if (!title) return
     try {
-      const res = await fetch(`/api/awon/session/${id}`, {
+      const res = await fetch(`/api/royal-red/session/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title }),
       })
       if (res.ok) {
-        if (useAwon.getState().sessionId === id) useAwon.setState({ sessionTitle: title })
+        if (useRoyalRed.getState().sessionId === id) useRoyalRed.setState({ sessionTitle: title })
         await refreshList()
       }
     } catch {}
@@ -257,7 +259,7 @@ function SessionsSheet() {
         key={s.id}
         className={cn(
           'group relative rounded-md transition hover:bg-muted focus-within:bg-muted',
-          active && 'bg-muted/60 ring-1 ring-emerald-600/30',
+          active && 'bg-muted/60 ring-1 ring-red-600/30',
         )}
       >
         {renaming === s.id ? (
@@ -272,7 +274,7 @@ function SessionsSheet() {
               }}
               onBlur={() => void commitRename(s.id)}
               aria-label="Rename session"
-              className="w-full rounded border border-emerald-600/50 bg-background px-2 py-1.5 font-mono text-xs outline-none focus:ring-1 focus:ring-emerald-600/40"
+              className="w-full rounded border border-red-600/50 bg-background px-2 py-1.5 font-mono text-xs outline-none focus:ring-1 focus:ring-red-600/40"
             />
             <p className="mt-1 px-0.5 font-mono text-[9px] text-muted-foreground">enter to save / esc to cancel</p>
           </div>
@@ -301,7 +303,7 @@ function SessionsSheet() {
               className={cn(
                 'rounded p-1 transition hover:bg-background',
                 s.pinned
-                  ? 'text-emerald-600 dark:text-emerald-400'
+                  ? 'text-red-600 dark:text-red-400'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
@@ -326,10 +328,10 @@ function SessionsSheet() {
                 ] as const).map(({ fmt, label, icon: Icon }) => (
                   <DropdownMenuItem
                     key={fmt}
-                    onClick={() => window.open(`/api/awon/session/${s.id}/export?format=${fmt}`, '_blank')}
+                    onClick={() => window.open(`/api/royal-red/session/${s.id}/export?format=${fmt}`, '_blank')}
                     className="gap-2 font-mono text-[11px]"
                   >
-                    <Icon className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                    <Icon className="h-3 w-3 text-red-600 dark:text-red-400" />
                     {label}
                   </DropdownMenuItem>
                 ))}
@@ -379,9 +381,9 @@ function SessionsSheet() {
               onClick={() => {
                 reset()
                 setSessionsOpen(false)
-                toast({ title: 'New session', description: 'AWON is listening.' })
+                toast({ title: 'New session', description: 'ROYAL RED is listening.' })
               }}
-              className="mb-2 flex w-full items-center gap-2 rounded-md border border-emerald-600/40 bg-emerald-500/5 px-3 py-2 font-mono text-xs text-emerald-700 transition hover:bg-emerald-500/15 dark:text-emerald-300"
+              className="mb-2 flex w-full items-center gap-2 rounded-md border border-red-600/40 bg-red-500/5 px-3 py-2 font-mono text-xs text-red-700 transition hover:bg-red-500/15 dark:text-red-300"
             >
               <Plus className="h-3.5 w-3.5" /> NEW SESSION
             </button>
@@ -437,7 +439,7 @@ function SessionsSheet() {
             )}
             {(filter.trim() || modeFilter !== 'all') && !visible.length && (
               <p className="p-3 font-mono text-xs text-muted-foreground">
-                no sessions match "{filter.trim() || modeFilter}".
+                no sessions match {'"'}{filter.trim() || modeFilter}{'"'}.
               </p>
             )}
             {!sessions.length && (
@@ -450,18 +452,18 @@ function SessionsSheet() {
   )
 }
 
-export default function AwonConsole() {
-  const mode = useAwon((s) => s.mode)
-  const streaming = useAwon((s) => s.streaming)
-  const artifact = useAwon((s) => s.artifact)
-  const sessionTitle = useAwon((s) => s.sessionTitle)
-  const panelHidden = useAwon((s) => s.panelHidden)
-  const setPanelHidden = useAwon((s) => s.setPanelHidden)
+export default function RoyalRedConsole() {
+  const mode = useRoyalRed((s) => s.mode)
+  const streaming = useRoyalRed((s) => s.streaming)
+  const artifact = useRoyalRed((s) => s.artifact)
+  const sessionTitle = useRoyalRed((s) => s.sessionTitle)
+  const panelHidden = useRoyalRed((s) => s.panelHidden)
+  const setPanelHidden = useRoyalRed((s) => s.setPanelHidden)
   const composerRef = useRef<HTMLDivElement>(null)
 
   // warm the sessions list (page 0 + cursor state for infinite scroll)
   useEffect(() => {
-    void useAwon.getState().refreshSessions()
+    void useRoyalRed.getState().refreshSessions()
   }, [])
 
   // press / anywhere to jump to the command line (vi style), unless typing
@@ -472,12 +474,12 @@ export default function AwonConsole() {
         const k = e.key.toLowerCase()
         if (k === 'b') {
           e.preventDefault()
-          setPanelHidden(!useAwon.getState().panelHidden)
+          setPanelHidden(!useRoyalRed.getState().panelHidden)
           return
         }
         if (k === 'j') {
           e.preventDefault()
-          useAwon.setState({ sessionsOpen: !useAwon.getState().sessionsOpen })
+          useRoyalRed.setState({ sessionsOpen: !useRoyalRed.getState().sessionsOpen })
           return
         }
       }
@@ -498,7 +500,7 @@ export default function AwonConsole() {
       <BootOverlay />
       <CommandPalette />
       <ThemeCommandBridge />
-      <div className="awon-scanlines pointer-events-none fixed inset-0 z-40 opacity-40" aria-hidden="true" />
+      <div className="royalred-scanlines pointer-events-none fixed inset-0 z-40 opacity-40" aria-hidden="true" />
 
       {/* top bar */}
       <header className="z-30 flex shrink-0 items-center justify-between border-b bg-background/95 px-4 py-2.5 backdrop-blur sm:px-6">
@@ -512,7 +514,7 @@ export default function AwonConsole() {
               className="hidden min-w-0 items-center gap-1.5 rounded-full border bg-muted/40 px-2.5 py-1 font-mono text-[10px] sm:inline-flex"
               title={sessionTitle}
             >
-              <span className="h-1 w-1 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+              <span className="h-1 w-1 shrink-0 rounded-full bg-red-500" aria-hidden="true" />
               <span className="max-w-[220px] truncate text-foreground/80">{sessionTitle}</span>
             </span>
           )}
@@ -521,11 +523,11 @@ export default function AwonConsole() {
           <span
             className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] tracking-widest sm:flex ${
               streaming
-                ? 'border-emerald-600/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                ? 'border-red-600/50 bg-red-500/10 text-red-700 dark:text-red-300'
                 : 'border-border text-muted-foreground'
             }`}
           >
-            <span className={`h-1.5 w-1.5 rounded-full ${streaming ? 'animate-pulse bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${streaming ? 'animate-pulse bg-red-500' : 'bg-muted-foreground/40'}`} />
             {MODE_LABELS[mode]}
           </span>
           <Button
@@ -545,7 +547,7 @@ export default function AwonConsole() {
             className="h-8 w-8"
             aria-label="Open command palette"
             title="Command palette (Ctrl+K)"
-            onClick={() => useAwon.setState({ paletteOpen: true })}
+            onClick={() => useRoyalRed.setState({ paletteOpen: true })}
           >
             <Terminal className="h-4 w-4" />
           </Button>
@@ -557,9 +559,9 @@ export default function AwonConsole() {
       {/* main area: ctrl+b collapses the preview panel for full-width focus */}
       <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
         <ResizablePanel id="chat" defaultSize={55} minSize={30}>
-          <div ref={composerRef} className="awon-grid-bg flex h-full min-h-0 flex-col">
+          <div ref={composerRef} className="royalred-grid-bg flex h-full min-h-0 flex-col">
             <PlanRail />
-            <div className="awon-fade-top min-h-0 flex-1">
+            <div className="royalred-fade-top min-h-0 flex-1">
               <ChatStream />
             </div>
             <Composer />
@@ -578,8 +580,8 @@ export default function AwonConsole() {
       {/* mobile artifact chip */}
       {artifact && (
         <button
-          onClick={() => window.open(`/api/awon/preview/${artifact.id}/${artifact.entry}`, '_blank')}
-          className="fixed bottom-36 right-4 z-30 max-w-[70vw] truncate rounded-full border border-emerald-600/50 bg-background/95 px-3.5 py-2 font-mono text-[11px] shadow-lg backdrop-blur md:hidden"
+          onClick={() => window.open(`/api/royal-red/preview/${artifact.id}/${artifact.entry}`, '_blank')}
+          className="fixed bottom-36 right-4 z-30 max-w-[70vw] truncate rounded-full border border-red-600/50 bg-background/95 px-3.5 py-2 font-mono text-[11px] shadow-lg backdrop-blur md:hidden"
         >
           ARTIFACT: {artifact.name}
           {typeof artifact.score === 'number' ? ` / ${artifact.score}/10` : ''}
@@ -588,9 +590,9 @@ export default function AwonConsole() {
 
       {/* sticky footer line */}
       <footer className="z-30 shrink-0 border-t bg-background px-4 py-1.5 text-center font-mono text-[10px] tracking-[0.25em] text-muted-foreground sm:px-6">
-        <span className="sm:hidden"> AWON V1.3 / SANDBOXED</span>
+        <span className="sm:hidden"> ROYAL RED // KERNEL v1.3</span>
         <span className="hidden sm:inline">
-           AWON V1.3 / SANDBOXED / EVERYTHING IT BUILDS IS PROOF-TESTED: LEDGER · CRITIC · SCREENSHOTS · CMS
+           ROYAL RED // KERNEL v1.3 / SANDBOXED / EVERYTHING IT BUILDS IS PROOF-TESTED: LEDGER · CRITIC · SCREENSHOTS · CMS
         </span>
       </footer>
     </div>

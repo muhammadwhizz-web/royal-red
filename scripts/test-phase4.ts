@@ -3,19 +3,17 @@
 import fs from 'fs'
 import path from 'path'
 import {
-  BOX_ROOT,
   BOX_HOME,
   BOX_TRASH,
   ensureBoxTree,
   resolveVirtual,
   verifyReal,
   statVirtual,
-  PrisonEscapeError,
-} from '../src/server/awon/box/prison'
-import { planOperations, cleanupPlanFor, type RawOp } from '../src/server/awon/box/dryrun'
-import { tokenizeCommand } from '../src/server/awon/box/box'
-import { ruleMatches, extractRuleScope } from '../src/server/awon/box/consent'
-import { beginRun, finishRun, undoRun, isAborted } from '../src/server/awon/box/ops'
+} from '../src/server/royal-red/box/prison'
+import { planOperations, cleanupPlanFor, type RawOp } from '../src/server/royal-red/box/dryrun'
+import { tokenizeCommand } from '../src/server/royal-red/box/box'
+import { ruleMatches, extractRuleScope } from '../src/server/royal-red/box/consent'
+import { beginRun, finishRun, undoRun, isAborted } from '../src/server/royal-red/box/ops'
 
 let pass = 0
 let fail = 0
@@ -43,9 +41,9 @@ const noopEmit = () => {}
 console.log('path prison:')
 ensureBoxTree()
 check('box tree exists', fs.existsSync(BOX_HOME) && fs.existsSync(BOX_TRASH))
-check('resolve ~ -> emulated home', resolveVirtual('~').virtual === '/home/awon')
+check('resolve ~ -> emulated home', resolveVirtual('~').virtual === '/home/royalred')
 check('resolve ~/Downloads -> box home', resolveVirtual('~/Downloads').real === path.join(BOX_HOME, 'Downloads'))
-check('relative resolves inside home', resolveVirtual('notes.txt').virtual === '/home/awon/notes.txt')
+check('relative resolves inside home', resolveVirtual('notes.txt').virtual === '/home/royalred/notes.txt')
 check('traversal escapes prison', throws(() => resolveVirtual('../../etc/passwd')))
 check('host path escapes prison', throws(() => resolveVirtual('/etc/passwd')))
 check('symlink escape detected', throws(() => {
@@ -76,8 +74,8 @@ fs.writeFileSync(unk, 'u'.repeat(16))
 
 const plan1 = cleanupPlanFor('~/Downloads')
 check('junk classified + flagged', plan1.steps.some((s) => s.proposable && s.op === 'trash' && s.from.endsWith('.crdownload') && s.flagged))
-check('documents move into ~/Documents', plan1.steps.some((s) => s.proposable && s.op === 'move' && s.to === '/home/awon/Documents/unit-test-report.pdf'))
-check('images move into ~/Pictures', plan1.steps.some((s) => s.proposable && s.op === 'move' && s.to === '/home/awon/Pictures/unit-test-photo.jpg'))
+check('documents move into ~/Documents', plan1.steps.some((s) => s.proposable && s.op === 'move' && s.to === '/home/royalred/Documents/unit-test-report.pdf'))
+check('images move into ~/Pictures', plan1.steps.some((s) => s.proposable && s.op === 'move' && s.to === '/home/royalred/Pictures/unit-test-photo.jpg'))
 check('unrecognized types untouched', !plan1.steps.some((s) => s.from.endsWith('.xyz')))
 check('plan hash is sha256 hex', /^[0-9a-f]{64}$/.test(plan1.hash))
 check('planId derives from content', plan1.planId.startsWith('plan_'))
@@ -98,7 +96,7 @@ const refusals = plan2.steps.filter((s) => !s.proposable)
 check('collision with existing file refused', refusals.some((r) => r.reason.includes('already exists')))
 check('missing source refused', refusals.some((r) => r.reason.includes('does not exist')))
 check('in-plan duplicate target refused', refusals.some((r) => r.reason.includes('plan collides')))
-check('move into existing dir resolves to dir/basename', plan2.steps.some((s) => s.proposable && s.op === 'move' && s.to === '/home/awon/Documents/unit-test-report.pdf'))
+check('move into existing dir resolves to dir/basename', plan2.steps.some((s) => s.proposable && s.op === 'move' && s.to === '/home/royalred/Documents/unit-test-report.pdf'))
 check('refused steps are NOT proposable', plan2.summary.refused === refusals.length)
 fs.rmSync(collisionTarget, { force: true })
 
@@ -119,15 +117,15 @@ fs.writeFileSync(aFrom, 'AAA')
 const aTo = path.join(fixtureDir, 'unit-move-a.txt')
 
 // NOTE: ops use BOX-VIRTUAL paths (what the agent sees); the planner
-// normalizes them to absolute virtual paths like /home/awon/...
+// normalizes them to absolute virtual paths like /home/royalred/...
 const moveOps: RawOp[] = [{ op: 'move', from: '~/Downloads/unit-move-a.txt', to: '~/Documents/unit-fixture' }]
 const movePlan = planOperations(moveOps)
-check('move into dir targets dir/basename', movePlan.steps[0].proposable && movePlan.steps[0].to === '/home/awon/Documents/unit-fixture/unit-move-a.txt', JSON.stringify(movePlan.steps[0]))
+check('move into dir targets dir/basename', movePlan.steps[0].proposable && movePlan.steps[0].to === '/home/royalred/Documents/unit-fixture/unit-move-a.txt', JSON.stringify(movePlan.steps[0]))
 // executePlan creates and owns its own run - the RESULT carries the runId
-const { executePlan, triggerAbort } = await import('../src/server/awon/box/ops')
+const { executePlan, triggerAbort } = await import('../src/server/royal-red/box/ops')
 const res = await executePlan(movePlan, { sessionId: SID, emit: noopEmit, approvedHash: movePlan.hash, consentId: 'unit' })
 check('move executed', res.executed === 1 && !fs.existsSync(aFrom) && fs.existsSync(aTo), JSON.stringify(res.lines))
-const journalCount = await db.awonUndoEntry.count({ where: { runId: res.runId } })
+const journalCount = await db.royalRedUndoEntry.count({ where: { runId: res.runId } })
 check('journal has one entry', journalCount === 1, String(journalCount))
 const undoRes = await undoRun(res.runId, SID, noopEmit, { userInitiated: true })
 check('undo restores the move', undoRes.ok && fs.existsSync(aFrom) && !fs.existsSync(aTo), undoRes.error ?? undoRes.lines.join('|'))
@@ -142,9 +140,9 @@ const execPromise = executePlan(trashPlan, { sessionId: SID, emit: noopEmit, app
 await new Promise((r) => setTimeout(r, 300))
 check('T3 pauses execution (kernel true pause)', fs.existsSync(tFrom))
 // find the pending consent and answer it like the API route does
-const pending = await db.awonConsent.findFirst({ where: { sessionId: SID, status: 'pending' }, orderBy: { createdAt: 'desc' } })
+const pending = await db.royalRedConsent.findFirst({ where: { sessionId: SID, status: 'pending' }, orderBy: { createdAt: 'desc' } })
 check('T3 consent row exists', pending !== null && pending.tier === 3)
-const { decideConsent } = await import('../src/server/awon/box/consent')
+const { decideConsent } = await import('../src/server/royal-red/box/consent')
 if (pending) await decideConsent(pending.id, { decision: 'approve' })
 const trashRes = await execPromise
 check('approved trash executes after the pause', trashRes.executed === 1 && !fs.existsSync(tFrom), JSON.stringify(trashRes.lines))
@@ -173,7 +171,7 @@ console.log('kill switch:')
 check('fresh run not aborted', !isAborted('unit-abort-run'))
 // a pending consent must resolve FROZEN when the kill switch fires
 const freezePromise = (async () => {
-  const { requestConsent } = await import('../src/server/awon/box/consent')
+  const { requestConsent } = await import('../src/server/royal-red/box/consent')
   return requestConsent({ sessionId: SID, tier: 1, title: 'freeze test' }, noopEmit)
 })()
 await new Promise((r) => setTimeout(r, 200))
@@ -197,9 +195,9 @@ check('glob rejected (shell-less ls is literal)', throws(() => tokenizeCommand('
 
 // ── typed rules ──────────────────────────────────────────────────────────────
 console.log('typed rules:')
-check('rule glob matches path', ruleMatches('/home/awon/Downloads/*.tmp', '/home/awon/Downloads/cache.tmp'))
-check('rule glob rejects other dirs', !ruleMatches('/home/awon/Downloads/*.tmp', '/home/awon/Documents/cache.tmp'))
-check('rule glob rejects subdirs', !ruleMatches('/home/awon/Downloads/*.tmp', '/home/awon/Downloads/sub/cache.tmp'))
+check('rule glob matches path', ruleMatches('/home/royalred/Downloads/*.tmp', '/home/royalred/Downloads/cache.tmp'))
+check('rule glob rejects other dirs', !ruleMatches('/home/royalred/Downloads/*.tmp', '/home/royalred/Documents/cache.tmp'))
+check('rule glob rejects subdirs', !ruleMatches('/home/royalred/Downloads/*.tmp', '/home/royalred/Downloads/sub/cache.tmp'))
 const scope = extractRuleScope('always allow box_trash for ~/Downloads/*.tmp', 'Trash "x"')
 check('rule scope parses op', scope.op === 'box_trash', scope.op)
 check('rule scope parses pattern', scope.pattern.includes('*.tmp'), scope.pattern)

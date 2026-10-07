@@ -1,7 +1,7 @@
 // count verification rows directly in the DB
 import { db } from '@/lib/db'
 async function main() {
-  const rows = await db.awonVerification.findMany({
+  const rows = await db.royalRedVerification.findMany({
     where: { sessionId: 'cmutpxqwm000oplwi86k0i8e8' },
     orderBy: { createdAt: 'desc' },
     select: { id: true, kind: true, status: true, createdAt: true, artifactId: true },

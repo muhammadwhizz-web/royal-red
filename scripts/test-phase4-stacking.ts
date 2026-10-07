@@ -2,7 +2,7 @@
 // Tier-3 per-action request arrive concurrently. What does the user see, what
 // order is the queue in, and what happens to the requests behind a timeout?
 // Run: bun --env-file=.env scripts/test-phase4-stacking.ts
-import { requestConsent, decideConsent, freezeAllPending } from '../src/server/awon/box/consent'
+import { requestConsent, decideConsent, freezeAllPending } from '../src/server/royal-red/box/consent'
 import { db } from '../src/lib/db'
 
 let pass = 0
@@ -28,7 +28,7 @@ const t3c = requestConsent({ sessionId: SID, tier: 3, title: 'T3: trash cache.tm
 await new Promise((r) => setTimeout(r, 300))
 
 // what the user sees: the DESKTOP panel queue is FIFO by createdAt
-const queue = await db.awonConsent.findMany({ where: { sessionId: SID, status: 'pending' }, orderBy: { createdAt: 'asc' } })
+const queue = await db.royalRedConsent.findMany({ where: { sessionId: SID, status: 'pending' }, orderBy: { createdAt: 'asc' } })
 check('all three stack as pending', queue.length === 3, String(queue.length))
 check('queue is FIFO (T1a, T1b, T3c)', queue[0].tier === 1 && queue[1].tier === 1 && queue[2].tier === 3, JSON.stringify(queue.map((q) => q.tier)))
 check('each request owns its 120s clock (same expiry window, independent rows)', queue.every((q) => q.expiresAt.getTime() - q.createdAt.getTime() >= 119_000))
@@ -58,11 +58,11 @@ const h1 = requestConsent({ sessionId: SID2, tier: 1, title: 'head - will expire
 const h2 = requestConsent({ sessionId: SID2, tier: 2, title: 'behind - stays pending' }, noopEmit)
 await new Promise((r) => setTimeout(r, 300))
 // shrink the head's clock so the test does not wait 120s
-await db.awonConsent.update({ where: { id: (await db.awonConsent.findFirst({ where: { sessionId: SID2, title: 'head - will expire' } }))!.id }, data: { expiresAt: new Date(Date.now() + 3000) } })
-const d2row = await db.awonConsent.findFirst({ where: { sessionId: SID2, title: 'behind - stays pending' } })!
+await db.royalRedConsent.update({ where: { id: (await db.royalRedConsent.findFirst({ where: { sessionId: SID2, title: 'head - will expire' } }))!.id }, data: { expiresAt: new Date(Date.now() + 3000) } })
+const d2row = await db.royalRedConsent.findFirst({ where: { sessionId: SID2, title: 'behind - stays pending' } })!
 // fake the behind-row's expiry for its own waiter (3s) so the test is fast:
 // the point is INDEPENDENCE, not the absolute timeout
-await db.awonConsent.update({ where: { id: d2row!.id }, data: { expiresAt: new Date(Date.now() + 5000) } })
+await db.royalRedConsent.update({ where: { id: d2row!.id }, data: { expiresAt: new Date(Date.now() + 5000) } })
 const rH1 = await h1
 check('head expired fail-closed', rH1.status === 'expired')
 const rH2 = await h2
@@ -78,10 +78,10 @@ check('freezeAllPending froze 2 rows', frozen === 2, String(frozen))
 const rf1 = await f1
 const rf2 = await f2
 check('both waiters resolved frozen', rf1.status === 'frozen' && rf2.status === 'frozen')
-const late = await decideConsent((await db.awonConsent.findFirst({ where: { sessionId: SID3, status: 'frozen' } }))!.id, { decision: 'approve' })
+const late = await decideConsent((await db.royalRedConsent.findFirst({ where: { sessionId: SID3, status: 'frozen' } }))!.id, { decision: 'approve' })
 check('a frozen card can NEVER be answered afterwards (fail-closed)', late.ok === false && late.status === 'frozen')
 
 // cleanup
-await db.awonConsent.deleteMany({ where: { sessionId: { startsWith: 'stacking-' } } })
+await db.royalRedConsent.deleteMany({ where: { sessionId: { startsWith: 'stacking-' } } })
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

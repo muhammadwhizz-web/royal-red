@@ -13,36 +13,36 @@ agent-browser open http://localhost:3000/ >/dev/null 2>&1
 agent-browser wait --load networkidle >/dev/null 2>&1
 sleep 1
 TITLE=$(agent-browser get title 2>/dev/null)
-contains "$TITLE" "AWON" && ok "page renders ($TITLE)" || bad "title=$TITLE"
+contains "$TITLE" "ROYAL RED" && ok "page renders ($TITLE)" || bad "title=$TITLE"
 
 echo "== 2. manifest served (P1-2) =="
 M=$(curl -s http://localhost:3000/manifest.webmanifest)
-contains "$M" '"name":"AWON' && ok "manifest returns AWON metadata" || bad "manifest body: $M"
+contains "$M" '"name":"ROYAL RED' && ok "manifest returns ROYAL RED metadata" || bad "manifest body: $M"
 MC=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/manifest.webmanifest)
 [ "$MC" = "200" ] && ok "manifest http 200" || bad "manifest status $MC"
 
 echo "== 3. sessions pagination API (P1-4) =="
-R=$(curl -s "http://localhost:3000/api/awon/session?limit=5")
+R=$(curl -s "http://localhost:3000/api/royal-red/session?limit=5")
 contains "$R" '"nextCursor"' && ok "page 1 carries nextCursor field" || bad "no nextCursor: $R"
 CUR=$(echo "$R" | python3 -c "import json,sys;print(json.load(sys.stdin).get('nextCursor') or '')")
 [ -n "$CUR" ] && ok "cursor present with 34+ sessions" || ok "cursor null (under one page — valid)"
 ENC=$(python3 -c "import urllib.parse;print(urllib.parse.quote('$CUR'))")
-R2=$(curl -s "http://localhost:3000/api/awon/session?limit=5&cursor=$ENC")
+R2=$(curl -s "http://localhost:3000/api/royal-red/session?limit=5&cursor=$ENC")
 N2=$(echo "$R2" | python3 -c "import json,sys;print(len(json.load(sys.stdin).get('sessions',[])))")
 [ "$N2" -gt 0 ] && ok "page 2 returns $N2 rows" || bad "page 2 empty"
-BC=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/api/awon/session?limit=5&cursor=bogus")
+BC=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/api/royal-red/session?limit=5&cursor=bogus")
 [ "$BC" = "400" ] && ok "bad cursor rejected 400" || bad "bad cursor status $BC"
 
 echo "== 4. version timeline API (P1-1) =="
-AID=$(curl -s "http://localhost:3000/api/awon/session?limit=50" | python3 -c "
+AID=$(curl -s "http://localhost:3000/api/royal-red/session?limit=50" | python3 -c "
 import json,sys
 sess=json.load(sys.stdin)['sessions']
 print(sess[-1]['id'])" 2>/dev/null)
 # find an artifact id from any session detail
-ART=$(for s in $(curl -s "http://localhost:3000/api/awon/session?limit=50" | python3 -c "
+ART=$(for s in $(curl -s "http://localhost:3000/api/royal-red/session?limit=50" | python3 -c "
 import json,sys
 print(' '.join(x['id'] for x in json.load(sys.stdin)['sessions']))"); do
-  curl -s "http://localhost:3000/api/awon/session/$s" | python3 -c "
+  curl -s "http://localhost:3000/api/royal-red/session/$s" | python3 -c "
 import json,sys
 try:
   d=json.load(sys.stdin)
@@ -51,12 +51,12 @@ try:
 except: pass" 2>/dev/null
 done | head -1)
 echo "  (artifact under test: $ART)"
-V=$(curl -s "http://localhost:3000/api/awon/artifact-versions/$ART")
+V=$(curl -s "http://localhost:3000/api/royal-red/artifact-versions/$ART")
 contains "$V" '"versionId"' && ok "version timeline returns snapshots" || bad "timeline: $(echo $V | head -c 120)"
 NV=$(echo "$V" | python3 -c "import json,sys;print(len(json.load(sys.stdin).get('versions',[])))")
 ok "$NV version snapshots on record"
 VID=$(echo "$V" | python3 -c "import json,sys;print(json.load(sys.stdin)['versions'][0]['versionId'])")
-VC=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/api/awon/artifact-version/$VID?path=index.html")
+VC=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/api/royal-red/artifact-version/$VID?path=index.html")
 [ "$VC" = "200" ] || [ "$VC" = "404" ] && ok "version content endpoint responds ($VC)" || bad "version content $VC"
 
 echo "== 5. sessions sheet UI (P1-4/P1-5 UI) =="
@@ -79,8 +79,8 @@ agent-browser press Escape >/dev/null 2>&1
 
 echo "== 6. ErrorRow a11y (P1-6) =="
 # error rows only render after a hard failure; assert the component contract via source
-rg -q 'role="alert"' /home/z/my-project/src/components/awon/chat-stream.tsx && ok "ErrorRow carries role=alert" || bad "role=alert missing"
-rg -q 'aria-live="polite"' /home/z/my-project/src/components/awon/chat-stream.tsx && ok "ErrorRow carries aria-live=polite" || bad "aria-live missing"
+rg -q 'role="alert"' /home/z/my-project/src/components/royal-red/chat-stream.tsx && ok "ErrorRow carries role=alert" || bad "role=alert missing"
+rg -q 'aria-live="polite"' /home/z/my-project/src/components/royal-red/chat-stream.tsx && ok "ErrorRow carries aria-live=polite" || bad "aria-live missing"
 
 echo "== 7. live /ask round trip (SSE regression guard) =="
 agent-browser open http://localhost:3000/ >/dev/null 2>&1

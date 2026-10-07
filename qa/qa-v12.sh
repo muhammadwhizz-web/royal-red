@@ -1,5 +1,5 @@
 #!/bin/bash
-# AWON v1.2 E2E - Phase 2 Verification 2.0 (constraint ledger, adversarial
+# ROYAL RED v1.2 E2E - Phase 2 Verification 2.0 (constraint ledger, adversarial
 # critique, visual regression, cms proof, benchmark harness, provider config)
 AB="agent-browser"
 PASS=0; FAIL=0
@@ -21,7 +21,7 @@ $AB open http://localhost:3000/ >/dev/null 2>&1
 BOOT=1
 for i in 1 2 3 4 5 6; do
   sleep 4
-  if $AB read 2>/dev/null | grep -q "awon kernel v1.2.0"; then BOOT=0; break; fi
+  if $AB read 2>/dev/null | grep -q "royal red kernel v1.2.0"; then BOOT=0; break; fi
   $AB open http://localhost:3000/ >/dev/null 2>&1
 done
 [ $BOOT = 0 ] && ck 0 "boot overlay shows v1.2.0" || ck 1 "boot overlay v1.2.0"
@@ -58,20 +58,20 @@ if [ -n "$IMG" ] && [ "$IMG" != "" ]; then
 else
   ck 1 "no verify-shot img found in dashboard"
 fi
-CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/api/awon/verify-shot?run=..%2Fetc&name=desktop.png")
+CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/api/royal-red/verify-shot?run=..%2Fetc&name=desktop.png")
 [ "$CODE" = "400" ] && ck 0 "verify-shot rejects traversal (400)" || ck 1 "verify-shot traversal guard: $CODE"
 
 click_tab PREVIEW
 $AB read 2>/dev/null | grep -q "constraint ledger (10)" && ck 0 "constraint ledger card restored in chat stream" || ck 1 "constraint ledger card in chat"
 
 echo "== provider config =="
-P=$(curl -s -X POST "http://localhost:3000/api/awon/providers" -H "content-type: application/json" -d '{"provider":"anthropic","label":"qa-critic","baseUrl":"https://api.anthropic.com","model":"claude-qa","apiKey":"sk-ant-qa-test-9999"}')
+P=$(curl -s -X POST "http://localhost:3000/api/royal-red/providers" -H "content-type: application/json" -d '{"provider":"anthropic","label":"qa-critic","baseUrl":"https://api.anthropic.com","model":"claude-qa","apiKey":"sk-ant-qa-test-9999"}')
 echo "$P" | grep -q '"keyHint":"sk-...9999"' && ck 0 "provider key stored + masked hint" || ck 1 "provider masked hint: $P"
 echo "$P" | grep -qv '"apiKeyEnc"' && ck 0 "raw key never returned by API" || ck 1 "raw key leaked"
-BAD=$(curl -s -X POST "http://localhost:3000/api/awon/providers" -H "content-type: application/json" -d '{"provider":"openai","label":"x","baseUrl":"http://evil.example.com","model":"m","apiKey":"k"}')
+BAD=$(curl -s -X POST "http://localhost:3000/api/royal-red/providers" -H "content-type: application/json" -d '{"provider":"openai","label":"x","baseUrl":"http://evil.example.com","model":"m","apiKey":"k"}')
 echo "$BAD" | grep -q "error" && ck 0 "plaintext http baseUrl rejected" || ck 1 "http baseUrl guard"
 PID=$(echo "$P" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
-curl -s -X DELETE "http://localhost:3000/api/awon/providers?id=$PID" | grep -q '"ok":true' && ck 0 "provider delete ok" || ck 1 "provider delete"
+curl -s -X DELETE "http://localhost:3000/api/royal-red/providers?id=$PID" | grep -q '"ok":true' && ck 0 "provider delete ok" || ck 1 "provider delete"
 
 echo "== regression sweep =="
 click_tab PREVIEW
@@ -81,7 +81,7 @@ $AB eval "var I=document.querySelector('textarea, input[placeholder*=command]');
 $AB keyboard type "/help" >/dev/null 2>&1; $AB press Enter >/dev/null 2>&1; sleep 1.5
 $AB read 2>/dev/null | grep -q "/verify benchmark" && ck 0 "/help lists /verify + benchmark" || ck 1 "/help lists /verify"
 # footer version
-$AB read 2>/dev/null | grep -q "AWON V1.2" && ck 0 "footer shows V1.2" || ck 1 "footer V1.2"
+$AB read 2>/dev/null | grep -q "ROYAL RED V1.2" && ck 0 "footer shows V1.2" || ck 1 "footer V1.2"
 # light mode sanity screenshot
 $AB eval "document.documentElement.classList.remove('dark')" >/dev/null 2>&1; sleep 1
 $AB screenshot /tmp/v12-final-light.png >/dev/null 2>&1 && ck 0 "light-mode screenshot saved" || ck 1 "screenshot"

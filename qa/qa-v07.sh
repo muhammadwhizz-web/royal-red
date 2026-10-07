@@ -17,13 +17,13 @@ done
 if [ "$CODE" != "200" ]; then echo "FATAL: server never came up"; tail -20 dev.log; exit 1; fi
 
 echo "=== [2] API smoke ==="
-SESSIONS=$(curl -s --max-time 20 http://localhost:3000/api/awon/session)
+SESSIONS=$(curl -s --max-time 20 http://localhost:3000/api/royal-red/session)
 echo "$SESSIONS" | head -c 500; echo
 echo "$SESSIONS" | rg -q '"pinned"' && echo "PASS: sessions API has pinned field" || echo "FAIL: pinned field missing"
 NEWEST=$(echo "$SESSIONS" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['sessions'][0]['id'] if d.get('sessions') else '')" 2>/dev/null)
 echo "newest session id: $NEWEST"
 if [ -n "$NEWEST" ]; then
-  EXP=$(curl -s --max-time 20 "http://localhost:3000/api/awon/session/$NEWEST/export")
+  EXP=$(curl -s --max-time 20 "http://localhost:3000/api/royal-red/session/$NEWEST/export")
   echo "$EXP" | head -c 300; echo
   echo "$EXP" | rg -q '^# ' && echo "PASS: export markdown has title header" || echo "FAIL: export markdown malformed"
 fi
@@ -48,11 +48,11 @@ agent-browser click "text=INITIALIZE" >/dev/null 2>&1
 sleep 2
 SHELL=$(agent-browser eval "document.body.innerText" 2>/dev/null)
 echo "$SHELL" | rg -q "OS WITHIN OS" && echo "PASS: header signature visible" || echo "FAIL: header missing"
-echo "$SHELL" | rg -q "AWON V0.7" && echo "PASS: footer v0.7" || echo "FAIL: footer version wrong"
+echo "$SHELL" | rg -q "ROYAL RED V0.7" && echo "PASS: footer v0.7" || echo "FAIL: footer version wrong"
 echo "$SHELL" | rg -q "BUILD" && echo "PASS: mode chips visible" || echo "FAIL: mode chips missing"
 
 echo "=== [5] live chat round trip (SSE + turn stats) ==="
-agent-browser fill "textarea" "/ask Reply with exactly: AWON ONLINE" >/dev/null 2>&1
+agent-browser fill "textarea" "/ask Reply with exactly: ROYAL RED ONLINE" >/dev/null 2>&1
 agent-browser press Enter >/dev/null 2>&1
 sleep 2
 DONE=0
@@ -70,14 +70,14 @@ else
   agent-browser screenshot $SHOT-chat-stuck.png >/dev/null 2>&1
 fi
 PAGE=$(agent-browser eval "document.body.innerText" 2>/dev/null)
-echo "$PAGE" | rg -q "AWON ONLINE" && echo "PASS: assistant replied" || echo "WARN: reply text not found (model variance)"
+echo "$PAGE" | rg -q "ROYAL RED ONLINE" && echo "PASS: assistant replied" || echo "WARN: reply text not found (model variance)"
 echo "$PAGE" | rg -q "web_search|web search" && echo "INFO: tool rows present" || echo "INFO: no tool rows"
 
 echo "=== [6] header session chip + auto title ==="
 CHIP=$(agent-browser eval "!!document.querySelector('header span[title]')" 2>/dev/null | tail -1)
 echo "header chip present: $CHIP"
 sleep 8   # auto-title fires post-done
-T=$(curl -s --max-time 20 http://localhost:3000/api/awon/session | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['sessions'][0]['title'] if d.get('sessions') else '')" 2>/dev/null)
+T=$(curl -s --max-time 20 http://localhost:3000/api/royal-red/session | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['sessions'][0]['title'] if d.get('sessions') else '')" 2>/dev/null)
 echo "newest session title: $T"
 
 echo "=== [7] command palette (Ctrl+K) ==="
@@ -103,7 +103,7 @@ agent-browser screenshot $SHOT-sessions-pinned.png >/dev/null 2>&1
 # restore: unpin
 agent-browser eval "var b=document.querySelector('[aria-label^=\"Unpin session\"]'); if(b) b.click(); !!b" 2>/dev/null | tail -1
 sleep 1
-PINNED_API=$(curl -s --max-time 20 http://localhost:3000/api/awon/session | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for s in d['sessions'] if s['pinned']))" 2>/dev/null)
+PINNED_API=$(curl -s --max-time 20 http://localhost:3000/api/royal-red/session | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for s in d['sessions'] if s['pinned']))" 2>/dev/null)
 echo "pinned count after unpin: $PINNED_API"
 agent-browser press Escape >/dev/null 2>&1
 

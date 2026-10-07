@@ -3,10 +3,10 @@
 // to baseline. Phase 4 ships only if nothing accumulates.
 // Run: bun --env-file=.env scripts/test-phase4-leak.ts
 import { execSync } from 'child_process'
-import { withScopedBrowser } from '../src/server/awon/verify/browser'
-import { boxExec, boxLiveChildCount } from '../src/server/awon/box/box'
-import { terminateAll } from '../src/server/awon/box/runtime'
-import { spawnSupervised } from '../src/server/awon/box/box'
+import { withScopedBrowser } from '../src/server/royal-red/verify/browser'
+import { boxExec, boxLiveChildCount } from '../src/server/royal-red/box/box'
+import { terminateAll } from '../src/server/royal-red/box/runtime'
+import { spawnSupervised } from '../src/server/royal-red/box/box'
 
 let pass = 0
 let fail = 0
@@ -62,7 +62,7 @@ const orphans = execSync("ps -eo args= | grep -E '^echo cycle-' | grep -v grep |
 check('no orphaned child processes in the OS', Number(orphans) === 0, orphans)
 
 console.log('box subsystem: supervised Xvfb lifecycle (spawn, SIGTERM via kill switch, reap)')
-const child = spawnSupervised('Xvfb', [':97', '-screen', '0', '640x480x24', '-nolisten', 'tcp'], 'Xvfb :97 leak-test')
+spawnSupervised('Xvfb', [':97', '-screen', '0', '640x480x24', '-nolisten', 'tcp'], 'Xvfb :97 leak-test')
 await new Promise((r) => setTimeout(r, 1500))
 const withXvfb = boxLiveChildCount()
 const xvfbUp = execSync('ps -eo args= | grep "Xvfb :97" | grep -v grep | wc -l', { encoding: 'utf8' }).trim()

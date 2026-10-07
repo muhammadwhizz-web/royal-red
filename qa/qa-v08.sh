@@ -17,16 +17,16 @@ done
 [ "$CODE" = "200" ] || { echo "FATAL: server never came up"; exit 1; }
 
 echo "=== [2] API: PUT round trip + stats ==="
-R1=$(curl -s -X PUT "http://localhost:3000/api/awon/workspace/file?path=qa-edit-test.txt" --data-binary "hello v0.8")
+R1=$(curl -s -X PUT "http://localhost:3000/api/royal-red/workspace/file?path=qa-edit-test.txt" --data-binary "hello v0.8")
 echo "create: $R1"
-R2=$(curl -s -X PUT "http://localhost:3000/api/awon/workspace/file?path=qa-edit-test.txt" --data-binary "hello v0.8 edited")
+R2=$(curl -s -X PUT "http://localhost:3000/api/royal-red/workspace/file?path=qa-edit-test.txt" --data-binary "hello v0.8 edited")
 echo "update: $R2"
-R3=$(curl -s "http://localhost:3000/api/awon/workspace/file?path=qa-edit-test.txt")
+R3=$(curl -s "http://localhost:3000/api/royal-red/workspace/file?path=qa-edit-test.txt")
 echo "read-back: $R3"
 echo "$R3" | rg -q "edited" && echo "PASS: PUT round trip" || echo "FAIL: PUT round trip"
-R4=$(curl -s -X PUT "http://localhost:3000/api/awon/workspace/file?path=../escape.txt" --data-binary "nope")
+R4=$(curl -s -X PUT "http://localhost:3000/api/royal-red/workspace/file?path=../escape.txt" --data-binary "nope")
 echo "$R4" | rg -q "bad path" && echo "PASS: path jail blocks .." || echo "FAIL: path jail: $R4"
-STATS=$(curl -s "http://localhost:3000/api/awon/workspace?stats=1" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['stats'])" 2>/dev/null)
+STATS=$(curl -s "http://localhost:3000/api/royal-red/workspace?stats=1" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['stats'])" 2>/dev/null)
 echo "stats: $STATS"
 echo "$STATS" | rg -q "'files':" && echo "PASS: stats API" || echo "FAIL: stats API"
 
@@ -43,7 +43,7 @@ done
 BOOT=$(agent-browser eval "document.body.innerText" 2>/dev/null)
 echo "$BOOT" | rg -q "v0.8.0" && echo "PASS: boot kernel v0.8.0" || echo "FAIL: boot version"
 echo "$BOOT" | rg -q "loading local command line" && echo "PASS: v0.8 boot line" || echo "FAIL: v0.8 boot line missing"
-agent-browser click "button.awon-glow" >/dev/null 2>&1
+agent-browser click "button.royalred-glow" >/dev/null 2>&1
 sleep 1.5
 GONE=$(agent-browser eval "!document.body.innerText.includes('all systems nominal')" 2>/dev/null | tail -1)
 [ "$GONE" = "true" ] && echo "PASS: console live" || echo "FAIL: overlay stuck"
@@ -80,7 +80,7 @@ agent-browser fill "textarea" "/system" >/dev/null 2>&1
 agent-browser press Enter >/dev/null 2>&1
 sleep 1
 S=$(agent-browser eval "document.body.innerText" 2>/dev/null)
-echo "$S" | rg -q "AWON ACCOUNTS" && echo "PASS: /system -> system tab" || echo "FAIL: /system"
+echo "$S" | rg -q "ROYAL RED ACCOUNTS" && echo "PASS: /system -> system tab" || echo "FAIL: /system"
 echo "$S" | rg -q "WORKSPACE" && echo "PASS: stats section present" || echo "FAIL: stats section"
 echo "$S" | rg -q "reading workspace stats|[0-9]+ files" && echo "PASS: stats widget renders" || echo "FAIL: stats widget"
 agent-browser screenshot $SHOT-system.png >/dev/null 2>&1
@@ -104,7 +104,7 @@ U=$(agent-browser eval "document.body.innerText" 2>/dev/null)
 echo "$U" | rg -q "unknown command" && echo "PASS: unknown command row" || echo "FAIL: unknown command"
 
 echo "=== [8] chat SSE regression ==="
-agent-browser fill "textarea" "/ask Reply with exactly: AWON V8 ONLINE" >/dev/null 2>&1
+agent-browser fill "textarea" "/ask Reply with exactly: ROYAL RED V8 ONLINE" >/dev/null 2>&1
 agent-browser press Enter >/dev/null 2>&1
 sleep 2
 DONE=0
@@ -115,7 +115,7 @@ for i in $(seq 1 40); do
 done
 [ "$DONE" = "1" ] && echo "PASS: SSE loop healthy" || echo "FAIL: SSE loop"
 PG=$(agent-browser eval "document.body.innerText" 2>/dev/null)
-echo "$PG" | rg -q "AWON V8 ONLINE" && echo "PASS: reply correct" || echo "WARN: reply variance"
+echo "$PG" | rg -q "ROYAL RED V8 ONLINE" && echo "PASS: reply correct" || echo "WARN: reply variance"
 
 echo "=== [9] workspace file editor dialog ==="
 agent-browser fill "textarea" "/files" >/dev/null 2>&1
@@ -131,7 +131,7 @@ echo "$D" | rg -q "text file, editable" && echo "PASS: editor dialog open" || ec
 agent-browser fill 'textarea[aria-label="Edit qa-edit-test.txt"]' "edited from the dialog at $(date +%s)" >/dev/null 2>&1
 agent-browser eval "var b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()==='save'); if(b) b.click(); !!b" 2>/dev/null | tail -1
 sleep 1.5
-SAVED=$(curl -s "http://localhost:3000/api/awon/workspace/file?path=qa-edit-test.txt")
+SAVED=$(curl -s "http://localhost:3000/api/royal-red/workspace/file?path=qa-edit-test.txt")
 echo "$SAVED" | rg -q "edited from the dialog" && echo "PASS: dialog save persisted" || echo "FAIL: dialog save: $SAVED"
 agent-browser screenshot $SHOT-editor.png >/dev/null 2>&1
 agent-browser press Escape >/dev/null 2>&1
@@ -158,7 +158,7 @@ else
 fi
 
 echo "=== [11] cleanup ==="
-curl -s -X DELETE "http://localhost:3000/api/awon/workspace?path=qa-edit-test.txt" >/dev/null
+curl -s -X DELETE "http://localhost:3000/api/royal-red/workspace?path=qa-edit-test.txt" >/dev/null
 agent-browser screenshot $SHOT-final.png >/dev/null 2>&1
 agent-browser close --all >/dev/null 2>&1
 tail -50 dev.log | rg -a -i "error|panic|unhandled" | rg -av "GET |POST " | head -8 || echo "no errors in dev.log tail"

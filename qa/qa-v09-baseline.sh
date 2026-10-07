@@ -29,7 +29,7 @@ for i in $(seq 1 30); do
 done
 [ "$OK" = "1" ] || { echo "FAIL: overlay never rendered"; agent-browser close --all >/dev/null 2>&1; exit 1; }
 sleep 1
-agent-browser click "button.awon-glow" >/dev/null 2>&1
+agent-browser click "button.royalred-glow" >/dev/null 2>&1
 sleep 2.5
 GONE=$(agent-browser eval "!document.body.innerText.includes('all systems nominal')" 2>/dev/null | tail -1)
 [ "$GONE" = "true" ] && echo "PASS: INITIALIZE dismisses overlay" || echo "FAIL: overlay stuck"
@@ -38,7 +38,7 @@ SUGG=$(agent-browser eval "document.body.innerText.includes('BUILD A COMPLETE WE
 [ "$SUGG" = "true" ] && echo "PASS: empty state + suggestion cards" || echo "FAIL: empty state"
 
 # live /ask round trip (SSE loop health)
-agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"AWON command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/ask In exactly one short sentence, what is AWON?'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'typed'" >/dev/null 2>&1
+agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'/ask In exactly one short sentence, what is ROYAL RED?'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'typed'" >/dev/null 2>&1
 agent-browser click '[aria-label="Send command"]' >/dev/null 2>&1
 echo "sent /ask..."
 DONE=0
@@ -79,7 +79,7 @@ echo "picked session: $PICK"
 sleep 3
 FRAME=$(agent-browser eval "!!document.querySelector('[aria-label=\"Preview device width\"]')" 2>/dev/null | tail -1)
 [ "$FRAME" = "true" ] && echo "PASS: preview device toggle rendered" || echo "FAIL: preview device toggle"
-IFR=$(agent-browser eval "!!document.querySelector('iframe[title=\"AWON artifact preview\"]')" 2>/dev/null | tail -1)
+IFR=$(agent-browser eval "!!document.querySelector('iframe[title=\"ROYAL RED artifact preview\"]')" 2>/dev/null | tail -1)
 [ "$IFR" = "true" ] && echo "PASS: preview iframe present" || echo "FAIL: preview iframe"
 agent-browser screenshot $SHOT-preview.png >/dev/null 2>&1
 

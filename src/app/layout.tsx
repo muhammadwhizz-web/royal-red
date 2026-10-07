@@ -15,11 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AWON / OS within OS",
+  title: "ROYAL RED / OS within OS",
   description:
-    "AWON is a Linux-native agent operating system: it builds complete websites and apps, researches the web, manages accounts, and verifies every deliverable to 10/10.",
-  keywords: ["AWON", "agent OS", "AI operating system", "website builder", "Linux"],
-  authors: [{ name: "AWON" }],
+    "ROYAL RED is a Linux-native agent operating system: it builds complete websites and apps, researches the web, manages accounts, and verifies every deliverable to 10/10.",
+  keywords: ["ROYAL RED", "agent OS", "AI operating system", "website builder", "Linux"],
+  authors: [{ name: "ROYAL RED" }],
 };
 
 export const viewport: Viewport = {

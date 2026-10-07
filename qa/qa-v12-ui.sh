@@ -25,7 +25,7 @@ echo "$TXT" | grep -qE "hamming|new baseline" && ck 0 "visual receipts render ha
 # cms proof steps visible
 echo "$TXT" | grep -qiE "no login gate|login" && ck 0 "cms step receipts visible" || ck 1 "cms step receipts visible"
 # screenshots thumbnails served through verify-shot route
-CODE=$($AB eval "fetch('/api/awon/verify-shot?run=nonexistent-run-x&name=desktop.png').then(r => r.status).catch(() => 'net-err')" 2>/dev/null)
+CODE=$($AB eval "fetch('/api/royal-red/verify-shot?run=nonexistent-run-x&name=desktop.png').then(r => r.status).catch(() => 'net-err')" 2>/dev/null)
 echo "$CODE" | grep -q "400" && ck 0 "verify-shot route guards bad run ids (400)" || ck 1 "verify-shot route guards bad run ids (400): $CODE"
 # light mode sanity
 $AB eval "document.documentElement.classList.remove('dark')" >/dev/null 2>&1; sleep 1

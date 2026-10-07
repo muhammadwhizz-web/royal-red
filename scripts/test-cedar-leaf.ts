@@ -4,9 +4,9 @@
 // verification machinery must handle the full honest path without inflation.
 // Deterministic only (no LLM): the kernel side of the verification engine.
 // Run: bun --env-file=.env scripts/test-cedar-leaf.ts
-import { autoGrade, artifactSnapshot, type LedgerItem } from '../src/server/awon/verify/ledger'
-import { disagreement, mergeCriticVerdicts, type CritiqueResult } from '../src/server/awon/verify/critic'
-import { compareShots } from '../src/server/awon/verify/visual'
+import { autoGrade, artifactSnapshot, type LedgerItem } from '../src/server/royal-red/verify/ledger'
+import { disagreement, mergeCriticVerdicts, type CritiqueResult } from '../src/server/royal-red/verify/critic'
+import { compareShots } from '../src/server/royal-red/verify/visual'
 import { db } from '../src/lib/db'
 
 let pass = 0
@@ -92,7 +92,7 @@ const v2 = compareShots('desktop', 'cedar', 'a'.repeat(16), 'f'.repeat(16), Arra
 check('changed frames -> changed verdict', v2.verdict === 'changed')
 
 // persist a verification receipt row so the VERIFY tab shows the regression ran
-await db.awonVerification.create({
+await db.royalRedVerification.create({
   data: {
     sessionId: 'cedar-leaf-regression',
     kind: 'critique',

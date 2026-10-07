@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ROYAL RED">
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#0a0a0a"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+  <path d="M14 42 L12 22 L23 31 L32 17 L41 31 L52 22 L50 42 Z" fill="#ef4444"/>
+  <rect x="14" y="45" width="36" height="5" rx="2.5" fill="#ef4444"/>
+  <circle cx="12" cy="20" r="3.2" fill="#ef4444"/>
+  <circle cx="32" cy="15" r="3.2" fill="#ef4444"/>
+  <circle cx="52" cy="20" r="3.2" fill="#ef4444"/>
+</svg>

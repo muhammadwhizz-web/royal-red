@@ -1,9 +1,9 @@
 // Phase 2 unit tests: OSWorld loader, perceptual hash, benchmark matrix, auto checks
-import { loadOsworldIndex, formatOsworldReport, createDeferredRunner } from '../src/server/awon/osworld/harness'
-import { perceptualHash, hammingHex, compareShots, verifyRelPath } from '../src/server/awon/verify/visual'
-import { MATRIX, TAXONOMY } from '../src/server/awon/verify/benchmark'
-import { autoGrade, artifactSnapshot, type LedgerItem } from '../src/server/awon/verify/ledger'
-import { assertVerifiableUrl, BrowserDeniedError } from '../src/server/awon/verify/browser'
+import { loadOsworldIndex, formatOsworldReport, createDeferredRunner } from '../src/server/royal-red/osworld/harness'
+import { perceptualHash, hammingHex, compareShots, verifyRelPath } from '../src/server/royal-red/verify/visual'
+import { MATRIX, TAXONOMY } from '../src/server/royal-red/verify/benchmark'
+import { autoGrade, artifactSnapshot, type LedgerItem } from '../src/server/royal-red/verify/ledger'
+import { assertVerifiableUrl, BrowserDeniedError } from '../src/server/royal-red/verify/browser'
 import sharp from 'sharp'
 
 let pass = 0
@@ -40,8 +40,8 @@ if (idx.available) {
 // --- perceptual hash (structured images, not solid colors) ---
 console.log('visual:')
 const svg = (inner: string) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240">${inner}</svg>`)
-const imgA = await sharp(svg(`<rect width="240" height="240" fill="#c2415d"/><rect x="30" y="30" width="80" height="180" fill="#f5e9dc"/><circle cx="170" cy="90" r="40" fill="#2d2a26"/><text x="40" y="120" fill="#2d2a26" font-size="28">AWON</text>`)).png().toBuffer()
-const imgA2 = await sharp(svg(`<rect width="240" height="240" fill="#c2415d"/><rect x="30" y="30" width="80" height="180" fill="#f5e9dc"/><circle cx="178" cy="90" r="40" fill="#2d2a26"/><text x="40" y="120" fill="#2d2a26" font-size="28">AWON</text>`)).png().toBuffer()
+const imgA = await sharp(svg(`<rect width="240" height="240" fill="#c2415d"/><rect x="30" y="30" width="80" height="180" fill="#f5e9dc"/><circle cx="170" cy="90" r="40" fill="#2d2a26"/><text x="40" y="120" fill="#2d2a26" font-size="28">ROYAL RED</text>`)).png().toBuffer()
+const imgA2 = await sharp(svg(`<rect width="240" height="240" fill="#c2415d"/><rect x="30" y="30" width="80" height="180" fill="#f5e9dc"/><circle cx="178" cy="90" r="40" fill="#2d2a26"/><text x="40" y="120" fill="#2d2a26" font-size="28">ROYAL RED</text>`)).png().toBuffer()
 const imgB = await sharp(svg(`<rect width="240" height="240" fill="#e9dfd0"/><rect x="10" y="120" width="220" height="60" fill="#1f4d3f"/><circle cx="60" cy="60" r="26" fill="#8f2d3a"/><text x="100" y="60" fill="#1f1f1f" font-size="20">studio</text>`)).png().toBuffer()
 const hA = await perceptualHash(imgA)
 const hA2 = await perceptualHash(imgA2)
@@ -92,7 +92,7 @@ check('unmapped -> semantic path', autoGrade(mkItem('copy is persuasive and spec
 
 // --- browser URL guard ---
 console.log('browser guard:')
-check('allows preview origin', assertVerifiableUrl('http://localhost:3000/api/awon/preview/x/', { allowLocalPreview: true }) === 'http://localhost:3000/api/awon/preview/x/')
+check('allows preview origin', assertVerifiableUrl('http://localhost:3000/api/royal-red/preview/x/', { allowLocalPreview: true }) === 'http://localhost:3000/api/royal-red/preview/x/')
 check('allows external https', !!assertVerifiableUrl('https://example.com/page'))
 let blocked = 0
 for (const bad of ['file:///etc/passwd', 'http://localhost:8080/', 'https://169.254.169.254/latest/meta-data/', 'javascript:alert(1)', 'http://127.0.0.1:22/']) {

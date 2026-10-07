@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 async function main() {
-  const a = await db.awonArtifact.findUnique({ where: { id: 'awon_1255b7dd-3fe' }, select: { files: true } })
+  const a = await db.royalRedArtifact.findUnique({ where: { id: 'awon_1255b7dd-3fe' }, select: { files: true } })
   const files = JSON.parse(a!.files) as { path: string; content: string }[]
   const cms = files.find((f) => /cms/.test(f.path))
   console.log('path:', cms?.path, 'len:', cms?.content.length)

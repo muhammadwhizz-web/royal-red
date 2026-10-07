@@ -27,7 +27,7 @@ done
 [ "$OK" = "1" ] || { echo "FAIL: INITIALIZE never appeared"; exit 1; }
 
 echo "=== [3] INITIALIZE real click (hit-target proof) ==="
-agent-browser click "button.awon-glow" 2>&1 | head -2
+agent-browser click "button.royalred-glow" 2>&1 | head -2
 sleep 1.5
 GONE=$(agent-browser eval "!document.body.innerText.includes('all systems nominal')" 2>/dev/null | tail -1)
 [ "$GONE" = "true" ] && echo "PASS: boot overlay dismissed by click" || echo "FAIL: boot overlay still visible"
@@ -35,12 +35,12 @@ agent-browser screenshot $SHOT-console.png >/dev/null 2>&1
 
 echo "=== [4] console shell checks ==="
 V=$(agent-browser eval "document.body.innerText" 2>/dev/null)
-echo "$V" | rg -q "AWON V0.7 / SANDBOXED" && echo "PASS: footer v0.7" || echo "FAIL: footer"
-echo "$V" | rg -q "command AWON" && echo "PASS: composer placeholder visible" || echo "FAIL: composer"
+echo "$V" | rg -q "ROYAL RED V0.7 / SANDBOXED" && echo "PASS: footer v0.7" || echo "FAIL: footer"
+echo "$V" | rg -q "command ROYAL RED" && echo "PASS: composer placeholder visible" || echo "FAIL: composer"
 echo "$V" | rg -q "EXAMINE AN ATTACHMENT\|ASK ABOUT\|BUILD" && echo "PASS: starter area" || echo "INFO: starter cards state unclear"
 
 echo "=== [5] live chat round trip (SSE + turn stats) ==="
-agent-browser fill "textarea" "/ask Reply with exactly: AWON ONLINE" >/dev/null 2>&1
+agent-browser fill "textarea" "/ask Reply with exactly: ROYAL RED ONLINE" >/dev/null 2>&1
 agent-browser press Enter >/dev/null 2>&1
 sleep 2
 DONE=0
@@ -51,7 +51,7 @@ for i in $(seq 1 40); do
 done
 [ "$DONE" = "1" ] && echo "PASS: turn stats line" || echo "FAIL: no turn stats"
 PAGE=$(agent-browser eval "document.body.innerText" 2>/dev/null)
-echo "$PAGE" | rg -q "AWON ONLINE" && echo "PASS: assistant replied" || echo "WARN: reply variance"
+echo "$PAGE" | rg -q "ROYAL RED ONLINE" && echo "PASS: assistant replied" || echo "WARN: reply variance"
 
 echo "=== [6] sessions sheet via CSS aria selector ==="
 agent-browser click '[aria-label="Session history"]' 2>&1 | head -2
@@ -68,7 +68,7 @@ echo "$SH2" | rg -q "PINNED" && echo "PASS: PINNED label appears" || echo "FAIL:
 agent-browser screenshot $SHOT-pinned.png >/dev/null 2>&1
 agent-browser eval "var b=document.querySelector('[aria-label^=\"Unpin session\"]'); if(b) b.click(); !!b" 2>/dev/null | tail -1
 sleep 1
-PCOUNT=$(curl -s --max-time 20 http://localhost:3000/api/awon/session | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for s in d['sessions'] if s['pinned']))" 2>/dev/null)
+PCOUNT=$(curl -s --max-time 20 http://localhost:3000/api/royal-red/session | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for s in d['sessions'] if s['pinned']))" 2>/dev/null)
 echo "pinned count after unpin (API): $PCOUNT"
 agent-browser press Escape >/dev/null 2>&1
 sleep 1

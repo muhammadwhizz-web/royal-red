@@ -22,12 +22,12 @@ done
 V9=$(agent-browser eval "document.body.innerText.includes('v0.9.0') && document.body.innerText.includes('console telemetry')" 2>/dev/null | tail -1)
 [ "$V9" = "true" ] && echo "PASS: boot overlay v0.9 lines" || echo "FAIL: boot overlay v0.9 lines"
 sleep 1
-agent-browser click "button.awon-glow" >/dev/null 2>&1
+agent-browser click "button.royalred-glow" >/dev/null 2>&1
 sleep 2.5
 
 # helper: push a command through the composer
 send_cmd() {
-  agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"AWON command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'$1'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
+  agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'$1'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
   agent-browser click '[aria-label="Send command"]' >/dev/null 2>&1
 }
 
@@ -96,19 +96,19 @@ sleep 1.5
 PICK=$(agent-browser eval "var btns=[...document.querySelectorAll('[aria-label^=\"Open session\"]')]; var t=btns.find(b=>/gallery|logo|kanban|website|coffee/i.test(b.getAttribute('aria-label'))); if(t){t.click(); t.getAttribute('aria-label').slice(0,60)}else{'none'}" 2>/dev/null | tail -1)
 echo "picked: $PICK"
 sleep 3
-agent-browser eval "var el=document.querySelector('[aria-label=\"AWON conversation\"]'); el.scrollTop=0; 'scrolled'" >/dev/null 2>&1
+agent-browser eval "var el=document.querySelector('[aria-label=\"ROYAL RED conversation\"]'); el.scrollTop=0; 'scrolled'" >/dev/null 2>&1
 sleep 1
 PILL=$(agent-browser eval "!!document.querySelector('[aria-label=\"Jump to the latest message\"]')" 2>/dev/null | tail -1)
 [ "$PILL" = "true" ] && echo "PASS: jump-to-latest pill appears when scrolled up" || echo "FAIL: jump pill"
 agent-browser click '[aria-label="Jump to the latest message"]' >/dev/null 2>&1
 sleep 2
-ATB=$(agent-browser eval "var el=document.querySelector('[aria-label=\"AWON conversation\"]'); (el.scrollHeight-el.scrollTop-el.clientHeight) < 120" 2>/dev/null | tail -1)
+ATB=$(agent-browser eval "var el=document.querySelector('[aria-label=\"ROYAL RED conversation\"]'); (el.scrollHeight-el.scrollTop-el.clientHeight) < 120" 2>/dev/null | tail -1)
 [ "$ATB" = "true" ] && echo "PASS: jump scrolls back to bottom" || echo "FAIL: jump scroll"
 
 # --- preview regression: device frames + iframe still fine ---
 FRAME=$(agent-browser eval "!!document.querySelector('[aria-label=\"Preview device width\"]')" 2>/dev/null | tail -1)
 [ "$FRAME" = "true" ] && echo "PASS: device frames intact" || echo "FAIL: device frames"
-IFR=$(agent-browser eval "var f=document.querySelector('iframe[title=\"AWON artifact preview\"]'); f? (f.clientWidth>100) : 'noiframe'" 2>/dev/null | tail -1)
+IFR=$(agent-browser eval "var f=document.querySelector('iframe[title=\"ROYAL RED artifact preview\"]'); f? (f.clientWidth>100) : 'noiframe'" 2>/dev/null | tail -1)
 [ "$IFR" = "true" ] && echo "PASS: preview iframe sized and visible" || echo "FAIL: preview iframe ($IFR)"
 agent-browser screenshot $SHOT-preview.png >/dev/null 2>&1
 

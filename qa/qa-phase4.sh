@@ -2,29 +2,29 @@
 # PHASE 4 ACCEPTANCE TEST - the 9 steps, each reported pass/fail.
 # Input: "Clean up my Downloads folder." - driven through the REAL console UI
 # with the REAL agent loop, REAL consent kernel, REAL journal. All disk checks
-# are on the EMULATED box home (awon-box/home/awon) - the real /home/z is never
+# are on the EMULATED box home (royalred-box/home/royalred) - the real /home/z is never
 # touched (honesty answer #3).
 AB="agent-browser"
 PASS=0; FAIL=0
 ck() { if [ "$1" = "0" ]; then PASS=$((PASS+1)); echo "  ok  $2"; else FAIL=$((FAIL+1)); echo "  FAIL $2"; fi }
 
-BOX=/home/z/my-project/awon-box/home/awon
+BOX=/home/z/my-project/royalred-box/home/royalred
 
 # abort any live run left over from a previous attempt, then reset the
-# EMULATED box (the harness cleans only its own awon-box/ + phase4 DB rows -
+# EMULATED box (the harness cleans only its own royalred-box/ + phase4 DB rows -
 # never the real home)
-curl -s -X POST http://localhost:3000/api/awon/desktop/abort -H "Content-Type: application/json" -d '{"reason":"qa reset"}' >/dev/null 2>&1
+curl -s -X POST http://localhost:3000/api/royal-red/desktop/abort -H "Content-Type: application/json" -d '{"reason":"qa reset"}' >/dev/null 2>&1
 # the kill switch opens a 30s refuse window for in-flight executors; let it
 # close before the test's own commands start
 sleep 33
-rm -rf /home/z/my-project/awon-box/.awon-trash/* 2>/dev/null
+rm -rf /home/z/my-project/royalred-box/.awon-trash/* 2>/dev/null
 bun -e "
 import { PrismaClient } from '@prisma/client';
 const db = new PrismaClient();
-await db.awonUndoEntry.deleteMany({});
-await db.awonConsent.deleteMany({});
-await db.awonRun.deleteMany({});
-await db.awonConsentRule.deleteMany({});
+await db.royalRedUndoEntry.deleteMany({});
+await db.royalRedConsent.deleteMany({});
+await db.royalRedRun.deleteMany({});
+await db.royalRedConsentRule.deleteMany({});
 process.exit(0);
 " >/dev/null 2>&1 || echo "  (warn: db reset failed)"
 
@@ -77,7 +77,7 @@ wait_idle() { # $1=timeout_secs - the send button is disabled while streaming
   local deadline=$((SECONDS + $1))
   while [ $SECONDS -lt $deadline ]; do
     B=$($AB eval "
-      var t=document.querySelector('textarea[aria-label=\"AWON command input\"]');
+      var t=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]');
       var b=document.querySelector('[aria-label=\"Send command\"]');
       if(!t||!b){'busy'}else{
         var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set;
@@ -98,7 +98,7 @@ wait_idle() { # $1=timeout_secs - the send button is disabled while streaming
 # send a console command through the REAL composer (React-controlled textarea)
 send_command() { # $1=text
   $AB eval "
-    var t=document.querySelector('textarea[aria-label=\"AWON command input\"]');
+    var t=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]');
     if(!t){ 'notextarea' } else {
       var setter=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set;
       setter.call(t, $1);
@@ -130,15 +130,15 @@ printf 'junk\n' > $BOX/Downloads/Thumbs.db
 printf 'PK zip\n' > $BOX/Downloads/old-backup.zip
 printf 'notes\n' > $BOX/Downloads/meeting-notes.txt
 printf 'mystery\n' > $BOX/Downloads/mystery.xyz
-rm -rf /home/z/my-project/awon-box/.awon-trash/* 2>/dev/null
+rm -rf /home/z/my-project/royalred-box/.awon-trash/* 2>/dev/null
 rm -rf $BOX/Documents/archives $BOX/Documents/unit-fixture 2>/dev/null
 rm -f $BOX/Documents/quarterly-report.pdf $BOX/Documents/meeting-notes.txt $BOX/Pictures/holiday-photo.jpg 2>/dev/null
 bun -e "
 import { PrismaClient } from '@prisma/client';
 const db = new PrismaClient();
-await db.awonUndoEntry.deleteMany({});
-await db.awonConsent.deleteMany({});
-await db.awonRun.deleteMany({});
+await db.royalRedUndoEntry.deleteMany({});
+await db.royalRedConsent.deleteMany({});
+await db.royalRedRun.deleteMany({});
 process.exit(0);
 " >/dev/null 2>&1
 BEFORE_LS=$(ls $BOX/Downloads 2>/dev/null | wc -l)
@@ -233,12 +233,12 @@ DOC=$(ls $BOX/Documents 2>/dev/null | grep -cE "quarterly-report.pdf|meeting-not
 PIC=$(ls $BOX/Pictures 2>/dev/null | grep -c "holiday-photo.jpg")
 ARC=$(ls $BOX/Documents/archives 2>/dev/null | grep -c "old-backup.zip")
 LEFT=$(ls $BOX/Downloads 2>/dev/null | tr ' ' '\n' | grep -c "mystery.xyz")
-TRASHED=$(find /home/z/my-project/awon-box/.awon-trash -type f 2>/dev/null | grep -cv "\.awon-trash$")
+TRASHED=$(find /home/z/my-project/royalred-box/.awon-trash -type f 2>/dev/null | grep -cv "\.awon-trash$")
 [ "$DOC" = "2" ] && [ "$PIC" = "1" ] && [ "$ARC" = "1" ] && ck 0 "step6c: moves on disk (2 docs, 1 image, 1 archive)" || ck 1 "step6c: disk layout doc=$DOC pic=$PIC arc=$ARC"
 [ "$TRASHED" = "3" ] && ck 0 "step6d: 3 items in .awon-trash (never rm)" || ck 1 "step6d: trash count=$TRASHED"
 
 echo "== STEP 7: undo journal recorded (from, to, timestamps) =="
-STATE=$(curl -s "http://localhost:3000/api/awon/desktop/state")
+STATE=$(curl -s "http://localhost:3000/api/royal-red/desktop/state")
 RUN=$(echo "$STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); rs=[r for r in d['runs'] if r['status']=='done']; print(rs[0]['id'] if rs and rs[0]['undoable']>0 else '')" 2>/dev/null)
 JN=$(echo "$STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); r=[x for x in d['runs'] if x['undoable']>0]; print(r[0]['undoable'] if r else 0)" 2>/dev/null)
 [ -n "$RUN" ] && [ "$JN" -ge 7 ] && ck 0 "step7: journal has $JN entries for run $RUN (panel shows them)" || ck 1 "step7: journal entries=$JN run=$RUN"
@@ -286,7 +286,7 @@ $AB eval "var btns=document.querySelectorAll('button'); var out='noabort'; for(v
 sleep 1
 $AB eval "var btns=document.querySelectorAll('button'); var out='noconfirm'; for(var i=0;i<btns.length;i++){ if(/CONFIRM ABORT/.test(btns[i].textContent)){ btns[i].click(); out='confirmed'; break } } out" >/dev/null 2>&1
 sleep 6
-STATE=$(curl -s "http://localhost:3000/api/awon/desktop/state")
+STATE=$(curl -s "http://localhost:3000/api/royal-red/desktop/state")
 AB_STATUS=$(echo "$STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); rs=[r for r in d['runs'] if r['status']=='aborted']; print(len(rs))" 2>/dev/null)
 FROZEN=$(echo "$STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for c in [] ) or 'see-audit')" 2>/dev/null)
 AB_AUDIT=$(echo "$STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(sum(1 for a in d['audit'] if a['action']=='desktop.abort'))" 2>/dev/null)
@@ -294,7 +294,7 @@ AB_AUDIT=$(echo "$STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); 
 [ "${AB_AUDIT:-0}" -ge 1 ] && ck 0 "step9b: desktop.abort audit row recorded" || ck 1 "step9b: abort audit rows=$AB_AUDIT"
 FROZEN_CARDS=$(page_text | grep -c "FROZEN BY KILL SWITCH")
 [ "$FROZEN_CARDS" -ge 1 ] && ck 0 "step9c: pending consent(s) FROZEN forever (card shows it)" || ck 1 "step9c: frozen cards=$FROZEN_CARDS"
-QUEUE_LEFT=$(curl -s "http://localhost:3000/api/awon/desktop/state" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d['consentQueue']))" 2>/dev/null)
+QUEUE_LEFT=$(curl -s "http://localhost:3000/api/royal-red/desktop/state" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d['consentQueue']))" 2>/dev/null)
 [ "$QUEUE_LEFT" = "0" ] && ck 0 "step9d: consent queue drained (nothing pending survives)" || ck 1 "step9d: queue=$QUEUE_LEFT"
 ABORT_SAY=$(page_text | grep -ciE "abort|kill switch")
 [ "$ABORT_SAY" -ge 1 ] && ck 0 "step9e: the agent reported the abort to the user" || ck 1 "step9e: no abort report in chat"

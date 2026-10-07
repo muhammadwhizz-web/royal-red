@@ -1,5 +1,8 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+/* tw-animate-css 1.4.0 ships a CSS-only exports map ("style" condition only),
+   which Turbopack 16.1.3 no longer resolves for bare @import - import the file
+   relatively so the animation keyframes always land in the bundle. */
+@import "../../node_modules/tw-animate-css/dist/tw-animate.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -51,18 +54,19 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* ROYAL RED brand: deep red primary (light mode) */
+  --primary: oklch(0.53 0.2 27);
+  --primary-foreground: oklch(0.985 0.01 27);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent: oklch(0.945 0.025 27);
+  --accent-foreground: oklch(0.35 0.14 27);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.55 0.19 27);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -70,12 +74,12 @@
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-primary: oklch(0.53 0.2 27);
+  --sidebar-primary-foreground: oklch(0.985 0.01 27);
+  --sidebar-accent: oklch(0.945 0.025 27);
+  --sidebar-accent-foreground: oklch(0.35 0.14 27);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: oklch(0.55 0.19 27);
 }
 
 .dark {
@@ -85,31 +89,32 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  /* ROYAL RED brand: strong red primary (dark mode) */
+  --primary: oklch(0.62 0.21 27);
+  --primary-foreground: oklch(0.985 0.01 27);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.28 0.06 27);
+  --accent-foreground: oklch(0.95 0.02 27);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
+  --ring: oklch(0.6 0.2 27);
+  --chart-1: oklch(0.55 0.2 45);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.62 0.21 27);
+  --sidebar-primary-foreground: oklch(0.985 0.01 27);
+  --sidebar-accent: oklch(0.28 0.06 27);
+  --sidebar-accent-foreground: oklch(0.95 0.02 27);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.6 0.2 27);
 }
 
 @layer base {
@@ -120,41 +125,41 @@
     @apply bg-background text-foreground;
   }
   ::selection {
-    background: rgba(16, 185, 129, 0.28);
+    background: rgba(239, 68, 68, 0.28);
   }
   .dark ::selection {
-    background: rgba(16, 185, 129, 0.4);
+    background: rgba(239, 68, 68, 0.4);
   }
 }
 
-/* ===== AWON console chrome ===== */
+/* ===== ROYAL RED console chrome ===== */
 
-/* blinking block caret after the AWON signature */
-.awon-caret {
+/* blinking block caret after the ROYAL RED signature */
+.royalred-caret {
   display: inline-block;
   width: 0.55em;
   height: 1em;
   margin-left: 0.18em;
   vertical-align: -0.12em;
   background: currentColor;
-  animation: awon-blink 1.1s steps(1) infinite;
+  animation: royalred-blink 1.1s steps(1) infinite;
 }
-@keyframes awon-blink {
+@keyframes royalred-blink {
   0%, 55% { opacity: 1; }
   56%, 100% { opacity: 0; }
 }
 
 /* soft breathing for phase text */
-.awon-breathe {
-  animation: awon-breathe 1.6s ease-in-out infinite;
+.royalred-breathe {
+  animation: royalred-breathe 1.6s ease-in-out infinite;
 }
-@keyframes awon-breathe {
+@keyframes royalred-breathe {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }
 }
 
 /* CRT scanline overlay, extremely subtle */
-.awon-scanlines {
+.royalred-scanlines {
   background: repeating-linear-gradient(
     to bottom,
     transparent 0px,
@@ -166,10 +171,10 @@
 }
 
 /* signature glow on the boot button */
-.awon-glow {
+.royalred-glow {
   box-shadow:
-    0 0 0 1px rgba(16, 185, 129, 0.25),
-    0 0 24px rgba(16, 185, 129, 0.18);
+    0 0 0 1px rgba(239, 68, 68, 0.25),
+    0 0 24px rgba(239, 68, 68, 0.18);
 }
 
 /* console scrollbars */
@@ -189,10 +194,10 @@
 }
 
 /* markdown stream spacing */
-.awon-md > *:first-child {
+.royalred-md > *:first-child {
   margin-top: 0;
 }
-.awon-md > *:last-child {
+.royalred-md > *:last-child {
   margin-bottom: 0;
 }
 
@@ -202,19 +207,19 @@
 }
 
 /* faint engineering grid + vignette behind the console */
-.awon-grid-bg {
+.royalred-grid-bg {
   background-image:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(16, 185, 129, 0.05), transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(239, 68, 68, 0.05), transparent 70%),
     linear-gradient(rgba(128, 128, 128, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
   background-size: 100% 100%, 44px 44px, 44px 44px;
 }
 
 /* soft fade at the top edge of the scroll area */
-.awon-fade-top {
+.royalred-fade-top {
   position: relative;
 }
-.awon-fade-top::before {
+.royalred-fade-top::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
@@ -225,29 +230,29 @@
 }
 
 /* online status dot pulse */
-.awon-pulse-dot {
+.royalred-pulse-dot {
   position: relative;
 }
-.awon-pulse-dot::after {
+.royalred-pulse-dot::after {
   content: '';
   position: absolute;
   inset: -3px;
   border-radius: 9999px;
-  border: 1px solid rgba(16, 185, 129, 0.6);
+  border: 1px solid rgba(239, 68, 68, 0.6);
   opacity: 0;
-  animation: awon-pulse 2.2s ease-out infinite;
+  animation: royalred-pulse 2.2s ease-out infinite;
 }
-@keyframes awon-pulse {
+@keyframes royalred-pulse {
   0% { transform: scale(0.6); opacity: 0.8; }
   70% { transform: scale(1.6); opacity: 0; }
   100% { transform: scale(1.6); opacity: 0; }
 }
 
 /* entrance: fade + rise for chat rows and cards */
-.awon-rise {
-  animation: awon-rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+.royalred-rise {
+  animation: royalred-rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-@keyframes awon-rise {
+@keyframes royalred-rise {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -258,16 +263,16 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .awon-rise {
+  .royalred-rise {
     animation: none;
   }
 }
 
 /* expanded tool output panel: subtle slide */
-.awon-detail {
-  animation: awon-detail 0.2s ease-out both;
+.royalred-detail {
+  animation: royalred-detail 0.2s ease-out both;
 }
-@keyframes awon-detail {
+@keyframes royalred-detail {
   from {
     opacity: 0;
     transform: translateY(-3px);
@@ -279,33 +284,33 @@
 }
 
 /* score pill celebration when the artifact hits 10/10 */
-.awon-score-glow {
-  animation: awon-score-glow 1.8s ease-in-out infinite;
+.royalred-score-glow {
+  animation: royalred-score-glow 1.8s ease-in-out infinite;
 }
-@keyframes awon-score-glow {
+@keyframes royalred-score-glow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35);
   }
   50% {
-    box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.45);
+    box-shadow: 0 0 12px 2px rgba(239, 68, 68, 0.45);
   }
 }
 
 /* execution plan rail: hairline top glow so it reads as an active pipeline */
-.awon-rail {
+.royalred-rail {
   position: relative;
 }
-.awon-rail::after {
+.royalred-rail::after {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(16, 185, 129, 0.35), transparent);
+  background: linear-gradient(to right, transparent, rgba(239, 68, 68, 0.35), transparent);
 }
 
 /* thin scrollbars inside panels and code blocks (webkit above covers the app) */
 pre::-webkit-scrollbar,
-.awon-md pre::-webkit-scrollbar {
+.royalred-md pre::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }

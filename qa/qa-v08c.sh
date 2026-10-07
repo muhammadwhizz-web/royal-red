@@ -21,7 +21,7 @@ for i in $(seq 1 40); do
   if [ "$R" = "true" ]; then echo "overlay ready (waited ~$((i*3))s)"; break; fi
 done
 sleep 1   # let hydration settle
-agent-browser click "button.awon-glow" 2>&1 | head -1
+agent-browser click "button.royalred-glow" 2>&1 | head -1
 sleep 2.5  # cover the exit animation
 GONE=$(agent-browser eval "!document.body.innerText.includes('all systems nominal')" 2>/dev/null | tail -1)
 [ "$GONE" = "true" ] && echo "PASS: INITIALIZE dismisses overlay" || echo "FAIL: overlay still up"

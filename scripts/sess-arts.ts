@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 async function main() {
-  const arts = await db.awonArtifact.findMany({
+  const arts = await db.royalRedArtifact.findMany({
     where: { sessionId: 'cmutpxqwm000oplwi86k0i8e8' },
     orderBy: { createdAt: 'desc' },
     select: { id: true, name: true, files: true, createdAt: true },

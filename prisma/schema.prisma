@@ -7,33 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model AwonSession {
+model RoyalRedSession {
   id        String         @id @default(cuid())
   title     String         @default("New session")
   mode      String         @default("build")
   pinned    Boolean        @default(false)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
-  messages  AwonMessage[]
-  artifacts AwonArtifact[]
+  messages  RoyalRedMessage[]
+  artifacts RoyalRedArtifact[]
+
+  @@map("AwonSession") // physical table name preserved across the Royal Red rebrand - zero data migration
 }
 
-model AwonMessage {
+model RoyalRedMessage {
   id        String      @id @default(cuid())
   sessionId String
-  session   AwonSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session   RoyalRedSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   role      String
   content   String
   meta      String?
   createdAt DateTime    @default(now())
 
   @@index([sessionId, createdAt])
+  @@map("AwonMessage")
 }
 
-model AwonArtifact {
+model RoyalRedArtifact {
   id        String                @id @default(cuid())
   sessionId String
-  session   AwonSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session   RoyalRedSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   name      String
   kind      String                @default("site")
   entry     String                @default("index.html")
@@ -41,17 +44,18 @@ model AwonArtifact {
   score     Int?
   review    String?
   createdAt DateTime              @default(now())
-  versions  AwonArtifactVersion[]
+  versions  RoyalRedArtifactVersion[]
 
   @@index([sessionId, createdAt])
+  @@map("AwonArtifact")
 }
 
 // immutable snapshot of an artifact's files after every write; the diff view
 // reads from this history instead of the mutable artifact row
-model AwonArtifactVersion {
+model RoyalRedArtifactVersion {
   id         String       @id @default(cuid())
   artifactId String
-  artifact   AwonArtifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  artifact   RoyalRedArtifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
   version    Int
   files      String
   note       String?
@@ -59,17 +63,20 @@ model AwonArtifactVersion {
 
   @@unique([artifactId, version])
   @@index([artifactId, createdAt])
+  @@map("AwonArtifactVersion")
 }
 
-model AwonAccount {
+model RoyalRedAccount {
   id        String   @id @default(cuid())
   username  String   @unique
   role      String   @default("user")
   note      String?
   createdAt DateTime @default(now())
+
+  @@map("AwonAccount")
 }
 
-model AwonAudit {
+model RoyalRedAudit {
   id        String   @id @default(cuid())
   action    String
   detail    String?
@@ -77,12 +84,13 @@ model AwonAudit {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+  @@map("AwonAudit")
 }
 
 // constraint ledger (Phase 2.1): structured, testable requirements extracted
 // from the user prompt BEFORE the build starts; every entry gets a stable id
 // and is graded individually at verification time
-model AwonConstraint {
+model RoyalRedConstraint {
   id        String   @id @default(cuid())
   sessionId String
   cid       String // C1, C2, ... stable within the session
@@ -94,13 +102,14 @@ model AwonConstraint {
   createdAt DateTime @default(now())
 
   @@index([sessionId, createdAt])
+  @@map("AwonConstraint")
 }
 
 // verification receipts (Phase 2): one row per verification run per kind.
 // kind: ledger | critique | visual | benchmark | cms
 // status: pass | fail | partial | error | unverified
 // data: JSON report payload rendered by the console VERIFY tab
-model AwonVerification {
+model RoyalRedVerification {
   id         String   @id @default(cuid())
   sessionId  String
   artifactId String?
@@ -112,12 +121,13 @@ model AwonVerification {
 
   @@index([sessionId, createdAt])
   @@index([artifactId])
+  @@map("AwonVerification")
 }
 
 // second-model provider config (Phase 2.2): a critique-only model endpoint the
 // user brings. API keys are stored AES-256-GCM encrypted and are NEVER returned
 // by any API (only a masked hint). purpose is always "critique" in Phase 2.
-model AwonProviderConfig {
+model RoyalRedProviderConfig {
   id        String   @id @default(cuid())
   provider  String // openai | anthropic | custom
   label     String
@@ -129,6 +139,8 @@ model AwonProviderConfig {
   active    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("AwonProviderConfig")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,7 +151,7 @@ model AwonProviderConfig {
 
 // a desktop run: one user command that produced a dry-run plan and executed
 // (or was aborted). status: running | done | aborted
-model AwonRun {
+model RoyalRedRun {
   id           String   @id @default(cuid())
   sessionId    String
   status       String   @default("running") // running | done | aborted
@@ -153,12 +165,13 @@ model AwonRun {
   abortReason  String?
 
   @@index([sessionId, startedAt])
+  @@map("AwonRun")
 }
 
 // a consent request. tier: 1 (read) | 2 (write/move batch) | 3 (destructive,
 // per-action, never batchable). status: pending | approved | denied | expired
 // | frozen (kill switch) | superseded (a newer decision replaced it)
-model AwonConsent {
+model RoyalRedConsent {
   id         String    @id @default(cuid())
   sessionId  String
   runId      String?
@@ -176,12 +189,13 @@ model AwonConsent {
 
   @@index([sessionId, status, createdAt])
   @@index([runId])
+  @@map("AwonConsent")
 }
 
 // permanent consent rules. Only created by the user TYPING the rule verbatim
 // in the consent card (no checkbox anywhere in the product). The kernel matches
 // incoming ops against enabled rules; a match still logs an audit row.
-model AwonConsentRule {
+model RoyalRedConsentRule {
   id        String   @id @default(cuid())
   sessionId String?
   ruleText  String // verbatim typed text, shown back to the user forever
@@ -191,12 +205,13 @@ model AwonConsentRule {
   createdAt DateTime @default(now())
 
   @@index([op, enabled])
+  @@map("AwonConsentRule")
 }
 
 // write-ahead undo journal. EVERY mutating box op writes its inverse here
 // BEFORE executing. Trash files live under the box .awon-trash/<runId>/ tree;
 // nothing is ever unlinked by the agent - trash is the only "delete".
-model AwonUndoEntry {
+model RoyalRedUndoEntry {
   id        String   @id @default(cuid())
   runId     String
   sessionId String
@@ -210,4 +225,5 @@ model AwonUndoEntry {
 
   @@unique([runId, seq])
   @@index([sessionId, createdAt])
+  @@map("AwonUndoEntry")
 }

@@ -17,11 +17,11 @@ for i in $(seq 1 30); do
 done
 [ "$OK" = "1" ] || { echo "FAIL: no overlay"; exit 1; }
 sleep 1
-agent-browser click "button.awon-glow" >/dev/null 2>&1
+agent-browser click "button.royalred-glow" >/dev/null 2>&1
 sleep 2.5
 
 send_cmd() {
-  agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"AWON command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'$1'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
+  agent-browser eval "var ta=document.querySelector('textarea[aria-label=\"ROYAL RED command input\"]'); var set=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set; set.call(ta,'$1'); ta.dispatchEvent(new Event('input',{bubbles:true})); 'ok'" >/dev/null 2>&1
   agent-browser click '[aria-label="Send command"]' >/dev/null 2>&1
 }
 
@@ -38,14 +38,14 @@ done
 echo "long session ready"
 
 # jump pill test on the current (long) session
-agent-browser eval "var el=document.querySelector('[aria-label=\"AWON conversation\"]'); el.scrollTop=0; 'scrolled'" >/dev/null 2>&1
+agent-browser eval "var el=document.querySelector('[aria-label=\"ROYAL RED conversation\"]'); el.scrollTop=0; 'scrolled'" >/dev/null 2>&1
 sleep 1
 PILL=$(agent-browser eval "!!document.querySelector('[aria-label=\"Jump to the latest message\"]')" 2>/dev/null | tail -1)
 [ "$PILL" = "true" ] && echo "PASS: jump pill appears on scroll-up" || echo "FAIL: jump pill"
 agent-browser screenshot $SHOT-pill.png >/dev/null 2>&1
 agent-browser click '[aria-label="Jump to the latest message"]' >/dev/null 2>&1
 sleep 2
-ATB=$(agent-browser eval "var el=document.querySelector('[aria-label=\"AWON conversation\"]'); (el.scrollHeight-el.scrollTop-el.clientHeight) < 120" 2>/dev/null | tail -1)
+ATB=$(agent-browser eval "var el=document.querySelector('[aria-label=\"ROYAL RED conversation\"]'); (el.scrollHeight-el.scrollTop-el.clientHeight) < 120" 2>/dev/null | tail -1)
 [ "$ATB" = "true" ] && echo "PASS: jump returns to bottom" || echo "FAIL: jump bottom ($ATB)"
 PILLGONE=$(agent-browser eval "!document.querySelector('[aria-label=\"Jump to the latest message\"]')" 2>/dev/null | tail -1)
 [ "$PILLGONE" = "true" ] && echo "PASS: pill hides at bottom" || echo "WARN: pill still visible"

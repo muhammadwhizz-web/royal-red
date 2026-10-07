@@ -1,8 +1,8 @@
 // Verification: every artifact must have >=1 version snapshot; every repaired row too.
 import { db } from '@/lib/db'
 async function main() {
-  const artifacts = await db.awonArtifact.findMany({ select: { id: true, sessionId: true, entry: true, files: true, createdAt: true } })
-  const versions = await db.awonArtifactVersion.findMany({ select: { artifactId: true, version: true, note: true, files: true } })
+  const artifacts = await db.royalRedArtifact.findMany({ select: { id: true, sessionId: true, entry: true, files: true, createdAt: true } })
+  const versions = await db.royalRedArtifactVersion.findMany({ select: { artifactId: true, version: true, note: true, files: true } })
   const distinctIds = new Set(versions.map(v => v.artifactId))
   console.log(`artifacts total:              ${artifacts.length}`)
   console.log(`distinct artifact_ids in ver: ${distinctIds.size}`)

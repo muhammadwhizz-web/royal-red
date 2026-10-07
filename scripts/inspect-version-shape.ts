@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 async function main() {
-  const v = await db.awonArtifactVersion.findFirst({ orderBy: { createdAt: 'desc' } })
+  const v = await db.royalRedArtifactVersion.findFirst({ orderBy: { createdAt: 'desc' } })
   const f = JSON.parse(v!.files as string)
   console.log('top-level keys:', Object.keys(f))
   const asJson = JSON.stringify(f, null, 1)

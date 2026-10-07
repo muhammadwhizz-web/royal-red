@@ -494,3 +494,75 @@ Work Log:
 
 Stage Summary:
 - 23.1% now has a starting line: a bucket table with costs, a today-pilotable A3 class covered by the Box, and a one-command regeneration path for the full row-level sheet once the payload returns
+---
+Task ID: 1-c
+Agent: Explore (framework/planner cluster)
+Task: Inventory ollama, open-webui, langgraph, vllm, sampleproject, Pkmer-Obsidian, ai-business-planner, browser-use (read-only; report at /home/z/rr-payload/reports/cluster-c-frameworks.md)
+
+Work Log:
+- Read worklog tail for context (kernel Phase 4: consent tiers, path prison, honesty doctrine) and used it as the judging lens
+- Surveyed all 8 repos: sizes, LICENSE/README heads, manifests; then per-repo targeted reads
+- ollama: Go local-model runtime; confirmed /v1/* OpenAI-compat + Anthropic /v1/messages endpoints (server/routes.go:2292-2348), embedded llama.cpp b11351 + MLX, MIT
+- open-webui: SvelteKit+FastAPI chat product v0.11.4; FOUND LICENSE TRAP - multi-license (MIT -> BSD-3 -> custom "Open WebUI License") whose clause 4 forbids branding removal in web deployments (<=50 users carve-out); identified BYOK connection-registry pattern (routers/openai.py, per-connection url+key+config, Anthropic x-api-key at :484-491)
+- langgraph: v1.2.14 MIT monorepo; located interrupt()/Command semantics (types.py:833-893) and checkpointer base (libs/checkpoint/) as pattern vocabulary only - kernel already owns consent+journal
+- vllm: Apache-2.0, OpenAI-compat server entrypoints/openai; version "dev" in checkout; GPU-server-class backend only, ollama covers consumer machines
+- sampleproject: VERIFIED MISMATCH - entire source is add_one() in src/sample/simple.py; pypa packaging sample, MIT; zero Budget Planner content
+- Pkmer-Obsidian: VERIFIED MISMATCH - Obsidian plugin/theme marketplace (Vue, pkmer.cn CDN, OAuth quotas); grep for openai|ollama|llm|gpt|schedule|weekly|plan across src = zero hits; MIT; found real bugs: downloader.ts:25 unguarded JSON.parse of localStorage, :73-74/:146-147 bare global `app` behind @ts-ignore vs manifest isDesktopOnly:false
+- ai-business-planner: verified 35KB pure markdown (AGENTS.md routing table, 9 task files, 7 business rules, workflow with agreement gates, Cursor adapters); no code; MIT; evidence-labeling contract (Observed/External/Inferred/Unknown) maps ~1:1 onto kernel honesty doctrine - sleeper find
+- browser-use: v0.13.11 MIT agent framework; judged duplicate-to-avoid vs kernel's own Xvfb/consent browser stack; extracted portable patterns: step-budget messaging + max-steps tool-mask (agent/service.py:1548-1572), DOM->indexed-LLM-text serializer (dom/)
+- Wrote full per-repo report with verdict table to /home/z/rr-payload/reports/cluster-c-frameworks.md
+
+Stage Summary:
+- Verdicts: ollama BACKEND-ONLY; vllm BACKEND-ONLY; open-webui EXTRACT-PRIMITIVES (patterns only, license trap); langgraph EXTRACT-PRIMITIVES (pattern vocab); ai-business-planner EXTRACT-PRIMITIVES (prompt-layer architecture, highest value/byte); browser-use EXTRACT-PRIMITIVES (step-budget + DOM-serializer patterns); sampleproject BUILD-FROM-SCRATCH (NO match); Pkmer-Obsidian BUILD-FROM-SCRATCH (NO match). REUSE-AS-PRODUCT: 0/8
+- Most important finding: 2 of 8 claimed uses are outright false (sampleproject has one add_one() function, no Budget Planner; Pkmer has zero LLM/schedule code) - and the two real backends (ollama, vllm) collapse to ONE integration surface: a single OpenAI-compatible engine abstraction; open-webui's custom branding clause makes any de-branded web fork a license breach, so its BYOK connection registry must be reimplemented, not copied
+---
+Task ID: 1-a
+Agent: Explore (deepseek cluster)
+Task: Inventory deepseek-harness-master, DeepSeek-V3-main, fileforge-triggerdev-main, pdf-pipeline-main
+
+Work Log:
+- Read worklog context (Phases 1-4 AWON kernel, consent tiers, box primitives, acceptance test green)
+- deepseek-harness-master: verified it is the OFFICIAL DeepSeek-AI agent harness `dsh` v0.2.1-alpha.1 (MIT, developer preview) - an everything-is-a-plugin agent product framework on vendored Cordis, NOT eval/training/inference. 157MB / 14,207 files / ~2,821 TS sources / 1,514 spec files / 50+ packages; apps cli+web+electron; Python SDK; ACP; Landlock launcher. Read README, AGENTS.md, docs/architecture.md (turn/step flow), core/tools + agent-loop + session + llm READMEs, agent-loop/src/index.ts, sandbox/roots.ts, SAFETY.md, pnpm-workspace (vendor/pinned closures incl. claude-agent-sdk + codex payloads). Found: root LICENSE file MISSING from snapshot while README/package.json declare MIT; TODO(hook-continue-false) hooks-codex/src/index.ts:178 (Stop hook cannot halt a run); 71 TODO/FIXME total; SAFETY.md unaudited. No functional bugs in skimmed core files
+- DeepSeek-V3-main: full file listing + greps - it is the 671B model metadata/paper repo + reference PyTorch inference (model.py 808 lines, generate.py, fp8_cast_bf16); NO weights, NO word-search/maze/tracing code (0 grep hits). LICENSE-CODE MIT + LICENSE-MODEL DeepSeek agreement with use restrictions. Claimed use = NO
+- fileforge-triggerdev-main: read all 2 source files + configs - 15-file SaaS demo (React receipt -> @fileforge/react-print compile -> Fileforge hosted PDF -> Trigger.dev cloud task). Two third-party cloud accounts required, beta deps from 2024, returns cloud-hosted URL (data egress), ISC declared but no LICENSE file. Claimed doc/PDF product line = NO (pattern only)
+- pdf-pipeline-main: read index.ts, pdf.service.ts, sqs/notification services, config, templates - generic SQS->Mustache->Puppeteer->S3->webhook microservice, invoice/statement templates only, nothing legal/contract-specific. Claimed use = PARTIAL. Real bugs seen: browser.close() only on success path in pdf.service.ts:15-34 (Chromium leak per failed render); pollingDelay sleeps in per-message finally index.ts:128-134 (10x sleeps per batch); no DLQ/receive-count guard -> poison messages loop + error webhook per retry index.ts:114-127; global lodash templateSettings mutation index.ts:12; hardcoded --no-sandbox config/index.ts:20
+- Wrote report /home/z/rr-payload/reports/cluster-a-deepseek.md (verdict table + Deep Dive with architecture diagram, adoption plan, effort estimates)
+
+Stage Summary:
+- deepseek-harness-master: EXTRACT-PRIMITIVES - official DeepSeek agent harness, matches claimed use; port 5 primitive sets (session event log, tools policy pipeline, llm adapter seam, agent-loop semantics, sandbox roots) into AWON, do NOT rewrite the 157MB monorepo
+- DeepSeek-V3-main: BUILD-FROM-SCRATCH - model config/paper repo, cannot run locally, zero generator code
+- fileforge-triggerdev-main: BUILD-FROM-SCRATCH (extract React->PDF pattern only) - 2-file SaaS demo with cloud egress
+- pdf-pipeline-main: EXTRACT-PRIMITIVES - generic queue->PDF service, PARTIAL for legal-doc line, 5 real bugs to fix in any port
+- MOST IMPORTANT FINDING: deepseek-harness-master is the payload's crown jewel - a production-shaped, heavily tested (1,514 spec files) MIT agent harness whose session-log/tool-policy/llm-seam/sandbox-roots designs map 1:1 onto the AWON kernel; but the root LICENSE file is missing from the delivered snapshot and must be recovered from upstream before any derivative code ships
+---
+Task ID: 1-b-1
+Agent: Explore (products b1)
+Task: Inventory coloring-book, Verba, AI-Resume-Generator (read-only; report at /home/z/rr-payload/reports/cluster-b1-products.md)
+
+Work Log:
+- Read worklog tail for context (kernel honesty doctrine, BYOK web product, prior cluster verdicts) and judged against it
+- coloring-book-main: MIT (c) 2026 Pierce Boggan; verified it is a full commercial SaaS (Next.js15+Supabase+Sentry/Amplitude, iOS/Android clients). CLAIM CHECK: "local edge detection/SD for 0 tokens" is FALSE - grep for edge-detect/opencv/SD/replicate = zero hits; line art comes from paid cloud APIs (OpenAI Responses / Gemini gemini-2.5-flash-image) with per-call cost tracking (openai.ts estimatedCostUSD); sharp used only for watermarking. Extractables: BASE_COLORING_PROMPT, provider-abstract image seam w/ latency+cost metadata, sharp SVG watermark, A4 photobook PDF pipeline (photobook/queue.ts), provider benchmark route. Real bug: HARDCODED OpenAI org 'org-xBug09vn6Yh8Uf19bKLjgxxu' at src/lib/openai.ts:65 (fork hazard); auth.json + personal images committed at root
+- Verba-main: BSD-3-Clause (Weaviate 2020-2023, 3-clause verified); README banner = PROJECT DISCONTINUED/ARCHIVED. Architecture skim: goldenverba (55 py files) = FastAPI + weaviate-client 4.9.6 + vendored built frontend; plugin architecture (Reader/Chunker/Embedder/Retriever/Generator, interfaces.py) with requires_env/requires_library availability gating - maps onto kernel BYOK key detection; 8 chunkers (SemanticChunker = sklearn cosine breakpoints); 9 generator wrappers; 1 WindowRetriever. CLAIM CHECK: "generating card text for Alphabet Flashcards" = NO flashcard/card/deck logic anywhere - PARTIAL pattern-only. No file:line bugs in skimmed core; structural hazard = archived + CVE-carrying pinned deps (weaviate-client==4.9.6, fastapi==0.111.1, requests==2.31.0)
+- AI-Resume-Generator-main: 35-file MERN tutorial demo; ONE feature = Cohere generate (model command, maxTokens 300, temp 0.7) returning Markdown. LICENSE MISSING - README claims "MIT (LICENSE)" but no LICENSE file exists in tree (find verified) and backend/package.json says ISC = license chain broken, unusable for derivatives. CLAIM CHECK: "LaTeX/JSON templates" = FALSE (grep latex/template/.tex across JS/JSON = marketing strings only). Bugs: prompt hardcodes John Doe/johndoe@example.com into every resume (resumeAiController.js:23-40); maxTokens:300 truncates every 7-section resume; education unvalidated -> "undefined" in prompt; generate route has no auth/rate-limit
+- Wrote per-repo report with verdict table to /home/z/rr-payload/reports/cluster-b1-products.md
+
+Stage Summary:
+- Verdicts: coloring-book EXTRACT-PRIMITIVES (prompt + provider/cost seam + watermark + PDF; local 0-token line-art does NOT exist here - build from scratch); Verba EXTRACT-PRIMITIVES pattern-only (plugin interface + BYOK availability gating + chunker menu; never deploy, archived upstream); AI-Resume BUILD-FROM-SCRATCH (license missing + zero claimed tech present). REUSE-AS-PRODUCT: 0/3
+- Honesty audit: 1/3 claims false at feature level (no LaTeX/JSON/templates in AI-Resume), 1/3 false at cost-model level (coloring-book is cloud-API-per-page, opposite of "0 tokens local"), 1/3 partial (Verba is RAG but has no flashcard code)
+- Zip completeness: all three look like full upstream trees minus .git; only AI-Resume has a provenance question (LICENSE file absent while README references it - upstream check needed before any use)
+
+---
+Task ID: 1-b-2
+Agent: Explore (products b2)
+Task: Inventory slidev, Fooocus, stable-diffusion-webui (read-only; report at /home/z/rr-payload/reports/cluster-b2-products.md)
+
+Work Log:
+- Read worklog tail for context (kernel phases, consent/honesty doctrine, cluster-a/c verdict patterns) and judged B2 with the same lens (BYOK web product, local GPU optional)
+- slidev-main v53.0.0: MIT monorepo (791 files, node>=22.12) - packages parser (core.ts 454L standalone MD->slide AST), client (204-file Vue app, builtin layouts), slidev CLI (playwright-chromium + pdf-lib + pptxgenjs export), create-theme scaffold; snapshot also ships upstream's own skills/slidev SKILL.md (generated from docs v52.11.3). Claim "MD->deck, zero AI token cost" = PARTIAL: renderer claim true, framework claim misleading (Vite+Chromium, not a library); no AI in repo. Verdict EXTRACT-PRIMITIVES (@slidev/parser + layout contract; own thin renderer; optional sandboxed @slidev/cli export). No bugs found at skim depth
+- Fooocus-main: GPL-3.0 (LICENSE), 612 files; webui.py = single Gradio 3.41.2 Blocks().queue() app (:153, :1122-1125), async_worker/core pipeline, ldm_patched = vendored ComfyUI-derived engine; NO REST API in repo (community Fooocus-API is a different fork) - usable surface = gradio_client against queue endpoints or import async_worker; models/ = downloader placeholders (weights fetched first run). Claim "local offline generator for minimalist logos" = PARTIAL: local/offline yes, logos is just SDXL prompting, no logo capability in code. Real bug: launch.py:15 ssl._create_default_https_context = ssl._create_unverified_context globally disables TLS verification; webui.py:1122-1125 auth only when listen/share AND auth file present. Verdict BACKEND-ONLY (second choice; GPL + gradio_client fragility)
+- stable-diffusion-webui-master: v1.10.1 (CHANGELOG head), AGPL-3.0 (LICENSE.txt), 315 files/4.6MB - judged the 2MB-zip warning as ALARMIST: near-complete source (modules 134 entries incl. api/api.py 928L FastAPI /sdapi/v1/*, processing.py 1792L, sd_models.py 1034L, extensions-builtin 11, javascript 25, scripts 12, test 10); only real gaps = localizations/*.json stripped (~24 files, cosmetic) + models/embeddings placeholders (normal, weights never in git); no .git so provenance via CHANGELOG/manifest consistency. Claim = PARTIAL (real local hi-res pipeline; "zero API expenses" elides user's GPU/checkpoint cost). Verdict BACKEND-ONLY, preferred over Fooocus: documented REST API via --api, unmodified-user-run appliance keeps AGPL clean
+- Wrote per-repo report with zip-completeness notes + cross-cutting conclusions to /home/z/rr-payload/reports/cluster-b2-products.md
+
+Stage Summary:
+- Verdicts: slidev EXTRACT-PRIMITIVES (MIT parser + layout vocab, BUILD the thin renderer - do NOT embed the Vite/Playwright framework); Fooocus BACKEND-ONLY (no API surface, GPL-3.0, TLS-verification bug); stable-diffusion-webui BACKEND-ONLY and FIRST CHOICE (v1.10.1 snapshot near-complete, real /sdapi/v1 REST, AGPL-clean if run unmodified by the user)
+- Key honest findings: (1) 0 of 3 payload claims are fully accurate - all PARTIAL; "zero AI/zero cost" framing hides that deck content and image generation both ride on the user's own keys/GPU/bandwidth; (2) no repo has any logo-specific capability - the "minimalist logo icons" line is pure prompting we must build and temper; (3) image backend collapses to ONE integration (A1111 /sdapi/v1 first, Fooocus gradio_client fallback); (4) both image apps need multi-GB first-run downloads, so "offline" only post-bootstrap; (5) slidev ships an agent skill - ready-made blueprint for LLM-authored decks under BYOK
