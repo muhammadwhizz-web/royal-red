@@ -21,6 +21,7 @@ import { extractAndSaveLedger, ledgerForBuilder } from './verify/ledger'
 import { runVerification, verifyCritique } from './verify/engine'
 import { appendEvent, durableEmitter } from './event-log'
 import { seamComplete } from './llm/seam'
+import { runOrchestratedTurn, shouldOrchestrate } from './orchestrator'
 
 type Emit = (e: RoyalRedSseEvent) => void
 
@@ -130,6 +131,22 @@ export async function runRoyalRedTurn(opts: {
   // otherwise iterations keep burning model calls after the UI is gone
   const stopped = () => opts.signal?.aborted === true
   ensureWorkspace()
+
+  // ── Phase 5 slice 1 (Round 4): orchestration routing ─────────────────────
+  // `/team <command>` forces the planner/builder pair; a compound
+  // research+build command (e.g. "research 3 coffee brands and write a
+  // landing page comparing them") auto-detects. Everything else takes the
+  // proven single-agent loop, byte-for-byte unchanged.
+  const teamMatch = opts.userText.trim().match(/^\/team\b\s?(.*)$/is)
+  const orchestrated = !!teamMatch || shouldOrchestrate(stripModePrefix(opts.userText))
+  if (orchestrated) {
+    return runOrchestratedTurn({
+      sessionId,
+      userText: teamMatch ? teamMatch[1].trim() : stripModePrefix(opts.userText),
+      emit: opts.emit,
+      signal: opts.signal,
+    })
+  }
 
   const userText = stripModePrefix(opts.userText)
   const slash = opts.userText.trim().startsWith('/')

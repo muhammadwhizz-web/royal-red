@@ -13,10 +13,11 @@
 //       opens the 30s refuse window. abortOneRun is a scalpel and shares no
 //       state with the consent freeze.
 //
-// WHAT THIS IS NOT (per the Round 2 freeze, still in force)
-//   This is NOT Phase 5. No sub-agents, no planner, no critic team. This
-//   module only makes the RUN a first-class, countable, individually-stoppable
-//   unit so that Phase 5 is safe when (and only when) it opens.
+// WHAT THIS IS (since Round 4)
+//   The same process table now hosts SUB-AGENTS: a sub-agent is a run with a
+//   parent (parentRunId/role/depth on the row — see subagents.ts). The scalpel
+//   therefore stops sub-agents too, with full attribution, and an aborted
+//   sub-agent emits its `subagent/aborted` lifecycle event here.
 //
 // WHY THE AUDIT/EVENT LOGS MATTER HERE
 //   With N runs per session, a log line that does not name its run is noise.
@@ -27,6 +28,7 @@
 
 import { db } from '@/lib/db'
 import { markRunAborted } from './box/abort-state'
+import { appendEvent } from './event-log'
 
 export interface RunProcEntry {
   runId: string
@@ -98,10 +100,24 @@ export async function abortOneRun(
     data: {
       action: 'desktop.abort.one',
       runId,
+      // sub-agent attribution (Round 4): aborting a sub-agent names WHO was
+      // cut and WHO sent it
+      subAgentId: row.role ? `${row.role}:${runId}` : null,
+      parentRunId: row.parentRunId,
       detail: `single-run abort: ${runId} (${row.tool}) — ${reason.slice(0, 200)}; siblings untouched`,
       ok: true,
     },
   })
+  // sub-agent lifecycle: an aborted SUB-AGENT gets its own typed event so the
+  // parent session log shows the full lifecycle (spawned -> aborted)
+  if (row.role) {
+    void appendEvent({
+      sessionId: row.sessionId,
+      runId,
+      type: 'subagent/aborted',
+      payload: { role: row.role, subAgentId: `${row.role}:${runId}`, parentRunId: row.parentRunId, reason: reason.slice(0, 200) },
+    })
+  }
   releaseRun(runId, 'aborted')
   return { ok: true, existed: true }
 }

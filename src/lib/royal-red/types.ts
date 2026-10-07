@@ -112,6 +112,8 @@ export type RoyalRedSseEvent =
   | { type: 'desktop_plan'; planId: string; toolName: string; summary: { total: number; proposable: number; refused: number; flagged: number; byClass: Record<string, number>; bytes: number }; steps: unknown[] }
   | { type: 'desktop_step'; runId: string; seq: number; op: string; detail: string; ok: boolean }
   | { type: 'desktop_run'; runId: string; status: string; total: number; executed?: number }
+  // Phase 5 slice 1 (Round 4): sub-agent lifecycle on the console transcript
+  | { type: 'subagent'; phase: 'spawned' | 'finished' | 'aborted' | 'verdict'; role: string; runId: string; parentRunId?: string; label?: string; status?: string }
   | { type: 'done' }
 
 // UI chat items

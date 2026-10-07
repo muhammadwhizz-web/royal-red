@@ -22,10 +22,22 @@ import { requestConsent, findMatchingRule, type ConsentAnswer } from './consent'
 import { isAborted as checkAbort, markRunAborted, setGlobalAbort } from './abort-state'
 import { registerRun, releaseRun } from '../runqueue'
 import { appendEvent } from '../event-log'
+import { waitWhilePaused } from '../pause-state'
 
 // re-export the shared checker so existing importers keep working
 export function isAborted(runId: string): boolean {
   return checkAbort(runId)
+}
+
+/**
+ * Sub-agent attribution for a run (Round 4 law: no sub-agent action is
+ * unattributed). Returns the audit-stamp for rows written while executing
+ * this run: `<role>:<runId>` + the parent that spawned it — null for
+ * user-initiated runs (those are attributed by runId alone).
+ */
+export async function runAttribution(runId: string): Promise<{ subAgentId: string | null; parentRunId: string | null }> {
+  const r = await db.royalRedRun.findUnique({ where: { id: runId }, select: { role: true, parentRunId: true } })
+  return { subAgentId: r?.role ? `${r.role}:${runId}` : null, parentRunId: r?.parentRunId ?? null }
 }
 
 type Emit = (e: unknown) => void
@@ -49,7 +61,12 @@ export async function triggerAbort(sessionId: string | undefined, reason: string
 
 // ─── run lifecycle ───────────────────────────────────────────────────────────
 
-export async function beginRun(sessionId: string, tool: string, plan: DryRunPlan): Promise<string> {
+export async function beginRun(
+  sessionId: string,
+  tool: string,
+  plan: DryRunPlan,
+  extras?: { parentRunId?: string; role?: string; depth?: number },
+): Promise<string> {
   ensureBoxTree()
   const id = `run_${randomUUID().slice(0, 12)}`
   await db.royalRedRun.create({
@@ -60,6 +77,10 @@ export async function beginRun(sessionId: string, tool: string, plan: DryRunPlan
       planJson: JSON.stringify(plan).slice(0, 400_000),
       planHash: plan.hash,
       actionsTotal: plan.summary.proposable,
+      // Phase 5 slice 1: sub-agent fields (null/0 for user-initiated runs)
+      parentRunId: extras?.parentRunId ?? null,
+      role: extras?.role ?? null,
+      depth: extras?.depth ?? 0,
     },
   })
   // RUN QUEUE (Phase-5 groundwork): every run is a first-class process. It is
@@ -67,7 +88,7 @@ export async function beginRun(sessionId: string, tool: string, plan: DryRunPlan
   // log with its runId, so N concurrent runs per session are trackable and
   // their log rows are attributable without convention or guesswork.
   registerRun({ runId: id, sessionId, label: tool, startedAt: new Date().toISOString() })
-  void appendEvent({ sessionId, runId: id, type: 'run/started', payload: { tool, steps: plan.summary.proposable } })
+  void appendEvent({ sessionId, runId: id, type: 'run/started', payload: { tool, steps: plan.summary.proposable, role: extras?.role ?? null, parentRunId: extras?.parentRunId ?? null } })
   return id
 }
 
@@ -268,7 +289,7 @@ export async function trashStats(): Promise<{ files: number; bytes: number; olde
 
 export async function executePlan(
   plan: DryRunPlan,
-  opts: { sessionId: string; emit: Emit; approvedHash: string; consentId: string; contentBySeq?: Map<number, string> },
+  opts: { sessionId: string; emit: Emit; approvedHash: string; consentId: string; contentBySeq?: Map<number, string>; extras?: { parentRunId?: string; role?: string; depth?: number } },
 ): Promise<{ runId: string; executed: number; refused: number; aborted: boolean; lines: string[] }> {
   const { sessionId, emit } = opts
   if (opts.approvedHash !== plan.hash) {
@@ -276,11 +297,15 @@ export async function executePlan(
     await db.royalRedAudit.create({ data: { action: 'desktop.exec.hash_mismatch', detail: `approved=${opts.approvedHash} got=${plan.hash}`, ok: false } })
     throw new Error('plan hash mismatch: the approved dry-run is not this plan (refusing to execute)')
   }
-  const runId = await beginRun(sessionId, 'box_batch', plan)
+  const runId = await beginRun(sessionId, 'box_batch', plan, opts.extras)
   const steps = plan.steps.filter((s): s is PlanStep => s.proposable)
   const lines: string[] = []
   let executed = 0
   let aborted = false
+  // sub-agent attribution: box plans executed BY a sub-agent run stamp every
+  // step row with subAgentId + parentRunId (the attribution law extends to
+  // any future sub-agent that executes box ops)
+  const attribution = await runAttribution(runId)
 
   emit({ type: 'desktop_run', runId, status: 'running', total: steps.length })
 
@@ -288,6 +313,13 @@ export async function executePlan(
     if (isAborted(runId)) {
       aborted = true
       lines.push('ABORTED by kill switch - remaining steps untouched, journal intact')
+      break
+    }
+    // PAUSE (kill-switch mode 3): freeze at the step boundary, state kept.
+    // Not paused -> returns immediately; aborted while paused -> abort path.
+    if ((await waitWhilePaused(sessionId, () => isAborted(runId))) === 'aborted') {
+      aborted = true
+      lines.push('ABORTED while paused - remaining steps untouched, journal intact')
       break
     }
 
@@ -309,12 +341,12 @@ export async function executePlan(
         )
         if (ans.status !== 'approved') {
           lines.push(`trash ${step.from}: ${ans.status} by you - skipped`)
-          await db.royalRedAudit.create({ data: { action: 'desktop.trash', runId, detail: `${step.from} ${ans.status}`, ok: false } })
+          await db.royalRedAudit.create({ data: { action: 'desktop.trash', runId, subAgentId: attribution.subAgentId, parentRunId: attribution.parentRunId, detail: `${step.from} ${ans.status}`, ok: false } })
           emit({ type: 'desktop_step', runId, seq: step.seq, op: 'trash', detail: `${step.from} - ${ans.status}`, ok: false })
           continue
         }
       } else {
-        await db.royalRedAudit.create({ data: { action: 'desktop.trash.rule', runId, detail: `${step.from} matched typed rule "${rule.ruleText}"`, ok: true } })
+        await db.royalRedAudit.create({ data: { action: 'desktop.trash.rule', runId, subAgentId: attribution.subAgentId, parentRunId: attribution.parentRunId, detail: `${step.from} matched typed rule "${rule.ruleText}"`, ok: true } })
         emit({ type: 'desktop_step', runId, seq: step.seq, op: 'rule', detail: `typed rule matched: ${rule.ruleText}`, ok: true })
       }
     }
@@ -326,12 +358,12 @@ export async function executePlan(
       await db.royalRedRun.update({ where: { id: runId }, data: { actionsDone: executed } })
       // every step row names its run: with N concurrent runs per session the
       // audit log must distinguish runs structurally (runId column), not by
-      // timestamp proximity
-      await db.royalRedAudit.create({ data: { action: `desktop.${step.op}`, runId, detail: line, ok: true } })
+      // timestamp proximity. Sub-agent rows ALSO name the sub-agent + parent.
+      await db.royalRedAudit.create({ data: { action: `desktop.${step.op}`, runId, subAgentId: attribution.subAgentId, parentRunId: attribution.parentRunId, detail: line, ok: true } })
       emit({ type: 'desktop_step', runId, seq: step.seq, op: step.op, detail: line, ok: true })
     } catch (err) {
       lines.push(`step ${step.seq} (${step.op} ${step.from}) failed: ${(err as Error).message}`)
-      await db.royalRedAudit.create({ data: { action: `desktop.${step.op}`, runId, detail: `${step.from} failed: ${(err as Error).message.slice(0, 200)}`, ok: false } })
+      await db.royalRedAudit.create({ data: { action: `desktop.${step.op}`, runId, subAgentId: attribution.subAgentId, parentRunId: attribution.parentRunId, detail: `${step.from} failed: ${(err as Error).message.slice(0, 200)}`, ok: false } })
       emit({ type: 'desktop_step', runId, seq: step.seq, op: step.op, detail: (err as Error).message, ok: false })
     }
   }

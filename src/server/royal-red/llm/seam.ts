@@ -34,6 +34,7 @@ import type { CanonicalMessage, CapabilityRequest, RoutingPolicy } from '../prov
 import { DEFAULT_POLICY } from '../providers/types'
 import { recordFailure, recordSuccess } from '../providers/health'
 import { recordCost } from '../router/ledger'
+import { checkBudget, recordUsage, estimateTokens, type BudgetRole } from '../budget'
 
 const HOUSE_PROVIDER_ID = 'house-zai'
 const HOUSE_MODEL = 'house-default (platform built-in)'
@@ -71,6 +72,7 @@ export interface SeamMeta {
   attempts: number
   switches: RotationEvent[]
   error?: string
+  budgetExhausted?: boolean
 }
 
 export interface SeamResult {
@@ -89,6 +91,13 @@ export interface SeamCompleteOpts {
   /** route through the provider matrix FIRST (BYO-key path) */
   routeFirst?: boolean
   policy?: Partial<RoutingPolicy>
+  // Round 4 (Phase 5 slice 1): budget-attributed calls. When a runId is
+  // present the seam (a) refuses the call if that run already burned its
+  // ceiling (escalation rule 1: the NEXT call is refused, never the in-flight
+  // one), (b) records usage against the run, and (c) stamps the cost-ledger
+  // row + llm/* events with the runId so receipts are reconstructible per run.
+  runId?: string
+  role?: BudgetRole
 }
 
 function withTimeout<T>(p: Promise<T>, timeoutMs: number | undefined, label: string): Promise<T> {
@@ -122,10 +131,35 @@ async function houseVision(messages: unknown[]): Promise<string> {
 // ---------- the seam: chat ----------
 
 export async function seamComplete(opts: SeamCompleteOpts): Promise<SeamResult> {
+  const role: BudgetRole = opts.role ?? 'top'
+  // BUDGET GATE (before anything): an exhausted run is refused its next call.
+  // The refusal is a typed meta flag — the CALLER owns the budget/exhausted
+  // event + audit row (it knows the sub-agent identity), the seam stays a
+  // pure gate.
+  if (opts.runId) {
+    const budget = checkBudget(opts.runId, role)
+    if (!budget.ok) {
+      return {
+        ok: false,
+        text: '',
+        meta: {
+          path: 'house',
+          provider: HOUSE_PROVIDER_ID,
+          model: HOUSE_MODEL,
+          latencyMs: 0,
+          costUsd: 0,
+          attempts: 0,
+          switches: [],
+          budgetExhausted: true,
+          error: `budget: run refused its next model call (${budget.reason}) — used ${budget.used?.tokensIn ?? 0} in / ${budget.used?.tokensOut ?? 0} out of caps ${budget.caps?.tokensIn ?? '?'}/${budget.caps?.tokensOut ?? '?'}`,
+        },
+      }
+    }
+  }
   const policy: RoutingPolicy = { ...DEFAULT_POLICY, preferLocal: true, ...(opts.policy ?? {}) }
   const header = buildHeader(opts.operation, 'chat', opts.routeFirst ?? false, policy)
   if (opts.sessionId) {
-    void appendEvent({ sessionId: opts.sessionId, type: 'llm/request-header', payload: { ...header } })
+    void appendEvent({ sessionId: opts.sessionId, runId: opts.runId ?? null, type: 'llm/request-header', payload: { ...header } })
   }
 
   const t0 = Date.now()
@@ -145,15 +179,16 @@ export async function seamComplete(opts: SeamCompleteOpts): Promise<SeamResult> 
     const res = await execute(req)
     switches.push(...res.switches)
     for (const s of res.switches) {
-      if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, type: 'llm/rotation', payload: { ...s } })
+      if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, runId: opts.runId ?? null, type: 'llm/rotation', payload: { ...s } })
     }
     if (res.ok && res.text) {
-      await recordCost({ operation: opts.operation, modality: 'chat', providerId: res.decision.chosen?.providerId ?? 'router', model: res.decision.chosen?.model ?? '?', tokensIn: 0, tokensOut: 0, costUsd: res.totalCostUsd, latencyMs: Date.now() - t0, outcome: 'ok', attempt: 1 })
-      if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, type: 'llm/attempt', payload: { operation: opts.operation, path: 'router', provider: res.decision.chosen?.providerId, outcome: 'ok', latencyMs: Date.now() - t0, costUsd: res.totalCostUsd, switches: res.switches.length } })
+      await recordCost({ operation: opts.operation, modality: 'chat', providerId: res.decision.chosen?.providerId ?? 'router', model: res.decision.chosen?.model ?? '?', tokensIn: 0, tokensOut: 0, costUsd: res.totalCostUsd, latencyMs: Date.now() - t0, outcome: 'ok', attempt: 1, runId: opts.runId })
+      if (opts.runId) recordUsage(opts.runId, role, opts.messages.reduce((a, m) => a + estimateTokens(m.content), 0), estimateTokens(res.text))
+      if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, runId: opts.runId ?? null, type: 'llm/attempt', payload: { operation: opts.operation, path: 'router', provider: res.decision.chosen?.providerId, outcome: 'ok', latencyMs: Date.now() - t0, costUsd: res.totalCostUsd, switches: res.switches.length } })
       return { ok: true, text: res.text, meta: { path: 'router', provider: res.decision.chosen?.providerId ?? 'router', model: res.decision.chosen?.model ?? '?', latencyMs: Date.now() - t0, costUsd: res.totalCostUsd, attempts: res.attempts.length, switches: res.switches } }
     }
     attempts.push(`router: ${res.error ?? 'failed'}`)
-    if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, type: 'llm/attempt', payload: { operation: opts.operation, path: 'router', outcome: 'error', error: res.error, attempts: res.attempts.length } })
+    if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, runId: opts.runId ?? null, type: 'llm/attempt', payload: { operation: opts.operation, path: 'router', outcome: 'error', error: res.error, attempts: res.attempts.length } })
   }
 
   // --- path B: house provider ---
@@ -162,14 +197,20 @@ export async function seamComplete(opts: SeamCompleteOpts): Promise<SeamResult> 
     if (!text.trim()) throw new Error('empty model response')
     const latency = Date.now() - t0
     recordSuccess(HOUSE_PROVIDER_ID)
-    await recordCost({ operation: opts.operation, modality: 'chat', providerId: HOUSE_PROVIDER_ID, model: HOUSE_MODEL, tokensIn: 0, tokensOut: 0, costUsd: 0, latencyMs: latency, outcome: 'ok', attempt: 1 })
-    if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, type: 'llm/attempt', payload: { operation: opts.operation, path: 'house', provider: HOUSE_PROVIDER_ID, outcome: 'ok', latencyMs: latency, costUsd: 0 } })
+    // token estimate honesty: the house provider reports no usage, so the
+    // ledger row + budget carry the chars/4 estimate (documented, consistent
+    // with the ceiling that enforces on the same estimate)
+    const estIn = opts.messages.reduce((a, m) => a + estimateTokens(m.content), 0)
+    const estOut = estimateTokens(text)
+    await recordCost({ operation: opts.operation, modality: 'chat', providerId: HOUSE_PROVIDER_ID, model: HOUSE_MODEL, tokensIn: estIn, tokensOut: estOut, costUsd: 0, latencyMs: latency, outcome: 'ok', attempt: 1, runId: opts.runId })
+    if (opts.runId) recordUsage(opts.runId, role, estIn, estOut)
+    if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, runId: opts.runId ?? null, type: 'llm/attempt', payload: { operation: opts.operation, path: 'house', provider: HOUSE_PROVIDER_ID, outcome: 'ok', latencyMs: latency, costUsd: 0, tokensInEstimate: estIn, tokensOutEstimate: estOut } })
     return { ok: true, text, meta: { path: 'house', provider: HOUSE_PROVIDER_ID, model: HOUSE_MODEL, latencyMs: latency, costUsd: 0, attempts: 1, switches } }
   } catch (e) {
     const err = (e as Error).message
     recordFailure(HOUSE_PROVIDER_ID)
-    await recordCost({ operation: opts.operation, modality: 'chat', providerId: HOUSE_PROVIDER_ID, model: HOUSE_MODEL, tokensIn: 0, tokensOut: 0, costUsd: 0, latencyMs: Date.now() - t0, outcome: 'error', error: err, attempt: 1 })
-    if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, type: 'llm/attempt', payload: { operation: opts.operation, path: 'house', outcome: 'error', error: err.slice(0, 160) } })
+    await recordCost({ operation: opts.operation, modality: 'chat', providerId: HOUSE_PROVIDER_ID, model: HOUSE_MODEL, tokensIn: 0, tokensOut: 0, costUsd: 0, latencyMs: Date.now() - t0, outcome: 'error', error: err, attempt: 1, runId: opts.runId })
+    if (opts.sessionId) void appendEvent({ sessionId: opts.sessionId, runId: opts.runId ?? null, type: 'llm/attempt', payload: { operation: opts.operation, path: 'house', outcome: 'error', error: err.slice(0, 160) } })
     attempts.push(`house: ${err}`)
 
     // --- path C: house failed -> the matrix is the fallback, never zero ---

@@ -8,6 +8,7 @@ import { getBoxRuntime, liveChildren } from '@/server/royal-red/box/runtime'
 import { BOX_ROOT, BOX_HOME, defaultMounts, ensureBoxTree } from '@/server/royal-red/box/prison'
 import { trashStats } from '@/server/royal-red/box/ops'
 import { screenSubsystemStatus } from '@/server/royal-red/box/screen'
+import { isPaused } from '@/server/royal-red/pause-state'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,7 +47,12 @@ export async function GET(req: NextRequest) {
       startedAt: r.startedAt,
       endedAt: r.endedAt,
       abortReason: r.abortReason,
+      // Phase 5 slice 1: sub-agent identity on the mission-control surface
+      role: r.role,
+      parentRunId: r.parentRunId,
+      depth: r.depth,
     })),
+    paused: sessionId ? isPaused(sessionId) : false,
     consentQueue: pending.map((c) => ({
       id: c.id,
       tier: c.tier,

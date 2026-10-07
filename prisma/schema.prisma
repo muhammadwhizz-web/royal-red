@@ -85,10 +85,18 @@ model RoyalRedAudit {
   // row. Nullable — pre-run-queue rows and kernel-level rows have none. This
   // is what lets N concurrent runs share one audit log without ambiguity.
   runId     String?
+  // sub-agent attribution (Round 4, Phase 5 slice 1): rows produced inside a
+  // sub-agent run carry the sub-agent identity (`<role>:<runId>`) and the
+  // parent run it was spawned by. Null on top-level rows — those are the
+  // kernel's own actions, already attributed by runId. "No action is
+  // unattributed": every sub-agent row names WHO did it and WHO sent it.
+  subAgentId  String?
+  parentRunId String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@index([runId])
+  @@index([subAgentId])
   @@map("AwonAudit")
 }
 
@@ -168,8 +176,16 @@ model RoyalRedRun {
   startedAt    DateTime @default(now())
   endedAt      DateTime?
   abortReason  String?
+  // Phase 5 slice 1 (Round 4): the sub-agent fields. A run is still a run —
+  // sub-agents are NOT a new process concept, they are runs with a parent.
+  // parentRunId persists the tree so the subtree walk is a DB query, never an
+  // in-memory guess (ISOLATION spec Q4). depth 0 = user-initiated.
+  parentRunId  String?
+  role         String? // planner | builder | null (user-initiated runs)
+  depth        Int      @default(0)
 
   @@index([sessionId, startedAt])
+  @@index([parentRunId])
   @@map("AwonRun")
 }
 
@@ -248,10 +264,15 @@ model RoyalRedCostEntry {
   outcome   String   // ok | error | switched | dry-run
   error     String?
   attempt   Int      @default(1)
+  // Round 4: which run spent this. The PHASE5-BUDGET ledger discipline
+  // requires receipts reconstructible per run; nullable for kernel rows that
+  // predate run attribution (and for non-run surfaces like panel probes).
+  runId     String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@index([providerId])
+  @@index([runId])
   @@map("AwonCostEntry")
 }
 

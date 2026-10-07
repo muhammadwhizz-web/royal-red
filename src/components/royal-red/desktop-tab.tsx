@@ -14,6 +14,8 @@ import {
   Eye,
   FolderTree,
   Loader2,
+  Pause,
+  Play,
   RefreshCw,
   ShieldAlert,
   ShieldCheck,
@@ -32,7 +34,8 @@ interface DesktopState {
   boxRoot: string
   boxHome: string
   mounts: { virtual: string; mode: string; label: string; exists: boolean }[]
-  runs: { id: string; status: string; tool: string; total: number; done: number; undoable: number; startedAt: string; endedAt: string | null; abortReason: string | null }[]
+  runs: { id: string; status: string; tool: string; total: number; done: number; undoable: number; startedAt: string; endedAt: string | null; abortReason: string | null; role?: string | null; parentRunId?: string | null; depth?: number }[]
+  paused?: boolean
   consentQueue: { id: string; tier: number; title: string; detail?: string; createdAt: string; expiresAt: string }[]
   journal: { id: string; runId: string; seq: number; op: string; from: string; to: string; createdAt: string }[]
   trash: { files: number; bytes: number; oldest: string | null }
@@ -106,6 +109,33 @@ export function DesktopTab() {
     }
   }
 
+  // Phase 5 slice 1: pause = freeze at the next boundary, keep ALL state
+  const togglePause = async () => {
+    const mode = state?.paused ? 'resume' : 'pause'
+    setBusy('pause')
+    try {
+      const res = await fetch('/api/royal-red/desktop/abort', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sessionId ?? undefined, mode }),
+      })
+      const data = (await res.json()) as { ok: boolean; error?: string }
+      toast({
+        title: data.ok ? (mode === 'pause' ? 'SESSION PAUSED' : 'SESSION RESUMED') : 'Not applied',
+        description: data.ok
+          ? mode === 'pause'
+            ? 'runs freeze at the next step boundary; state, journals and pending consents are kept'
+            : 'runs continue where they froze'
+          : data.error,
+      })
+      await refresh()
+    } catch (e) {
+      toast({ title: 'Pause failed', description: (e as Error).message })
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const undoRun = async (runId: string) => {
     if (!sessionId) return
     setBusy(runId)
@@ -135,18 +165,32 @@ export function DesktopTab() {
             icon={Activity}
             title="ACTIVE RUN"
             right={
-              <Button
-                type="button"
-                size="sm"
-                variant="destructive"
-                aria-label="Kill switch: abort all box activity, freeze pending consents"
-                className="h-7 gap-1.5 rounded px-2.5 font-mono text-[10px] tracking-[0.2em]"
-                disabled={busy === 'abort'}
-                onClick={() => setConfirmAbort(true)}
-              >
-                {busy === 'abort' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Square className="h-3 w-3" />}
-                ABORT
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  aria-label={state?.paused ? 'Resume the paused session; runs continue where they froze' : 'Pause the session; state is kept, runs freeze at the next boundary'}
+                  className="h-7 gap-1.5 rounded px-2.5 font-mono text-[10px] tracking-[0.2em]"
+                  disabled={busy === 'pause'}
+                  onClick={() => void togglePause()}
+                >
+                  {busy === 'pause' ? <Loader2 className="h-3 w-3 animate-spin" /> : state?.paused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+                  {state?.paused ? 'RESUME' : 'PAUSE'}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  aria-label="Kill switch: abort all box activity, freeze pending consents"
+                  className="h-7 gap-1.5 rounded px-2.5 font-mono text-[10px] tracking-[0.2em]"
+                  disabled={busy === 'abort'}
+                  onClick={() => setConfirmAbort(true)}
+                >
+                  {busy === 'abort' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Square className="h-3 w-3" />}
+                  ABORT
+                </Button>
+              </div>
             }
           />
           {confirmAbort && (
@@ -165,16 +209,17 @@ export function DesktopTab() {
             </div>
           )}
           {activeRun ? (
-            <div className="rounded border border-amber-600/40 bg-amber-500/5 p-2.5">
+            <div className={cn('rounded border p-2.5', state?.paused ? 'border-sky-600/40 bg-sky-500/5' : 'border-amber-600/40 bg-amber-500/5')}>
               <div className="flex items-center gap-2 font-mono text-[11px]">
-                <Loader2 className="h-3 w-3 animate-spin text-amber-600" />
+                {state?.paused ? <Pause className="h-3 w-3 text-sky-600" /> : <Loader2 className="h-3 w-3 animate-spin text-amber-600" />}
                 <span className="font-semibold">{activeRun.id}</span>
                 <span className="text-muted-foreground">({activeRun.tool})</span>
+                {state?.paused && <span className="rounded bg-sky-500/15 px-1 text-[9px] font-bold tracking-widest text-sky-700 dark:text-sky-300">PAUSED</span>}
               </div>
               <div className="mt-1.5 flex items-center gap-2">
                 <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-border">
                   <div
-                    className="h-full rounded-full bg-amber-500 transition-all duration-300"
+                    className={cn('h-full rounded-full transition-all duration-300', state?.paused ? 'bg-sky-500' : 'bg-amber-500')}
                     style={{ width: `${activeRun.total ? Math.round((activeRun.done / activeRun.total) * 100) : 0}%` }}
                   />
                 </div>
@@ -261,7 +306,13 @@ export function DesktopTab() {
                     <p className="truncate">
                       <span className={cn(r.status === 'aborted' ? 'text-red-600 dark:text-red-400' : r.status === 'running' ? 'text-amber-600 dark:text-amber-300' : 'text-emerald-600 dark:text-emerald-400')}>{r.status.toUpperCase()}</span>{' '}
                       <span className="text-foreground/85">{r.id}</span> <span className="text-muted-foreground">· {r.tool} · {r.done}/{r.total} · {timeAgo(r.startedAt)}</span>
+                      {r.role && (
+                        <span className={cn('ml-1.5 rounded px-1 text-[9px] font-bold tracking-widest', r.role === 'planner' ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300' : 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300')}>
+                          {r.role.toUpperCase()}
+                        </span>
+                      )}
                     </p>
+                    {r.parentRunId && <p className="truncate text-[10px] text-muted-foreground">sub-agent of {r.parentRunId} · depth {r.depth ?? 1}</p>}
                     {r.abortReason && <p className="truncate text-[10px] text-muted-foreground">abort: {r.abortReason}</p>}
                   </div>
                   {r.undoable > 0 && (

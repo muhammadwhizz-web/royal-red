@@ -42,6 +42,15 @@ export const ROYAL_RED_EVENT_TYPES = [
   'sandbox/mode',
   'run/started',
   'run/ended',
+  // Phase 5 slice 1 (Round 4) — merge-extensible additions, never renames
+  'subagent/spawned',
+  'subagent/finished',
+  'subagent/aborted',
+  'subagent/verdict',
+  'budget/exhausted',
+  'budget/warning',
+  'session/paused',
+  'session/resumed',
   'error',
 ] as const
 

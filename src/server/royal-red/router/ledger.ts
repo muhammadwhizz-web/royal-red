@@ -16,6 +16,7 @@ export interface CostEntryInput {
   outcome: 'ok' | 'error' | 'switched' | 'dry-run'
   error?: string
   attempt: number
+  runId?: string // Round 4: per-run spend attribution (PHASE5-BUDGET ledger discipline)
 }
 
 export async function recordCost(e: CostEntryInput) {
@@ -33,6 +34,7 @@ export async function recordCost(e: CostEntryInput) {
         outcome: e.outcome,
         error: e.error ?? null,
         attempt: e.attempt,
+        runId: e.runId ?? null,
       },
     })
     await db.royalRedAudit.create({

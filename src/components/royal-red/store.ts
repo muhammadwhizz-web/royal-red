@@ -796,6 +796,27 @@ export const useRoyalRed = create<RoyalRedState>((set, get) => ({
         set({ items })
         break
       }
+      // ── Phase 5 slice 1: sub-agent lifecycle ─────────────────────────────
+      case 'subagent': {
+        const items = s.items.filter((i) => i.kind !== 'phase')
+        const label =
+          e.phase === 'spawned'
+            ? `SUB-AGENT ${e.role.toUpperCase()} spawned`
+            : e.phase === 'verdict'
+              ? `PLANNER verdict — ${e.label ?? e.status ?? ''}`
+              : e.phase === 'aborted'
+                ? `SUB-AGENT ${e.role.toUpperCase()} ABORTED`
+                : `SUB-AGENT ${e.role.toUpperCase()} finished`
+        items.push({
+          kind: 'event',
+          id: nextId(),
+          label,
+          detail: `run ${e.runId} · parent ${e.parentRunId ?? '—'}`,
+          status: e.phase === 'aborted' ? 'err' : e.phase === 'verdict' && e.status === 'escalate' ? 'err' : 'ok',
+        })
+        set({ items })
+        break
+      }
     }
   },
 
