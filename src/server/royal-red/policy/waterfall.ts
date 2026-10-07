@@ -235,6 +235,15 @@ export async function decideTool(t: ToolShape, opts: { sessionId: string; mode?:
 }
 
 function finish(t: ToolShape, opts: { sessionId: string }, d: PolicyDecision): PolicyDecision {
+  // INSPECTABILITY CONTRACT: every decision carries the COMPLETE five-layer
+  // stack — including the layers never consulted because an earlier layer
+  // decided — so a receipt always shows the whole waterfall, not just the
+  // path taken. (Found by the Round 3 waterfall regression: partial stacks
+  // made the audit trail look like layers were skipped.)
+  const ALL_LAYERS: PolicyLayerName[] = ['global', 'mode', 'session', 'turn', 'action-consent']
+  d.layers = ALL_LAYERS.map(
+    (name) => d.layers.find((l) => l.name === name) ?? { name, rulesConsidered: 0, source: 'not consulted (an earlier layer decided)' },
+  )
   // every decision is a durable typed event — the audit trail names its layer
   void appendEvent({
     sessionId: opts.sessionId,
