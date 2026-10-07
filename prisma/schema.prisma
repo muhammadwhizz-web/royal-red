@@ -81,9 +81,14 @@ model RoyalRedAudit {
   action    String
   detail    String?
   ok        Boolean  @default(true)
+  // run attribution (Round 3 run-queue prep): which Box run produced this
+  // row. Nullable — pre-run-queue rows and kernel-level rows have none. This
+  // is what lets N concurrent runs share one audit log without ambiguity.
+  runId     String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+  @@index([runId])
   @@map("AwonAudit")
 }
 

@@ -40,6 +40,8 @@ export const ROYAL_RED_EVENT_TYPES = [
   'policy/decision',
   'verify/receipt',
   'sandbox/mode',
+  'run/started',
+  'run/ended',
   'error',
 ] as const
 

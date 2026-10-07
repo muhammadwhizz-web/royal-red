@@ -20,6 +20,8 @@ import { BOX_TRASH, BOX_HOME, resolveVirtual, verifyReal, statVirtual, ensureBox
 import { planOperations, type DryRunPlan, type PlanStep, type RawOp } from './dryrun'
 import { requestConsent, findMatchingRule, type ConsentAnswer } from './consent'
 import { isAborted as checkAbort, markRunAborted, setGlobalAbort } from './abort-state'
+import { registerRun, releaseRun } from '../runqueue'
+import { appendEvent } from '../event-log'
 
 // re-export the shared checker so existing importers keep working
 export function isAborted(runId: string): boolean {
@@ -60,11 +62,27 @@ export async function beginRun(sessionId: string, tool: string, plan: DryRunPlan
       actionsTotal: plan.summary.proposable,
     },
   })
+  // RUN QUEUE (Phase-5 groundwork): every run is a first-class process. It is
+  // tracked in the in-memory process table and announced on the durable event
+  // log with its runId, so N concurrent runs per session are trackable and
+  // their log rows are attributable without convention or guesswork.
+  registerRun({ runId: id, sessionId, label: tool, startedAt: new Date().toISOString() })
+  void appendEvent({ sessionId, runId: id, type: 'run/started', payload: { tool, steps: plan.summary.proposable } })
   return id
 }
 
 export async function finishRun(runId: string, status: 'done' | 'aborted'): Promise<void> {
   await db.royalRedRun.update({ where: { id: runId }, data: { status, endedAt: new Date() } }).catch(() => null)
+  const row = await db.royalRedRun.findUnique({ where: { id: runId }, select: { sessionId: true, abortReason: true } }).catch(() => null)
+  releaseRun(runId, status)
+  if (row) {
+    void appendEvent({
+      sessionId: row.sessionId,
+      runId,
+      type: 'run/ended',
+      payload: { status, reason: status === 'aborted' ? row.abortReason ?? 'aborted' : 'completed' },
+    })
+  }
 }
 
 // ─── write-ahead journal (4.5) ───────────────────────────────────────────────
@@ -291,12 +309,12 @@ export async function executePlan(
         )
         if (ans.status !== 'approved') {
           lines.push(`trash ${step.from}: ${ans.status} by you - skipped`)
-          await db.royalRedAudit.create({ data: { action: 'desktop.trash', detail: `${step.from} ${ans.status}`, ok: false } })
+          await db.royalRedAudit.create({ data: { action: 'desktop.trash', runId, detail: `${step.from} ${ans.status}`, ok: false } })
           emit({ type: 'desktop_step', runId, seq: step.seq, op: 'trash', detail: `${step.from} - ${ans.status}`, ok: false })
           continue
         }
       } else {
-        await db.royalRedAudit.create({ data: { action: 'desktop.trash.rule', detail: `${step.from} matched typed rule "${rule.ruleText}"`, ok: true } })
+        await db.royalRedAudit.create({ data: { action: 'desktop.trash.rule', runId, detail: `${step.from} matched typed rule "${rule.ruleText}"`, ok: true } })
         emit({ type: 'desktop_step', runId, seq: step.seq, op: 'rule', detail: `typed rule matched: ${rule.ruleText}`, ok: true })
       }
     }
@@ -306,11 +324,14 @@ export async function executePlan(
       executed++
       lines.push(line)
       await db.royalRedRun.update({ where: { id: runId }, data: { actionsDone: executed } })
-      await db.royalRedAudit.create({ data: { action: `desktop.${step.op}`, detail: line, ok: true } })
+      // every step row names its run: with N concurrent runs per session the
+      // audit log must distinguish runs structurally (runId column), not by
+      // timestamp proximity
+      await db.royalRedAudit.create({ data: { action: `desktop.${step.op}`, runId, detail: line, ok: true } })
       emit({ type: 'desktop_step', runId, seq: step.seq, op: step.op, detail: line, ok: true })
     } catch (err) {
       lines.push(`step ${step.seq} (${step.op} ${step.from}) failed: ${(err as Error).message}`)
-      await db.royalRedAudit.create({ data: { action: `desktop.${step.op}`, detail: `${step.from} failed: ${(err as Error).message.slice(0, 200)}`, ok: false } })
+      await db.royalRedAudit.create({ data: { action: `desktop.${step.op}`, runId, detail: `${step.from} failed: ${(err as Error).message.slice(0, 200)}`, ok: false } })
       emit({ type: 'desktop_step', runId, seq: step.seq, op: step.op, detail: (err as Error).message, ok: false })
     }
   }
@@ -401,7 +422,7 @@ export async function executeSingleTrash(fromVirtual: string, sessionId: string,
   try {
     const line = await executeStep(runId, sessionId, step)
     await db.royalRedRun.update({ where: { id: runId }, data: { actionsDone: 1 } })
-    await db.royalRedAudit.create({ data: { action: 'desktop.trash', detail: line, ok: true } })
+    await db.royalRedAudit.create({ data: { action: 'desktop.trash', runId, detail: line, ok: true } })
     emit({ type: 'desktop_step', runId, seq: 1, op: 'trash', detail: line, ok: true })
     await finishRun(runId, 'done')
     return { ok: true, line, runId }
