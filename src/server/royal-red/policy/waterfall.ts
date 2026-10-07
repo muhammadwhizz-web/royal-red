@@ -95,7 +95,7 @@ interface ToolShape {
 
 function globalDecide(t: ToolShape): { verdict: PolicyVerdict; reason: string } | null {
   if (!KNOWN_TOOLS.has(t.name)) {
-    return { verdict: 'deny', reason: `"${t.name}" is not in the kernel tool registry (fail closed)` }
+    return { verdict: 'deny', reason: `unknown tool: "${t.name}" is not in the kernel tool registry (fail closed)` }
   }
   if (t.name === 'shell' || t.name === 'shell_exec') {
     const cmd = String(t.args?.command ?? '').trim()

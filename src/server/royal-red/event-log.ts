@@ -70,35 +70,27 @@ export interface AppendEventInput {
  * monotonic (harness types.ts:496 pattern). Fire-and-forget safe: callers may
  * `void appendEvent(...)` on the SSE hot path; a failed log write never breaks
  * the operation it records (same rule as the cost ledger).
+ *
+ * The seq is allocated ATOMICALLY inside SQLite
+ * (`max(seq)+1 for this session` in the same INSERT statement) — concurrent
+ * writers (SSE events, policy decisions, LLM attempts firing in parallel)
+ * cannot collide on the (sessionId, seq) unique constraint, because SQLite
+ * serializes the write. No application-level retry race.
  */
 export async function appendEvent(input: AppendEventInput): Promise<void> {
   const known = (ROYAL_RED_EVENT_TYPES as readonly string[]).includes(input.type)
   const ignorable = input.ignorable ?? !known
-  for (let tryN = 0; tryN < 2; tryN++) {
-    try {
-      const last = await db.royalRedEventLog.findFirst({
-        where: { sessionId: input.sessionId },
-        orderBy: { seq: 'desc' },
-        select: { seq: true },
-      })
-      await db.royalRedEventLog.create({
-        data: {
-          sessionId: input.sessionId,
-          runId: input.runId ?? null,
-          seq: (last?.seq ?? 0) + 1,
-          type: input.type,
-          ignorable,
-          payload: JSON.stringify(input.payload ?? {}).slice(0, 400_000),
-        },
-      })
-      return
-    } catch (e) {
-      // concurrent writers can race the seq: retry once, then give up quietly
-      if (tryN === 1) {
-        console.error('event-log append failed', e)
-        return
-      }
-    }
+  try {
+    await db.$executeRaw`
+      INSERT INTO "AwonEventLog"
+        ("id", "sessionId", "runId", "seq", "type", "ignorable", "payload", "createdAt")
+      VALUES
+        (lower(hex(randomblob(16))), ${input.sessionId}, ${input.runId ?? null},
+         (SELECT COALESCE(MAX("seq"), 0) + 1 FROM "AwonEventLog" WHERE "sessionId" = ${input.sessionId}),
+         ${input.type}, ${ignorable ? 1 : 0}, ${JSON.stringify(input.payload ?? {}).slice(0, 400_000)}, CURRENT_TIMESTAMP)`
+  } catch (e) {
+    // a failed log write must never break the operation it records
+    console.error('event-log append failed', e)
   }
 }
 
