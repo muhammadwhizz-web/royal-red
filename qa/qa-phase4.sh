@@ -144,6 +144,21 @@ process.exit(0);
 BEFORE_LS=$(ls $BOX/Downloads 2>/dev/null | wc -l)
 [ "$BEFORE_LS" = "8" ] && ck 0 "fixtures seeded in EMULATED Downloads (8 files, real /home/z/Downloads untouched)" || ck 1 "fixtures seeded ($BEFORE_LS)"
 
+echo "== CSS-LOAD GUARD: the Tailwind-catastrophe class can never ship silently again =="
+# postmortem (RR3): postcss.config.mjs vanished in a sandbox checkpoint-restore;
+# the UI was unstyled for 3 rounds while every functional suite stayed green.
+# This guard asserts the SERVED stylesheet actually carries Tailwind utilities
+# and theme tokens. Full sibling sweep: scripts/test-build-integrity.ts
+PAGE_HTML=$(curl -s http://localhost:3000/)
+CSSHREF=$(echo "$PAGE_HTML" | grep -oE '<link[^>]+rel="stylesheet"[^>]+href="[^"]+"' | head -1 | sed -E 's/.*href="([^"]+)".*/\1/')
+CSSBODY=""
+[ -n "$CSSHREF" ] && CSSBODY=$(curl -s "http://localhost:3000$CSSHREF")
+if [ -n "$CSSBODY" ] && echo "$CSSBODY" | grep -qE '\.flex[[:space:]]*\{' && echo "$CSSBODY" | grep -qE -- '--primary[[:space:]]*:'; then
+  ck 0 "css-load guard: served stylesheet carries real utilities + theme tokens"
+else
+  ck 1 "css-load guard: stylesheet missing/unstyled (PostCSS pipeline dead?) href=$CSSHREF bytes=${#CSSBODY}"
+fi
+
 echo "== STEP 1-2: command -> Tier 1 read consent -> approve =="
 wait_idle 90 && echo '  (console idle)' || echo '  (console busy - sending anyway)'
 send_command '"Clean up my Downloads folder."'
