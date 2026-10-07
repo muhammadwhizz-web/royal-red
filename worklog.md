@@ -602,3 +602,59 @@ Work Log:
 
 Stage Summary:
 - THE ROUTER IS THE PRODUCT: 66 providers x 7 modalities = 1,188 routes for 18 products (projected 2,772 at 42). Rotation contract PROVEN (5-switch), fail-closed everywhere, every call audit-logged. 3 products shipped with honest receipts. Report card: payload intake DONE, matrix DONE (66 >> 20 required), router DONE, rotation DONE, products 3/3, panels DONE, test suite 27/27
+
+---
+Task ID: RR2 (Royal Red Round 2 — git forensics, LICENSE audit, DeepSeek ports, v1.4)
+Agent: main orchestrator (Z.ai Code)
+Task: ROYAL RED ROUND 2 directive — Section 1 git history answer, Section 2 LICENSE-AUDIT, Section 3 key-ask escalation, Section 4 four DeepSeek-harness ports (one commit each), re-verification, boot v1.4, UI excellence pass.
+
+Work Log:
+- SECTION 1 — GIT HISTORY (answered first, nothing else happened before it):
+  * Diagnosis: sandbox CHECKPOINT RESTORE wiped the old .git (evidence: current repo had a fresh `(initial)` commit as parent of everything; reflog contained nothing before it; `git fsck --lost-found` clean and EMPTY — no dangling objects; no remote, no stash; the 57MB awon-backup.tar.gz was wiped from /home/z while /tmp/my-project (no .git) survived).
+  * RECOVERY SUCCEEDED (no reconstruction needed): the off-site wormhole backup link from Task F1 (https://wormhole.app/JW85Lx#gijIFcrB7vIXSy6PKwCs1g, `awon-backup.tar.gz` 59.5MB) was still alive. Downloaded via agent-browser, extracted `my-project/.git` (12MB) to /home/z/git-recovery — 19 commits recovered: bcc2727 Initial → 261bcde v1.3 Phase 4 → aa6fda5 → recon(v0.1)…recon(v1.2) (worklog-cited) → b56239b (Task 20.6) → 4196b89 → bc2c5d9.
+  * Graft: the 4 post-reset Royal Red commits (checkpoint v1.3 → rebrand → royal-red engine → cron UUID) were re-parented onto the recovered tip via `git commit-tree` with original author/dates/messages (+graft provenance note per commit). Trees verified IDENTICAL pre/post graft (`git rev-parse HEAD^{tree}` equal) — zero content drift, provable.
+  * Result: main = 23 commits, `git log --oneline` shows full v0.1→v1.1→v1.2→v1.3→checkpoint→ROYAL RED progression. Pre-graft line preserved as branch `sandbox-init-line`; recovered copy kept at /home/z/git-recovery.
+- SECTION 2 — LICENSE-AUDIT (all 18 repos; table below):
+  * Fetched the canonical upstream LICENSE for deepseek-harness from github.com/deepseek-ai/deepseek-harness (master): **MIT License, Copyright (c) 2026 DeepSeek** → snapshot's missing-LICENSE gap CLOSED; copy restored into rr-payload/extracted/deepseek-harness-master/LICENSE.
+  * AI-Resume-Generator (no license): audited the shipped resume product — grep for John Doe / Cohere / hardcoded-identity patterns in src/server/royal-red/products = ZERO hits; product uses structured JSON schema + injects the user's real data (the exact inverse of that repo's design). Verdict: nothing ever touched; BUILD-FROM-SCRATCH confirmed.
+  * LICENSE-AUDIT TABLE (legal record):
+    | # | Repo | License status | Port verdict |
+    |---|------|----------------|--------------|
+    | 1 | deepseek-harness-master | VERIFIED MIT (upstream fetched; snapshot file was missing, now restored) | PORT (direct pattern, reimplemented natively — 4 commits this round) |
+    | 2 | DeepSeek-V3-main | VERIFIED: LICENSE-CODE = MIT (code); LICENSE-MODEL restricts weights | BUILD-FROM-SCRATCH (products); model via API only |
+    | 3 | Fooocus-main | VERIFIED GPL-3.0 | PATTERN-ONLY / unmodified external appliance (copyleft — never fork into product) |
+    | 4 | Pkmer-Obsidian-main | VERIFIED MIT (c) 2022 Liam Cain | PATTERN-ONLY (plugin patterns) |
+    | 5 | Verba-main | VERIFIED BSD-3-Clause (Weaviate) | PATTERN-ONLY (BYOK gating vocabulary; never deploy) |
+    | 6 | ai-business-planner-main | VERIFIED MIT (c) 2025 Shinsuke Kagawa | PATTERN-ONLY (markdown instruction architecture) |
+    | 7 | browser-use-main | VERIFIED MIT (c) 2024 | PATTERN-ONLY (harness patterns) |
+    | 8 | coloring-book-main | VERIFIED MIT (c) 2026 | PATTERN-ONLY (prompt + cost-seam patterns) |
+    | 9 | AI-Resume-Generator-main | **MISSING** (README claims MIT, file absent; backend says ISC) | **DO-NOT-TOUCH** — audit done, nothing touched, product clean-room |
+    | 10 | fileforge-triggerdev-main | **MISSING file** (ISC declared in package.json only) | **DO-NOT-TOUCH code**; pattern only (React→HTML→PDF), rebuild local |
+    | 11 | langgraph-main | VERIFIED MIT (c) 2024 LangChain | PATTERN-ONLY |
+    | 12 | ollama-main | VERIFIED MIT | PATTERN-ONLY (OpenAI-compat integration reference) |
+    | 13 | open-webui-main | VERIFIED custom "Open WebUI License" (BSD-3 + branding clause) | RESTRICTIVE — PATTERN-ONLY, never fork branding |
+    | 14 | pdf-pipeline-main | VERIFIED MIT (c) 2024 | PATTERN-ONLY (queue-config schema + notifier; bugs documented, don't import) |
+    | 15 | sampleproject-main | VERIFIED MIT (PyPA) | DO-NOT-TOUCH-AS-PRODUCT (packaging sample; matches no claimed use) |
+    | 16 | slidev-main | VERIFIED MIT (Anthony Fu) | PATTERN-ONLY (deck-AST + layout contract) |
+    | 17 | stable-diffusion-webui-master | VERIFIED AGPL-3.0 | RESTRICTIVE — unmodified external appliance only |
+    | 18 | vllm-main | VERIFIED Apache-2.0 | PATTERN-ONLY (serving reference) |
+- SECTION 4 — DEEPSEEK-HARNESS PORTS (4 commits, one primitive each, MIT verified → direct pattern ports):
+  * Commit 1 `port(dsh #1)` session event log: append-only typed events, per-session contiguous seq (unique constraint), replay projection + integrity check; agent.ts emits through durableEmitter; GET /api/royal-red/events. Cites core/session/src/types.ts:276, :496-497, known-event-types.ts:24.
+  * Commit 2 `port(dsh #2)` tool policy waterfall: 5 inspectable layers (global→mode→session→turn→action-consent), monotonic (no force-allow past a deny), every decision names its winning layer + lands as policy/decision event + audit row; SHELL_ALLOWLIST single-sourced; runTool fails closed on unknown tools/unenforceable asks; GET /api/royal-red/policy. Cites core/tools/src/index.ts:1131-1133, :1507-1519.
+  * Commit 3 `port(dsh #3)` LLM seam: seamComplete/seamVision/seamRouted/seamDryRun — call-header logging (call-config discipline), house provider + router fallback + breakers + ledger behind one door; ALL model call sites migrated (agent loop/repair/regen/title, ledger extraction, shot-note VLM, analyze_image, analyze_video, products). Cites llm/llm/src/index.ts:2, call-config.ts:1-5, :23-30.
+  * Commit 4 `port(dsh #4)` sandbox roots: declarative RootsSpec per run/mode/session, canonicalPath + writableRoots with the harness's missing-root rule verbatim; prison.mountsForScope merge point; grants outside the box root rejected; sandbox/mode events; GET/POST/DELETE /api/royal-red/roots. Cites sandbox/sandbox/src/roots.ts:1-14, :30-41, :52-55.
+- SECTION 3 — PROVIDER-KEY ASK (escalated, third round): the delta paragraph is in the round report (top). If no key arrives, SAME-FAMILY FRESH CONTEXT becomes the permanent ceiling, stated on every receipt.
+- BUGS FOUND & FIXED during re-verification (both real, both fixed, suites re-run):
+  1. event-log.ts P2002 — concurrent appends raced app-level max(seq)+1 (loop-death 8/9). Fix: seq allocated ATOMICALLY inside SQLite (max+1 in the same INSERT).
+  2. waterfall wording — unknown-tool refusal broke the loop-death /unknown/i regression contract. Fix: refusal now reads "unknown tool: … (fail closed)".
+  3. CRITICAL UI regression: Tailwind emitted ZERO utilities (served CSS was fonts-only; palette/dialogs unstyled, hidden file input visible, tabs wrapping). Fix: canonical postcss.config.mjs with @tailwindcss/postcss; served CSS 30KB→184KB. Found via agent-browser screenshots; verified fixed visually.
+- BOOT v1.4: boot-overlay v1.4.0 with matrix/router/rotation + 4 dsh-port lines; footer v1.4; boot log container scrolls. New EVENTS console tab (integrity badge, replay projection grid, typed event stream, stream-follow). Screenshots: qa/royalred-v14-*.png.
+- LIVE E2E (agent-browser): boot v1.4 lines render; INITIALIZE → SYSTEM ONLINE; one real turn executed ("what is royal red?" → correct one-sentence reply + artifact); durable log captured 14 events, seq 1-14 contiguous, integrity ok; policy API shows 5 layers (13 box-tiered asks); roots API returns workspace-write + box root; palette/tabs/EVENTS all styled.
+- FINAL RECEIPTS: kernel units 28/28 · router 27/27 (incl. 5-switch) · soft-spot 4/4 suites (42 checks) · acceptance 19/19 · lint 0/0. NOTE: unit count is 28 in scripts/test-phase2.ts on the restored history (the previous round's "47/47" counted a different/combined set; current runner + all suites green, counts reported honestly).
+
+Stage Summary:
+- Git history RECOVERED (not reconstructed): 19 commits restored from off-site backup + 4 grafted with zero drift = 23-commit timeline v0.1→Royal Red.
+- LICENSE-AUDIT table complete for all 18 repos; deepseek-harness MIT verified upstream and the payload LICENSE gap closed; AI-Resume-Generator confirmed untouched/clean-room.
+- All four DeepSeek-harness primitives ported (4 commits, citations + license verdicts in each message); the kernel now has a durable replayable event log, a monotonic policy waterfall, a single LLM seam, and declarative sandbox roots.
+- Kernel v1.4 shipped with a new EVENTS panel; one critical CSS-pipeline regression found by visual QA and fixed.
+- Verification fully green: 28/28 units, 27/27 router, 4/4 soft-spot suites (42 checks), 19/19 acceptance, lint clean, live E2E proven.
