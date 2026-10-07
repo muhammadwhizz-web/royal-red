@@ -249,3 +249,23 @@ model RoyalRedCostEntry {
   @@index([providerId])
   @@map("AwonCostEntry")
 }
+
+// ROYAL RED session event log (DeepSeek-harness port #1, MIT pattern).
+// The append-only, typed, replayable source of truth for agent sessions:
+// rows are only ever INSERTED (no update path exists in code), seq is
+// per-session monotonic, and unknown future event types replay as ignorable.
+model RoyalRedEventLog {
+  id        String   @id @default(cuid())
+  sessionId String
+  runId     String?
+  seq       Int // per-session monotonic, contiguous 1..N
+  type      String // typed vocabulary, see server/royal-red/event-log.ts
+  ignorable Boolean @default(false) // forward-compat: newer-kernel events are skipped on replay, never misread
+  payload   String // JSON
+  createdAt DateTime @default(now())
+
+  @@unique([sessionId, seq])
+  @@index([sessionId, createdAt])
+  @@index([type])
+  @@map("AwonEventLog")
+}

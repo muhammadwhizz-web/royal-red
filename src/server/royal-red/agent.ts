@@ -19,6 +19,7 @@ import {
 } from './workspace'
 import { extractAndSaveLedger, ledgerForBuilder } from './verify/ledger'
 import { runVerification, verifyCritique } from './verify/engine'
+import { appendEvent, durableEmitter } from './event-log'
 
 type Emit = (e: RoyalRedSseEvent) => void
 
@@ -112,7 +113,11 @@ export async function runRoyalRedTurn(opts: {
   emit: Emit
   signal?: AbortSignal
 }): Promise<void> {
-  const { sessionId, emit } = opts
+  const { sessionId } = opts
+  // DURABLE EVENT LOG (DeepSeek-harness port): every console event is also
+  // appended to the append-only session log, so the transcript and the
+  // replayable record can never diverge.
+  const emit = durableEmitter(sessionId, opts.emit as (e: { type: string } & Record<string, unknown>) => void)
   // client disconnects (stop button, tab close) must end the loop server side,
   // otherwise iterations keep burning model calls after the UI is gone
   const stopped = () => opts.signal?.aborted === true
@@ -219,11 +224,13 @@ export async function runRoyalRedTurn(opts: {
             type: 'say',
             text: `${finalSay}\n\nPartial progress is saved (artifact + files intact). Send **continue** to resume the loop.`,
           })
+          void appendEvent({ sessionId, type: 'turn/ended', payload: { reason: 'malformed-directive-partial' } })
           emit({ type: 'done' })
           return
         }
         finalSay = 'ROYAL RED hit a malformed directive and aborted this turn. Try rephrasing the command.'
         emit({ type: 'say', text: finalSay })
+        void appendEvent({ sessionId, type: 'turn/ended', payload: { reason: 'malformed-directive' } })
         emit({ type: 'done' })
         return
       }
@@ -662,5 +669,6 @@ export async function runRoyalRedTurn(opts: {
     }
   }
 
+  void appendEvent({ sessionId, type: 'turn/ended', payload: { reason: stopped() ? 'stopped' : 'completed' } })
   emit({ type: 'done' })
 }
