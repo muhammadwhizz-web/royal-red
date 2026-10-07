@@ -7,7 +7,7 @@ import { useAwon } from './store'
 
 const BOOT_LINES = [
   'awon kernel v1.3.0 (linux-native)',
-  'mounting userland workspace ......... ok',
+  'mounting sandbox workspace ......... ok',
   'loading tool bus: search fs shell accounts ok',
   'linking vision core: image gen + vlm eyes ok',
   'linking video core: watch mp4 webm mov ... ok',

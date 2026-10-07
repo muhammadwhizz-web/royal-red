@@ -588,9 +588,9 @@ export default function AwonConsole() {
 
       {/* sticky footer line */}
       <footer className="z-30 shrink-0 border-t bg-background px-4 py-1.5 text-center font-mono text-[10px] tracking-[0.25em] text-muted-foreground sm:px-6">
-        <span className="sm:hidden"> AWON V1.3 / USERLAND-CONFINED</span>
+        <span className="sm:hidden"> AWON V1.3 / SANDBOXED</span>
         <span className="hidden sm:inline">
-           AWON V1.3 / USERLAND-CONFINED / EVERYTHING IT BUILDS IS PROOF-TESTED: LEDGER · CRITIC · SCREENSHOTS · CMS
+           AWON V1.3 / SANDBOXED / EVERYTHING IT BUILDS IS PROOF-TESTED: LEDGER · CRITIC · SCREENSHOTS · CMS
         </span>
       </footer>
     </div>

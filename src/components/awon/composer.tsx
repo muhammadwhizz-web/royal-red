@@ -333,7 +333,7 @@ export function Composer() {
         </div>
         <div className="flex items-center justify-between gap-2">
           <p className="hidden font-mono text-[10px] text-muted-foreground sm:block">
-            AWON runs userland-confined: files land in its workspace, shell is whitelisted, artifacts are previewed live - enforced by this app process, not the kernel.
+            AWON runs sandboxed: files land in its workspace, shell is whitelisted, artifacts are previewed live.
           </p>
           <p className="hidden items-center gap-1.5 font-mono text-[10px] text-muted-foreground/70 lg:flex">
             <kbd className="rounded border bg-muted/60 px-1 py-0.5 text-[9px]">&uarr;</kbd>

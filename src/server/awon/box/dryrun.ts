@@ -108,48 +108,10 @@ export function planOperations(rawOps: RawOp[]): DryRunPlan {
   const mounts = defaultMounts()
   const steps: PlanEntry[] = []
   let seq = 0
-  // In-plan directory creation (A3 pilot finding): a mkdir op may name a
-  // nested path whose parents do not exist yet. dry-run-is-the-product means
-  // the card must show what will REALLY run, so nested mkdirs expand into
-  // explicit ancestor mkdir steps BEFORE the target step. The executor keeps
-  // non-recursive mkdir - the plan itself guarantees the parents.
-  const expanded: RawOp[] = []
-  const emittedAncestors = new Set<string>()
   for (const raw of rawOps) {
-    if (raw.op === 'mkdir') {
-      const to = raw.to ?? raw.path ?? ''
-      try {
-        const { virtual } = resolveVirtual(to, mounts)
-        const parts = virtual.split('/').filter(Boolean)
-        // walk the ancestor chain deepest-last, skipping /home/awon itself
-        // (the emulated home always exists), anything already on disk, and
-        // the TARGET segment itself - the original op creates that one
-        for (let i = 2; i < parts.length - 1; i++) {
-          const dir = '/' + parts.slice(0, i + 1).join('/')
-          if (emittedAncestors.has(dir)) continue
-          if (statVirtual(dir, mounts)) continue // exists at plan time
-          emittedAncestors.add(dir)
-          expanded.push({ op: 'mkdir', to: dir })
-        }
-        expanded.push(raw)
-      } catch {
-        // unresolvable path: keep the original op so planOne reports the
-        // honest refusal instead of hiding it
-        expanded.push(raw)
-      }
-    } else {
-      expanded.push(raw)
-    }
-  }
-  // directories that EARLIER steps of this plan create - later move/copy
-  // targets may legitimately land inside them (move-into-new-folder tasks)
-  const plannedDirs = new Set<string>()
-  for (const raw of expanded) {
     seq++
     try {
-      steps.push(planOne(seq, raw, mounts, steps, plannedDirs))
-      const last = steps[steps.length - 1]
-      if (raw.op === 'mkdir' && last.proposable) plannedDirs.add((last as PlanStep).to)
+      steps.push(planOne(seq, raw, mounts, steps))
     } catch (e) {
       steps.push({
         seq,
@@ -186,7 +148,7 @@ export function planOperations(rawOps: RawOp[]): DryRunPlan {
   }
 }
 
-function planOne(seq: number, raw: RawOp, mounts: ReturnType<typeof defaultMounts>, prior: PlanEntry[], plannedDirs: Set<string>): PlanEntry {
+function planOne(seq: number, raw: RawOp, mounts: ReturnType<typeof defaultMounts>, prior: PlanEntry[]): PlanEntry {
   if (raw.op === 'write') {
     // content is NOT included in the plan card (could be huge); the step
     // carries the target + byte count only, full content is consent-bound
@@ -214,8 +176,6 @@ function planOne(seq: number, raw: RawOp, mounts: ReturnType<typeof defaultMount
     verifyReal(real, mount.real)
     if (mount.mode !== 'rw') throw new Error(`"${virtual}" is read-only`)
     if (statVirtual(virtual, mounts)) throw new Error(`"${virtual}" already exists`)
-    const dup = prior.find((p) => p.proposable && p.op === 'mkdir' && p.to === virtual)
-    if (dup) throw new Error(`duplicate mkdir: step ${dup.seq} of this plan already creates "${virtual}"`)
     return { seq, op: 'mkdir', from: '', to: virtual, class: 'other', flagged: false, reversible: true, bytes: 0, reason: `create directory ${virtual}`, proposable: true }
   }
   if (!raw.from) throw new Error(`${raw.op} op without a source`)
@@ -254,15 +214,6 @@ function planOne(seq: number, raw: RawOp, mounts: ReturnType<typeof defaultMount
   // moving INTO an existing directory is legitimate: resolve to dir/basename
   // so the plan card shows the true final path and collisions stay detectable
   if (fs.existsSync(toReal) && fs.statSync(toReal).isDirectory()) {
-    toV = `${toV.replace(/\/$/, '')}/${path.basename(fromV)}`
-    const remounted = resolveVirtual(toV, mounts)
-    toV = remounted.virtual
-    toReal = remounted.real
-    if (fs.existsSync(toReal)) throw new Error(`destination "${toV}" already exists`)
-  } else if (plannedDirs.has(toV.replace(/\/$/, ''))) {
-    // an EARLIER step of this plan mkdirs this exact directory, so by the
-    // time this step runs it IS a directory: resolve to dir/basename now so
-    // the card shows the true final path (A3 pilot finding)
     toV = `${toV.replace(/\/$/, '')}/${path.basename(fromV)}`
     const remounted = resolveVirtual(toV, mounts)
     toV = remounted.virtual
