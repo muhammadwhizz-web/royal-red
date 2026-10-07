@@ -6,7 +6,7 @@ import { Signature } from './signature'
 import { useRoyalRed } from './store'
 
 const BOOT_LINES = [
-  'royal red kernel v1.4.0 (linux-native · deepseek primitives aboard)',
+  'royal red kernel v1.5.0 (linux-native · deepseek primitives aboard)',
   'mounting sandbox workspace ......... ok',
   'loading tool bus: search fs shell accounts ok',
   'linking vision core: image gen + vlm eyes ok',
@@ -36,6 +36,9 @@ const BOOT_LINES = [
   'dsh port 2: policy waterfall 5 layers monotonic ok',
   'dsh port 3: llm seam all calls behind one door ok',
   'dsh port 4: sandbox roots declarative per-scope ok',
+  'invariants doc: every claim cites its test ok',
+  'run queue: n runs per session + per-run scalpel ok',
+  'css guard: served stylesheet asserted each boot ok',
   'linking llm core .................. ok',
   'all systems nominal',
 ]

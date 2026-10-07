@@ -590,9 +590,9 @@ export default function RoyalRedConsole() {
 
       {/* sticky footer line */}
       <footer className="z-30 shrink-0 border-t bg-background px-4 py-1.5 text-center font-mono text-[10px] tracking-[0.25em] text-muted-foreground sm:px-6">
-        <span className="sm:hidden"> ROYAL RED // KERNEL v1.4</span>
+        <span className="sm:hidden"> ROYAL RED // KERNEL v1.5</span>
         <span className="hidden sm:inline">
-           ROYAL RED // KERNEL v1.4 / SANDBOXED / PROOF-TESTED: LEDGER · CRITIC · SCREENSHOTS · CMS · EVENT LOG · POLICY WATERFALL · LLM SEAM · SANDBOX ROOTS
+           ROYAL RED // KERNEL v1.5 / SANDBOXED / INVARIANTS DOC / PROOF-TESTED: LEDGER · CRITIC · EVENT LOG · WATERFALL · SEAM · ROOTS · RUN QUEUE · CSS GUARD
         </span>
       </footer>
     </div>
