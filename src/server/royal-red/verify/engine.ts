@@ -252,9 +252,9 @@ export async function runVerification(
         const path = await import('path')
         const { WORKSPACE_ROOT } = await import('../workspace')
         const buf = fs.default.readFileSync(path.default.join(WORKSPACE_ROOT, desktop.relFile))
-        const { default: ZAI } = await import('z-ai-web-dev-sdk')
-        const zai = await ZAI.create()
-        const completion = await zai.chat.completions.createVision({
+        const { seamVision } = await import('../llm/seam')
+        const vr = await seamVision({
+          operation: 'verify.shot-note',
           messages: [
             {
               role: 'user',
@@ -264,9 +264,9 @@ export async function runVerification(
               ],
             },
           ],
-          thinking: { type: 'disabled' },
         })
-        const note = completion.choices?.[0]?.message?.content ?? ''
+        if (!vr.ok) throw new Error(vr.meta.error ?? 'vision failed')
+        const note = vr.text
         if (note.trim()) shotNotes = [note.slice(0, 1200)]
       } catch {}
     }

@@ -80,19 +80,18 @@ function parseLedgerJson(raw: string): LedgerItem[] {
 }
 
 export async function callLlmJson(system: string, user: string, timeoutMs = 45_000): Promise<string> {
-  const { default: ZAI } = await import('z-ai-web-dev-sdk')
-  const zai = await ZAI.create()
-  const completion = (await Promise.race([
-    zai.chat.completions.create({
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-      thinking: { type: 'disabled' },
-    }),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('ledger extraction timed out')), timeoutMs)),
-  ])) as { choices?: { message?: { content?: string } }[] }
-  return completion.choices?.[0]?.message?.content ?? ''
+  // through the seam (harness port #3) — no direct provider access here
+  const { seamComplete } = await import('../llm/seam')
+  const r = await seamComplete({
+    operation: 'verify.ledger-extract',
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+    timeoutMs,
+  })
+  if (!r.ok) throw new Error(r.meta.error ?? 'ledger extraction failed')
+  return r.text
 }
 
 // ---- deterministic evaluators (kernel decides; the model never does) ----

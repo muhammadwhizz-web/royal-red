@@ -251,9 +251,9 @@ async function analyzeImage(req: Extract<ToolRequest, { name: 'analyze_image' }>
       return { name: 'analyze_image', ok: false, summary: 'rejected: provide path or url' }
     }
 
-    const { default: ZAI } = await import('z-ai-web-dev-sdk')
-    const zai = await ZAI.create()
-    const completion = await zai.chat.completions.createVision({
+    const { seamVision } = await import('./llm/seam')
+    const vr = await seamVision({
+      operation: 'tool.analyze_image',
       messages: [
         {
           role: 'user',
@@ -263,9 +263,9 @@ async function analyzeImage(req: Extract<ToolRequest, { name: 'analyze_image' }>
           ],
         },
       ],
-      thinking: { type: 'disabled' },
     })
-    const text = completion.choices[0]?.message?.content ?? ''
+    if (!vr.ok) throw new Error(vr.meta.error ?? 'vision failed')
+    const text = vr.text
     if (!text.trim()) return { name: 'analyze_image', ok: false, summary: 'vision model returned empty analysis' }
     return {
       name: 'analyze_image',
@@ -443,8 +443,6 @@ async function analyzeVideo(req: Extract<ToolRequest, { name: 'analyze_video' }>
     }
     if (!frames.length) return { name: 'analyze_video', ok: false, summary: 'ffmpeg could not extract any frames from this file' }
 
-    const { default: ZAI } = await import('z-ai-web-dev-sdk')
-    const zai = await ZAI.create()
     const content: { type: string; text?: string; image_url?: { url: string } }[] = [
       { type: 'text', text: `${question}\n\nVideo duration: ${duration.toFixed(1)}s. Below are ${frames.length} sampled frames in chronological order${sceneTimes.length ? ` (picked at ${Math.min(sceneTimes.length, stamps.length)} of the video's scene cuts)` : ' (evenly spaced)'}.` },
       ...frames.flatMap((f) => [
@@ -452,11 +450,13 @@ async function analyzeVideo(req: Extract<ToolRequest, { name: 'analyze_video' }>
         { type: 'image_url' as const, image_url: { url: f.dataUrl } },
       ]),
     ]
-    const completion = await zai.chat.completions.createVision({
+    const { seamVision } = await import('./llm/seam')
+    const vr = await seamVision({
+      operation: 'tool.analyze_video',
       messages: [{ role: 'user', content }],
-      thinking: { type: 'disabled' },
     })
-    const text = completion.choices[0]?.message?.content ?? ''
+    if (!vr.ok) throw new Error(vr.meta.error ?? 'vision failed')
+    const text = vr.text
     if (!text.trim()) return { name: 'analyze_video', ok: false, summary: 'video model returned empty analysis' }
     return {
       name: 'analyze_video',

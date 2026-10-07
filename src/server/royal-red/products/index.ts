@@ -11,7 +11,7 @@
 //   says exactly which path produced the artifact ("router" vs "builtin-fallback").
 // - a product whose output fails verification is reported as failed — never faked.
 
-import { execute } from '../router/router'
+import { seamRouted } from '../llm/seam'
 import type { CapabilityRequest, CanonicalMessage } from '../providers/types'
 
 export interface ProductRunReceipt {
@@ -214,7 +214,7 @@ export async function runProduct(productId: string, input: Record<string, unknow
   let costUsd = 0
 
   try {
-    const res = await execute(req)
+    const res = await seamRouted(req)
     if (res.ok && res.text) {
       raw = res.text
       providerChain = res.attempts.map((a) => a.providerId)

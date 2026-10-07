@@ -20,6 +20,7 @@ import {
 import { extractAndSaveLedger, ledgerForBuilder } from './verify/ledger'
 import { runVerification, verifyCritique } from './verify/engine'
 import { appendEvent, durableEmitter } from './event-log'
+import { seamComplete } from './llm/seam'
 
 type Emit = (e: RoyalRedSseEvent) => void
 
@@ -59,16 +60,20 @@ export function extractJson(raw: string): Directive | null {
   }
 }
 
-async function callLlm(messages: { role: 'system' | 'user' | 'assistant'; content: string }[]): Promise<string> {
-  const { default: ZAI } = await import('z-ai-web-dev-sdk')
-  const zai = await ZAI.create()
-  const completion = await zai.chat.completions.create({
+// every model call flows through the LLM seam (harness port #3): the loop
+// never talks to a provider directly — the seam owns the header log, the
+// house provider, the router fallback, the breaker and the ledger
+async function callLlm(
+  messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
+  opts?: { sessionId?: string; operation?: string },
+): Promise<string> {
+  const r = await seamComplete({
+    operation: opts?.operation ?? 'agent.loop',
     messages,
-    thinking: { type: 'disabled' },
+    sessionId: opts?.sessionId,
   })
-  const content = completion.choices[0]?.message?.content ?? ''
-  if (!content.trim()) throw new Error('empty model response')
-  return content
+  if (!r.ok) throw new Error(r.meta.error ?? 'seam: all model paths failed')
+  return r.text
 }
 
 // extract structured, testable constraints from a substantive build command;
@@ -86,17 +91,20 @@ export async function generateSessionTitle(
   firstReply: string,
 ): Promise<string | null> {
   try {
-    const raw = await callLlm([
-      {
-        role: 'system',
-        content:
-          'You name ROYAL RED session transcripts. Reply with EXACTLY one title: 3 to 6 words, Title Case, no quotes, no trailing period, no emoji. Describe the task, not the outcome.',
-      },
-      {
-        role: 'user',
-        content: `COMMAND: ${firstCommand.slice(0, 500)}\n\nROYAL RED REPLY EXCERPT: ${firstReply.slice(0, 800)}`,
-      },
-    ])
+    const raw = await callLlm(
+      [
+        {
+          role: 'system',
+          content:
+            'You name ROYAL RED session transcripts. Reply with EXACTLY one title: 3 to 6 words, Title Case, no quotes, no trailing period, no emoji. Describe the task, not the outcome.',
+        },
+        {
+          role: 'user',
+          content: `COMMAND: ${firstCommand.slice(0, 500)}\n\nROYAL RED REPLY EXCERPT: ${firstReply.slice(0, 800)}`,
+        },
+      ],
+      { operation: 'session.title' },
+    )
     let t = raw.trim()
     t = t.replace(/^["'`]+|["'`.]+$/g, '').replace(/\s+/g, ' ')
     if (!t || t.length < 3 || t.length > 80 || /\n/.test(t)) return null
@@ -190,7 +198,7 @@ export async function runRoyalRedTurn(opts: {
 
     let raw: string
     try {
-      raw = await callLlm(chat)
+      raw = await callLlm(chat, { sessionId })
     } catch (e) {
       if (stopped()) break
       emit({ type: 'error', message: `model error: ${(e as Error).message}` })
@@ -210,7 +218,7 @@ export async function runRoyalRedTurn(opts: {
               : 'STILL_MALFORMED: output EXACTLY ONE tiny JSON object. Safest: {"say":"one short sentence"} and nothing else.',
         })
         try {
-          raw = await callLlm(chat)
+          raw = await callLlm(chat, { sessionId, operation: 'agent.repair' })
           d = extractJson(raw)
         } catch {
           d = null
@@ -574,7 +582,7 @@ export async function runRoyalRedTurn(opts: {
             emit({ type: 'phase', value: `regeneration pass ${regen + 1}` })
             let regenRaw = ''
             try {
-              regenRaw = await callLlm(chat)
+              regenRaw = await callLlm(chat, { sessionId, operation: 'agent.regen' })
             } catch {
               break
             }
