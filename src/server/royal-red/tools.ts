@@ -18,13 +18,13 @@ import {
 import type { ArtifactPatch, ToolOutcome, ToolRequest } from '@/lib/royal-red/types'
 import { runBoxPrimitive } from './box/primitives'
 import { isAborted } from './box/ops'
+import { decideTool, SHELL_ALLOWLIST } from './policy/waterfall'
 
 const pexec = promisify(execFile)
 
-const SHELL_ALLOW = [
-  'uname', 'whoami', 'uptime', 'date', 'df', 'free', 'ps',
-  'ls', 'echo', 'wc', 'head', 'tail', 'python3', 'node', 'bun',
-]
+// single source of truth for the shell allowlist now lives in the policy
+// waterfall (harness port #2) — the executor imports it so the two can drift
+const SHELL_ALLOW = SHELL_ALLOWLIST
 
 async function runShell(command: string, timeoutMs = 15000): Promise<ToolOutcome> {
   const trimmed = command.trim()
@@ -476,6 +476,19 @@ export async function runTool(
   ctx: { sessionId: string; emit?: (e: unknown) => void },
 ): Promise<ToolOutcome> {
   try {
+    // ---- POLICY WATERFALL (harness port #2): every dispatch passes the five
+    // inspectable layers before anything executes. Deny = named-layer refusal;
+    // ask = delegated to the consent engine inside the box primitive.
+    const decision = await decideTool({ name: req.name, args: (req.args ?? {}) as Record<string, unknown> }, { sessionId: ctx.sessionId })
+    if (decision.verdict === 'deny' || (decision.verdict === 'ask' && !decision.enforcedBy)) {
+      // fail closed: an 'ask' with no enforcement channel is a denial
+      return {
+        name: req.name,
+        ok: false,
+        summary: `denied by ${decision.layer} policy: ${decision.reason}`,
+        detail: decision.layers ? `layers considered: ${decision.layers.map((l) => l.name).join(' -> ')}` : undefined,
+      }
+    }
     // Phase 4: the 13 permitted desktop primitives. The kernel (box/*) enforces
     // tiers, dry-run, journal and the kill switch regardless of model behavior.
     if (
