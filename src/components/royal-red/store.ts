@@ -318,7 +318,7 @@ export interface RoyalRedState {
   artifacts: ArtifactView[]
   activeFile: string | null
   previewKey: number
-  panelTab: 'preview' | 'files' | 'verify' | 'system' | 'desktop'
+  panelTab: 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router'
   filesScope: 'artifact' | 'workspace'
   panelHidden: boolean
   systemOpen: boolean

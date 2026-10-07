@@ -41,6 +41,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { VerifyTab } from './verify-tab'
 import { DesktopTab } from './desktop-tab'
+import { ProvidersTab } from './providers-tab'
+import { RouterTab } from './router-tab'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1326,10 +1328,10 @@ export function RightPanel() {
   return (
     <Tabs
       value={panelTab}
-      onValueChange={(v) => setPanelTab(v as 'preview' | 'files' | 'verify' | 'system' | 'desktop')}
+      onValueChange={(v) => setPanelTab(v as 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router')}
       className="flex h-full flex-col"
     >
-      <TabsList className="mx-3 mt-3 grid w-auto grid-cols-5 gap-1 bg-muted/50 p-1">
+      <TabsList className="mx-3 mt-3 grid w-auto grid-cols-7 gap-1 bg-muted/50 p-1">
         {(
           [
             { id: 'preview', label: 'PREVIEW' },
@@ -1337,6 +1339,8 @@ export function RightPanel() {
             { id: 'verify', label: 'VERIFY' },
             { id: 'system', label: 'SYSTEM' },
             { id: 'desktop', label: 'DESKTOP' },
+            { id: 'providers', label: 'PROVIDERS' },
+            { id: 'router', label: 'ROUTER' },
           ] as const
         ).map((t) => (
           <TabsTrigger
@@ -1364,6 +1368,12 @@ export function RightPanel() {
       </TabsContent>
       <TabsContent value="desktop" className="mt-0 min-h-0 flex-1">
         <DesktopTab />
+      </TabsContent>
+      <TabsContent value="providers" className="mt-0 min-h-0 flex-1">
+        <ProvidersTab />
+      </TabsContent>
+      <TabsContent value="router" className="mt-0 min-h-0 flex-1">
+        <RouterTab />
       </TabsContent>
     </Tabs>
   )

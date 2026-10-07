@@ -227,3 +227,25 @@ model RoyalRedUndoEntry {
   @@index([sessionId, createdAt])
   @@map("AwonUndoEntry")
 }
+
+// ROYAL RED cost ledger (router): one row per provider call attempt.
+// Append-only. Powers the ROUTER panel + "what did this cost me" surfaces.
+model RoyalRedCostEntry {
+  id        String   @id @default(cuid())
+  operation String
+  modality  String
+  providerId String
+  model     String
+  tokensIn  Int      @default(0)
+  tokensOut Int      @default(0)
+  costUsd   Float    @default(0)
+  latencyMs Int      @default(0)
+  outcome   String   // ok | error | switched | dry-run
+  error     String?
+  attempt   Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([providerId])
+  @@map("AwonCostEntry")
+}

@@ -566,3 +566,20 @@ Work Log:
 Stage Summary:
 - Verdicts: slidev EXTRACT-PRIMITIVES (MIT parser + layout vocab, BUILD the thin renderer - do NOT embed the Vite/Playwright framework); Fooocus BACKEND-ONLY (no API surface, GPL-3.0, TLS-verification bug); stable-diffusion-webui BACKEND-ONLY and FIRST CHOICE (v1.10.1 snapshot near-complete, real /sdapi/v1 REST, AGPL-clean if run unmodified by the user)
 - Key honest findings: (1) 0 of 3 payload claims are fully accurate - all PARTIAL; "zero AI/zero cost" framing hides that deck content and image generation both ride on the user's own keys/GPU/bandwidth; (2) no repo has any logo-specific capability - the "minimalist logo icons" line is pure prompting we must build and temper; (3) image backend collapses to ONE integration (A1111 /sdapi/v1 first, Fooocus gradio_client fallback); (4) both image apps need multi-GB first-run downloads, so "offline" only post-bootstrap; (5) slidev ships an agent skill - ready-made blueprint for LLM-authored decks under BYOK
+
+---
+Task ID: 2
+Agent: full-stack-developer (relaunch) + main orchestrator (gates)
+Task: Rename AWON -> ROYAL RED everywhere + red UI theme, zero behavior change
+
+Work Log:
+- Prior attempt died after setup (checkpoint commit b6e5cfc + db backup custom.db.backup-prerename-20261007-055337); relaunch completed the rename before its final report was lost to an infra error; main orchestrator verified gates
+- Dirs: src/server/awon -> src/server/royal-red, src/components/awon -> src/components/royal-red, src/app/api/awon -> src/app/api/royal-red; ALL imports/fetch URLs updated
+- Prisma: all 12 Awon* models renamed RoyalRed* with @@map("Awon*") preserving physical tables - ZERO data migration, verified by live queries (SELECT ... FROM AwonSession in dev.log)
+- Branding: layout/manifest metadata "ROYAL RED / OS within OS", boot overlay "royal red kernel v1.3.0", footer "ROYAL RED // KERNEL v1.3", composer placeholder "command ROYAL RED..."
+- Red UI: globals.css --primary deep red (oklch(0.53 0.2 27) light) both modes
+- Deliberate exceptions (compat): physical dirs awon-box/ and .awon-trash constants + their UI mentions, db row IDs awon_* in test scripts, historical docs/
+- GATES: lint 0/0; dev server via start-stop-daemon (setsid/nohup get reaped - sandbox kills session children; start-stop-daemon daemonization survives); agent-browser smoke: title ROYAL RED, boot overlay, composer, SSE round-trip "say hello" -> agent built+verified hello-page artifact 8/10, /desktop command ok; dev.log error scan clean; screenshots qa/royalred-rebrand-dark.png, royalred-boot.png, royalred-rebrand-desktop.png
+
+Stage Summary:
+- ROYAL RED v1.3 live: full rebrand with zero behavior change; SSE loop, artifacts, verification, consent stack all proven working post-rename. Sandbox-wipe lesson re-confirmed: wh-work wiped again this round; payload saved at /home/z/rr-payload (18 repos, reports in reports/)
