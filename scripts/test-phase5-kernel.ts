@@ -52,7 +52,7 @@ async function auditRowsFor(runIds: string[]) {
 // box dirs for the executor runs (only ever the emulated Box)
 ensureBoxTree()
 fs.mkdirSync(path.join(BOX_HOME, 'Downloads'), { recursive: true })
-for (const d of ['p5-planner', 'p5-builder', 'p5-root', 'p5-childA', 'p5-gc', 'p5-childB', 'p5-pause']) {
+for (const d of ['p5-planner', 'p5-builder', 'p5-root', 'p5-childA', 'p5-gc', 'p5-childB', 'p5-pause', 'p5-t3victim']) {
   fs.rmSync(path.join(BOX_HOME, 'Downloads', d), { recursive: true, force: true })
 }
 resetBudgetState()
@@ -326,6 +326,41 @@ const subRows = await db.royalRedAudit.findMany({ where: { runId: { in: subRunId
 const missing = subRows.filter((r) => !r.subAgentId || !r.parentRunId)
 check('ATTRIBUTION LAW: every sub-agent audit row names subAgentId + parentRunId', missing.length === 0, JSON.stringify(missing.slice(0, 3).map((r) => r.action)))
 
+// ═══ 8. CONSENT GATE NAMES THE SUB-AGENT (T3 card through the executor) ══════
+console.log('consent gate under load: the T3 card NAMES the sub-agent')
+{
+  // a BUILDER sub-run needs to trash one Box file -> the card must say BUILDER
+  const victimDir = path.join(BOX_HOME, 'Downloads', 'p5-t3victim')
+  fs.mkdirSync(victimDir, { recursive: true })
+  fs.writeFileSync(path.join(victimDir, 'old.txt'), 'to trash\n')
+  const t3Ops = [{ op: 'trash' as const, from: '/home/royalred/Downloads/p5-t3victim/old.txt' }]
+  const t3Plan = planOperations(t3Ops)
+  const t3Run = executePlan(t3Plan, {
+    sessionId: SID, emit: noopEmit, approvedHash: t3Plan.hash, consentId: 't',
+    extras: { parentRunId: topRun, role: 'builder', depth: 1 },
+  })
+  // the user answers the card while the executor waits (fail-open to approval)
+  let cardTitle = ''
+  const dl3 = Date.now() + 20_000
+  while (Date.now() < dl3 && !cardTitle) {
+    const pending = await db.royalRedConsent.findFirst({ where: { sessionId: SID, status: 'pending', tier: 3 }, orderBy: { createdAt: 'desc' } })
+    if (pending) {
+      cardTitle = pending.title
+      await decideConsent(pending.id, { decision: 'approve' })
+    }
+    await sleep(20)
+  }
+  const t3Res = await t3Run
+  check('T3 card NAMES the sub-agent (BUILDER ...)', /BUILDER \(sub-agent builder:/.test(cardTitle), `title="${cardTitle}"`)
+  check('T3 card names the exact op', cardTitle.includes('old.txt'), cardTitle)
+  check('approval let the trash execute, journaled per-run', t3Res.executed === 1)
+  const t3Audit = await db.royalRedAudit.findFirst({ where: { runId: t3Res.runId, action: 'desktop.trash', ok: true } })
+  check('T3 execution attributed to the sub-agent', !!t3Audit && !!t3Audit.subAgentId && t3Audit.subAgentId.startsWith('builder:'))
+  const restored = await db.royalRedUndoEntry.count({ where: { runId: t3Res.runId, op: 'trash' } })
+  check('T3 trash is undoable (journal row per-run)', restored === 1)
+  fs.rmSync(victimDir, { recursive: true, force: true })
+}
+
 // ═══ cleanup (our rows + our box dirs only — never the real home) ════════════
 const allRunIds = (await db.royalRedRun.findMany({ where: { sessionId: SID } })).map((r) => r.id)
 await db.royalRedAudit.deleteMany({ where: { runId: { in: allRunIds } } })
@@ -334,7 +369,7 @@ await db.royalRedConsent.deleteMany({ where: { sessionId: SID } })
 await db.royalRedUndoEntry.deleteMany({ where: { sessionId: SID } })
 await db.royalRedRun.deleteMany({ where: { sessionId: SID } })
 await db.royalRedEventLog.deleteMany({ where: { sessionId: SID } })
-for (const d of ['p5-planner', 'p5-builder', 'p5-root', 'p5-childA', 'p5-gc', 'p5-childB', 'p5-pause']) {
+for (const d of ['p5-planner', 'p5-builder', 'p5-root', 'p5-childA', 'p5-gc', 'p5-childB', 'p5-pause', 'p5-t3victim']) {
   fs.rmSync(path.join(BOX_HOME, 'Downloads', d), { recursive: true, force: true })
 }
 check('estimateTokens is a sane chars/4 approximation', estimateTokens('12345678') === 2)

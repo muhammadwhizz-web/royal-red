@@ -324,16 +324,22 @@ export async function executePlan(
     }
 
     // Tier 3: trash steps ask PER ACTION. A typed permanent rule can match and
-    // skip the dialog; every rule match is still audited.
+    // skip the dialog; every rule match is still audited. Round 4: when the
+    // run belongs to a SUB-AGENT, the card NAMES the sub-agent ("BUILDER
+    // (sub-agent builder:run_x) wants to trash ...") — the user always knows
+    // which member of the team is asking.
     if (step.op === 'trash') {
       const rule = await findMatchingRule('box_trash', step.from)
       if (!rule) {
+        const who = attribution.subAgentId
+          ? `${attribution.subAgentId.split(':')[0].toUpperCase()} (sub-agent ${attribution.subAgentId})`
+          : null
         const ans = await requestConsent(
           {
             sessionId,
             runId,
             tier: 3,
-            title: `Trash "${step.from}"`,
+            title: `${who ? `${who} wants to trash` : 'Trash'} "${step.from}"`,
             detail: `Tier 3 destructive action, asked per action. It moves to .awon-trash (restorable, 7-day TTL) - it is never deleted. To never ask again for this pattern, choose TYPE A RULE and type it.`,
             payload: { kind: 'single', step },
           },

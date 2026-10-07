@@ -1,7 +1,8 @@
 # ROYAL RED — SYSTEM INVARIANTS
 
-**Document version: 1.0 (2026-10-07, Round 3)**
+**Document version: 1.1 (2026-10-08, Round 4)**
 **Change rule: this document never changes without a version bump and a worklog entry citing the reason.**
+**v1.1 reason: the provider-key decision landed (Option B — section F); Phase 5 slice 1 shipped two new enforced properties (S-10, C-7) and the T3 consent card now names the asking sub-agent (S-2).**
 
 This is the single place where the properties that make Royal Red trustworthy are
 written down. Every invariant carries a **how it's tested** line pointing at a real,
@@ -26,9 +27,12 @@ are never read, written, listed, or deleted by any kernel code path.
 ### S-2. Consent gate — the loop pauses for consent, fail-closed
 Every session-tier action pauses the loop, streams `consent.request`, and waits
 for `consent.decision`; execution resumes only on approval. A 120-second
-timeout is a **deny**, never an approval.
-- **Enforced by:** `src/server/royal-red/box/consent.ts` (pending rows, FIFO queue, 120s expiry, abort-state triple-checkpoint).
-- **Tested by:** acceptance steps 1–2 (live card, live approval); `scripts/test-phase4-stacking.ts` (FIFO order, independent 120s clocks, timeout ⇒ deny).
+timeout is a **deny**, never an approval. When the asking run belongs to a
+sub-agent, the card **names the sub-agent** ("BUILDER (sub-agent
+builder:run_x) wants to trash …") — the user always knows which member of the
+team is asking.
+- **Enforced by:** `src/server/royal-red/box/consent.ts` (pending rows, FIFO queue, 120s expiry, abort-state triple-checkpoint); `box/ops.ts` executor consent branch (sub-agent naming from the run's attribution).
+- **Tested by:** acceptance steps 1–2 (live card, live approval); `scripts/test-phase4-stacking.ts` (FIFO order, independent 120s clocks, timeout ⇒ deny); `scripts/test-phase5-kernel.ts` section 8 (T3 card raised through the executor by a BUILDER sub-run names the sub-agent, approval executes, journal attributed).
 
 ### S-3. Tier 3 actions: per-action consent, no batching
 Destructive actions (trash, shell exec, screen click/type) ask one dialog per
@@ -43,13 +47,16 @@ anywhere in the kernel.
 - **Enforced by:** `box/ops.ts` executeStep (trash op), journal-before-disk.
 - **Tested by:** `scripts/test-arch-invariants.ts` → trash-only law (destructive fs confined to a named allowlist of kernel-owned stores, no shell `rm`); acceptance steps 6c/6d/7/8 (files land in trash, undo restores them).
 
-### S-5. Kill switch: global hammer AND per-run scalpel
+### S-5. Kill switch: global hammer, per-run scalpel, session pause
 The global kill switch freezes the consent queue, aborts every running run,
 SIGTERMs supervised children, and refuses new actions for 30 seconds. The
-per-run abort (run-queue) stops exactly one run and must not touch siblings,
-consents, or the refuse window.
-- **Enforced by:** `box/ops.ts triggerAbort`, `box/abort-state.ts` (global flag vs per-run set), `runqueue.ts abortOneRun`.
-- **Tested by:** acceptance steps 9a–9e; `scripts/test-run-queue.ts` ("single-run abort lands mid-flight", "global kill switch not invoked (consent table untouched)", "run B/C completed untouched").
+per-run abort (run-queue) stops exactly one run or sub-agent and must not touch
+siblings, consents, or the refuse window. The third verb — **session pause** —
+freezes runs at the next step boundary with ALL state kept (runs stay running,
+consents stay pending, journals intact) and lifts on resume; the kill switch
+still wins inside a pause. Pause is user-only: no agent can pause itself.
+- **Enforced by:** `box/ops.ts triggerAbort`, `box/abort-state.ts` (global flag vs per-run set), `runqueue.ts abortOneRun`, `pause-state.ts` + the executor's per-step pause gate, `subagents.ts abortSubtree` (persisted-tree walk).
+- **Tested by:** acceptance steps 9a–9e; `scripts/test-run-queue.ts` (scalpel semantics); `scripts/test-phase5-kernel.ts` sections 4–6 (builder cut mid-flight while the planner completes — session resumable; pause freezes progress and resumes to completion; subtree abort kills exactly the walked subtree).
 
 ### S-6. Provider keys: AES-256-GCM at rest, never returned, masked hints only
 Keys are encrypted at rest, decrypted only in-process at call time, never
@@ -79,9 +86,20 @@ a grant binds before turn rules (the user outranks the turn).
 ### S-9. LLM seam: all model calls behind one door
 `seamComplete` / `seamVision` / `seamRouted` are the only model-call interface.
 Provider adapters execute only under the seam → router chain; breakers, cost
-ledger and fallback live behind the seam.
+ledger, budget gate and fallback live behind the seam.
 - **Enforced by:** import discipline (`src/server/royal-red/llm/seam.ts` is the sole consumer surface of the router; the router is the sole consumer of adapters).
 - **Tested by:** `scripts/test-arch-invariants.ts` → seam section (`providers/adapters` importable only by llm/router/providers; creds/health/registry additionally only by the key-management API surface; no direct provider-host `fetch()` outside the seam family).
+
+### S-10. Sub-agent attribution: no sub-agent action is unattributed
+Every sub-agent is a RUN with a persisted parent (`RoyalRedRun.parentRunId`,
+`role`, `depth`). Every audit row written while a sub-agent executes carries
+`subAgentId` (`<role>:<runId>`) AND `parentRunId`; every sub-agent event lands
+on the session log under the sub-agent's own `runId` (partitioned at read-side
+replay); the parent session log shows the full lifecycle (`subagent/spawned`,
+`subagent/finished`, `subagent/aborted`, `subagent/verdict`). Spawn denials are
+audited kernel decisions.
+- **Enforced by:** `subagents.ts` (spawn/lifecycle), `ops.ts runAttribution` (executor stamping), `orchestrator.ts` (verdicts/artifact rows), `runqueue.ts abortOneRun` (aborts of sub-agents name them).
+- **Tested by:** `scripts/test-phase5-kernel.ts` (attribution law check: zero sub-agent audit rows missing subAgentId/parentRunId; lifecycle events; per-run projections separable); `scripts/test-phase5-orchestrator.ts` (every scripted scenario re-asserts the law).
 
 ## B. Correctness invariants
 
@@ -96,6 +114,9 @@ writers cannot collide); unknown future event types replay as `ignorable`.
 The honest score is `min(builder, critic)`. With no independent-critic key the
 receipt is labeled `SAME-FAMILY FRESH CONTEXT` — never presented as independent
 verification. Every receipt persists to the DB and reloads with the session.
+**Permanence (v1.1, section F): the user answered the provider-key question —
+Option B. This label is the operating ceiling on every receipt, and every
+round report states it on line one, until a second key is actually configured.**
 - **Enforced by:** `verify/engine.ts` (score math, label), verification persistence.
 - **Tested by:** `scripts/test-cedar-leaf.ts` (permanent regression: 7/7 honest, no fabricated disagreement); acceptance flow receipts reload after reconnect.
 
@@ -123,6 +144,17 @@ The invariants above depend on shape (imports, call sites) that behavioral
 tests cannot see. The shape itself is asserted.
 - **Tested by:** `scripts/test-arch-invariants.ts` (11 checks: seam boundaries, trash-only law, path-prison literals, supervised-process confinement, key hygiene).
 
+### C-7. Orchestration caps: spawn depth/width, per-run budgets, admission
+Sub-agent spawning is a KERNEL property, never an agent choice: depth ≤ 2
+(run → sub → sub-sub), width ≤ 4 live children per parent, ≤ 6 live runs per
+session. Token ceilings are per-run and role-differentiated (planner is the
+tightest per `docs/PHASE5-BUDGET.md`); the wall clock is 15 min/run. An
+exhausted run is refused its NEXT model call (never interrupted mid-call) and
+stops with a typed `budget/exhausted` event + an honest "stopped by budget"
+receipt — partial work saved, never silently dropped.
+- **Enforced by:** `subagents.ts checkSpawnCaps` (denies before any row exists, audited), `budget.ts` + the seam gate (`checkBudget` before every attributed call).
+- **Tested by:** `scripts/test-phase5-kernel.ts` sections 1+3 (depth/width/session denials audited; a drained planner refused while the builder completes; ledger rows attribute spend per runId); `scripts/test-phase5-orchestrator.ts` scenario E (mid-orchestration exhaustion → typed event + honest stop).
+
 ## C. Process invariants (how work is done)
 
 - **P-1.** Every round ends with a git commit hash **and** a worklog entry ID. Both are cited in the report; either one alone is not a receipt.
@@ -141,11 +173,23 @@ tests cannot see. The shape itself is asserted.
    order (tested in `test-waterfall.ts`); users resolving conflicting rules
    must delete the earlier one. The kernel surfaces the winning `ruleId` to
    make this visible.
-4. **Run-queue scale** — proven at 3 concurrent runs (the directive's
-   contract); no load test at larger N this round.
+4. **Run-queue scale** — proven at 3 concurrent runs (the Round 3 contract) and
+   now at 2 concurrent SUB-AGENT runs plus concurrent top-level work (Phase 5
+   kernel suite); no larger-N load test.
 5. **OSWorld payload dependency** — kernel-unit OSWorld checks degrade to
    honest-skip when the payload (wiped by sandbox resets) is absent; the
    harness itself remains covered.
+6. **Orchestrator LLM quality** (new in v1.1) — the planner's task lists and
+   the review verdicts are model-quality-dependent. The deterministic suite
+   proves the CONTRACT (spawns, attribution, verdicts, budget, degrade paths)
+   with a scripted seam; the LIVE acceptance proves one real end-to-end run.
+   No property of Royal Red depends on the planner being smart — degrade paths
+   handle a bad plan honestly.
+7. **Budget token accounting is estimate-based** (new in v1.1) — the house
+   provider reports no usage, so ceilings enforce on a chars/4 estimate; the
+   estimate is recorded as an estimate in the ledger. Routed BYOK providers
+   report real usage when adapters return it. Self-consistent, but not
+   provider-exact.
 
 ## E. The Tailwind catastrophe — postmortem record (Round 3)
 
@@ -177,8 +221,42 @@ CSS contains actual utilities. This was a QA blind spot, not a Tailwind bug.
 - **Invariant C-5** records this as a first-class correctness property: any
   future asset-pipeline failure fails loudly, in a suite, not in a screenshot.
 
+## F. The provider-key decision record (v1.1, Round 4)
+
+**The question, asked since Round 1 and escalated to BLOCKING in Round 3:
+provide a second provider key (Option A — independent critic, the strong
+verification moat) or ship with the same-model critic (Option B — honest but
+weaker label)?**
+
+**The user's Round 4 reply carried the decision template with NEITHER option
+selected and NO key. Per the standing rule ("silent non-response defaults to
+Option B after this round"), the decision is now ON RECORD: OPTION B.**
+
+Consequences, all enforced:
+
+1. Every verification receipt carries the label `SAME-FAMILY FRESH CONTEXT`
+   (already true since Round 2; now the PERMANENT operating ceiling, not a
+   temporary state). Upgrade path stays open: configuring a second critic key
+   through the existing encrypted-key system flips receipts to
+   `INDEPENDENT PROVIDER` with zero code change — the label logic already
+   branches on the presence of a key.
+2. Every round report states this fact on line one.
+3. The boot sequence states it (v1.6 line: `provider key: option b — same-family
+   fresh context ceiling ok`).
+4. No receipt, report, or marketing claim may describe the critique as
+   independent while Option B is in force. The critique still catches real
+   bugs (fresh context, different temperature, different sampling) — it is
+   just not a second brain, and Royal Red will never say it is.
+
+**What Option A would still buy, if it ever arrives:** disagreement that is a
+genuine signal instead of a same-family echo. The moat claim upgrades from
+"we verify honestly within one model family" to "two independent evaluators
+must agree". Phase 5's planner/builder/critic separation makes the second key
+worth MORE, not less — the critic team (Round 6) is where independent
+verification becomes the product.
+
 ---
 
 *Companion documents: `docs/PHASE5-ISOLATION.md` (sub-agent isolation spec —
-preparation only, Phase 5 not open), `docs/PHASE5-BUDGET.md` (orchestration
-budget policy). Boot sequence: v1.5.*
+now IMPLEMENTED for slice 1: planner/builder pair), `docs/PHASE5-BUDGET.md`
+(orchestration budget policy — now ENFORCED, see C-7). Boot sequence: v1.6.*

@@ -1,10 +1,11 @@
 # PHASE 5 ISOLATION SPEC — Sub-Agent Containment Contract
 
-**Status: SPEC ONLY. Phase 5 is NOT open.** Per the Round 2 freeze and the
-Round 3 directive, this document is preparation: it makes Phase 5 *safe to
-open*, it does not open it. No planner, no builder team, no critic team exists.
-Every answer below names the kernel primitive that will carry it and the test
-that will prove it. **The rule: an answer without a test does not ship.**
+**Status: SLICE 1 IMPLEMENTED (Round 4).** The planner/builder pair runs under
+exactly the contract below; the tests named "planned" are shipped as
+`scripts/test-phase5-kernel.ts` (54 checks) and
+`scripts/test-phase5-orchestrator.ts` (39 checks). The critic team and any
+third sub-agent type remain Phase 5.2 (Round 6) — the caps below deny them
+today. **The rule stands: an answer without a test does not ship.**
 
 ---
 
