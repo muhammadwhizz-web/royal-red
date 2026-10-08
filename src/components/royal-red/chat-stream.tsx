@@ -240,7 +240,7 @@ function UserBubble({ text }: { text: string }) {
   const files = m ? m[1].split(',').map((s) => s.trim()).filter(Boolean) : []
   return (
     <div className="royalred-rise flex justify-end">
-      <div className="max-w-[85%] rounded-lg rounded-br-sm border bg-muted/60 px-3.5 py-2 font-mono text-sm whitespace-pre-wrap">
+      <div className="max-w-[85%] rounded-2xl rounded-br-md border border-border/60 bg-muted/60 px-3.5 py-2 font-mono text-sm whitespace-pre-wrap shadow-sm">
         {body}
         {files.length > 0 && (
           <span className="mt-2 flex flex-wrap justify-end gap-1">
@@ -425,7 +425,7 @@ function ConsentCard({ item }: { item: Extract<ChatItem, { kind: 'consent' }> })
       role="group"
       aria-label={`Consent request: ${item.title}`}
       className={cn(
-        'royalred-rise rounded-lg border bg-card p-3 font-mono text-xs shadow-sm',
+        'royalred-rise rounded-2xl border bg-card p-3 font-mono text-xs shadow-sm transition',
         item.tier === 3 && pending && 'border-red-600/40',
         item.tier === 2 && pending && 'border-amber-600/40',
         item.tier === 1 && pending && 'border-emerald-600/40',
@@ -767,7 +767,7 @@ function EmptyState() {
               key={s.title}
               onClick={() => void send(s.cmd)}
               style={{ animationDelay: `${i * 70}ms` }}
-              className="royalred-rise group rounded-lg border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-red-600/40 hover:bg-red-500/5 hover:shadow-lg hover:shadow-red-500/5 focus-visible:ring-2 focus-visible:ring-red-600/40 focus-visible:outline-none"
+              className="royalred-rise group rounded-2xl border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-red-600/40 hover:bg-red-500/5 hover:shadow-lg hover:shadow-red-500/5 focus-visible:ring-2 focus-visible:ring-red-600/40 focus-visible:outline-none"
             >
               <div className="mb-1.5 flex items-center gap-2 font-mono text-xs tracking-wider text-red-600 transition group-hover:text-red-500 dark:text-red-400">
                 <Icon className="h-3.5 w-3.5" />
@@ -861,7 +861,7 @@ export function ChatStream() {
           if (item.kind === 'assistant') {
             return (
               <div key={item.id} className="royalred-rise flex justify-start">
-                <div className="group/msg relative max-w-[92%] rounded-lg rounded-bl-sm border border-l-2 border-l-red-600/50 bg-card px-3.5 py-2.5">
+                <div className="group/msg relative max-w-[92%] rounded-2xl rounded-bl-md border border-l-2 border-l-red-600/50 bg-card/95 px-3.5 py-2.5 shadow-[0_10px_30px_-18px_rgba(239,68,68,0.4)]">
                   {item.fresh ? <Typewriter text={item.text} /> : <MarkdownBody text={item.text} />}
                   <CopyButton text={item.text} />
                 </div>

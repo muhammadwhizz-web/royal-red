@@ -171,7 +171,7 @@ export function Composer() {
         setDragging(false)
       }}
       onDrop={onDrop}
-      className="relative mt-auto border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      className="relative mt-auto z-20"
     >
       {/* drop overlay */}
       {dragging && (
@@ -184,7 +184,7 @@ export function Composer() {
           </span>
         </div>
       )}
-      <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6">
+      <div className="mx-auto max-w-3xl px-3 pb-3 pt-2 sm:px-6">
         {/* pending uploads + errors */}
         {(pending.length > 0 || uploading > 0 || uploadError) && (
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
@@ -226,6 +226,8 @@ export function Composer() {
             )}
           </div>
         )}
+        {/* v1.7 signature dock: one glass capsule holding modes + input + actions */}
+        <div className="glass-strong rounded-[28px] px-3 pb-2.5 pt-3 shadow-[0_24px_60px_-28px_rgba(239,68,68,0.35)]">
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
           {MODES.map((m) => {
             const Icon = m.icon
@@ -286,7 +288,7 @@ export function Composer() {
             rows={1}
             placeholder="command ROYAL RED...  (/ to focus, drop files to attach)"
             aria-label="ROYAL RED command input"
-            className="max-h-40 min-h-[44px] flex-1 resize-none rounded-md border bg-card px-3.5 py-2.5 font-mono text-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-red-600/50 focus:ring-1 focus:ring-red-600/30"
+            className="max-h-40 min-h-[44px] flex-1 resize-none rounded-2xl border border-border/70 bg-background/50 px-3.5 py-2.5 font-mono text-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-red-600/50 focus:bg-background/80 focus:ring-2 focus:ring-red-600/20"
           />
           {/* idle slot: attach button; streaming slot: stop button (no layout shift) */}
           {streaming ? (
@@ -295,7 +297,7 @@ export function Composer() {
               onClick={stop}
               aria-label="Stop ROYAL RED"
               title="Stop the current turn"
-              className="royalred-rise flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-red-500/40 bg-red-500/5 text-red-500 transition hover:bg-red-500/15"
+              className="royalred-rise flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-red-500/40 bg-red-500/5 text-red-500 transition hover:bg-red-500/15"
             >
               <Square className="h-3.5 w-3.5 fill-current" />
             </button>
@@ -305,7 +307,7 @@ export function Composer() {
               onClick={() => fileRef.current?.click()}
               aria-label="Attach files"
               title="Attach files: images, videos, code, data. They land in the workspace."
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border text-muted-foreground transition hover:border-red-600/40 hover:text-foreground"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/50 text-muted-foreground transition hover:border-red-600/40 hover:text-foreground"
             >
               <Paperclip className="h-4 w-4" />
             </button>
@@ -314,9 +316,9 @@ export function Composer() {
             type="submit"
             disabled={streaming || !text.trim() || uploading > 0}
             aria-label="Send command"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-red-600/50 bg-red-500/10 text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40 dark:text-red-300"
+            className="btn-glossy flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           >
-            <ArrowUp className="h-4.5 w-4.5" />
+            <ArrowUp className="relative z-10 h-4.5 w-4.5" />
           </button>
           <input
             ref={fileRef}
@@ -331,7 +333,7 @@ export function Composer() {
             }}
           />
         </div>
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 px-1 pt-2">
           <p className="hidden font-mono text-[10px] text-muted-foreground sm:block">
             ROYAL RED runs sandboxed: files land in its workspace, shell is whitelisted, artifacts are previewed live.
           </p>
@@ -346,6 +348,7 @@ export function Composer() {
             <kbd className="rounded border bg-muted/60 px-1 py-0.5 text-[9px]">ctrl+b</kbd>
             panel
           </p>
+        </div>
         </div>
       </div>
     </form>

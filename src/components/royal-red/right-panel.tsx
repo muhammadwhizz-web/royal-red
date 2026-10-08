@@ -1332,7 +1332,7 @@ export function RightPanel() {
       onValueChange={(v) => setPanelTab(v as 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events')}
       className="flex h-full flex-col"
     >
-      <TabsList className="mx-3 mt-3 grid w-auto grid-cols-8 gap-1 bg-muted/50 p-1">
+      <TabsList className="seg mx-3 mt-3 grid w-auto grid-cols-8 gap-1 p-1">
         {(
           [
             { id: 'preview', label: 'PREVIEW' },
@@ -1349,7 +1349,7 @@ export function RightPanel() {
             key={t.id}
             value={t.id}
             className={cn(
-              'rounded font-mono text-[11px] tracking-wider transition-all data-[state=active]:bg-red-500/10 data-[state=active]:text-red-700 data-[state=active]:shadow-sm dark:data-[state=active]:text-red-300',
+              'seg-item font-mono text-[11px] tracking-wider text-muted-foreground transition-all data-[state=active]:text-red-700 dark:data-[state=active]:text-red-300',
             )}
           >
             {t.label}

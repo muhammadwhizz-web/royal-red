@@ -2,15 +2,19 @@
 
 import { useEffect } from 'react'
 import {
+  ArrowLeftRight,
   Download,
   FileDown,
   FlaskConical,
+  FolderTree,
   Gauge,
   Hammer,
   History,
+  KeyRound,
   Moon,
   PanelRight,
   Plus,
+  Rss,
   ScanEye,
   Search,
   ShieldCheck,
@@ -152,6 +156,33 @@ export function CommandPalette() {
             <ShieldCheck className="h-3.5 w-3.5" />
             open the verification dashboard
           </CommandItem>
+        </CommandGroup>
+        <CommandSeparator />
+        <CommandGroup heading="PANELS">
+          {(
+            [
+              { id: 'preview', label: 'preview the live artifact', icon: PanelRight },
+              { id: 'files', label: 'workspace files', icon: FolderTree },
+              { id: 'verify', label: 'verification dashboard (receipts)', icon: ShieldCheck },
+              { id: 'system', label: 'system: box, consent, undo journal', icon: Gauge },
+              { id: 'desktop', label: 'desktop mission control (kill switch)', icon: ScanEye },
+              { id: 'providers', label: 'providers: api keys + health', icon: KeyRound },
+              { id: 'router', label: 'router: matrix + rotation drill', icon: ArrowLeftRight },
+              { id: 'events', label: 'event log: replay + integrity', icon: Rss },
+            ] as const
+          ).map((t) => (
+            <CommandItem
+              key={t.id}
+              onSelect={() =>
+                run(() =>
+                  useRoyalRed.setState({ panelTab: t.id, panelHidden: false }),
+                )
+              }
+            >
+              <t.icon className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+              {t.label}
+            </CommandItem>
+          ))}
         </CommandGroup>
         <CommandSeparator />
         <CommandGroup heading="MODES">

@@ -6,7 +6,7 @@ import { Signature } from './signature'
 import { useRoyalRed } from './store'
 
 const BOOT_LINES = [
-  'royal red kernel v1.6.0 (linux-native · deepseek primitives aboard)',
+  'royal red kernel v1.7.0 (glass crown ui)',
   'mounting sandbox workspace ......... ok',
   'loading tool bus: search fs shell accounts ok',
   'linking vision core: image gen + vlm eyes ok',
@@ -21,7 +21,7 @@ const BOOT_LINES = [
   'console focus: panel toggle workspace search ok',
   'loading builder loop: plan build verify 10/10 ok',
   'constraint ledger: extracting testable assertions ok',
-  'verification 2.0: adversarial critic + visual regression ok',
+  'verification 2.0: critic + visual regression ok',
   'proof bus: cms panel + 10-site benchmark harness ok',
   'royal red box: path-prison emulation mount table rw/ro ok',
   'dry-run is the product: unproposable ops never run ok',
@@ -44,6 +44,9 @@ const BOOT_LINES = [
   'sub-agent law: every action names who + who sent it ok',
   'kernel caps: depth 2 / width 4 / budget per run ok',
   'kill switch verbs: abort session / abort agent / pause ok',
+  'signature ui v1.7: aurora + glass islands + segmented panels ok',
+  'feature access: 8 panels + history on the ctrl+k palette ok',
+  'skill catalog: products + provider services documented ok',
   'linking llm core .................. ok',
   'all systems nominal',
 ]
@@ -68,13 +71,14 @@ export function BootOverlay() {
           exit={{ opacity: 0, filter: 'blur(6px)' }}
           transition={{ duration: 0.5 }}
         >
+          <div className="royalred-aurora" aria-hidden="true" />
           <div className="royalred-scanlines pointer-events-none absolute inset-0" aria-hidden="true" />
           <div className="relative flex flex-col items-center gap-6 px-6">
             <Signature size="lg" />
-            <p className="font-mono text-xs text-muted-foreground tracking-widest uppercase">
+            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
               the operating system for agents
             </p>
-            <div className="mt-2 h-[520px] w-full max-w-md overflow-y-auto pr-1 font-mono text-[11px] leading-5 text-red-600 [scrollbar-color:theme(colors.red.600)_transparent] [scrollbar-width:thin] dark:text-red-400">
+            <div className="glass h-[520px] w-full max-w-md overflow-y-auto rounded-3xl p-4 pr-5 font-mono text-[11px] leading-5 text-red-600 [scrollbar-color:theme(colors.red.600)_transparent] [scrollbar-width:thin] dark:text-red-400">
               {BOOT_LINES.slice(0, shown).map((l) => (
                 <div key={l} className="whitespace-nowrap">
                   <span className="text-muted-foreground">[</span> ok{' '}
@@ -87,9 +91,9 @@ export function BootOverlay() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 onClick={setBooted}
-                className="royalred-glow mt-2 rounded-md border border-red-600/50 bg-red-500/10 px-8 py-2.5 font-mono text-sm tracking-[0.3em] text-red-700 transition hover:bg-red-500/20 dark:text-red-300"
+                className="btn-glossy mt-2 rounded-full px-10 py-3 font-mono text-sm tracking-[0.3em]"
               >
-                INITIALIZE
+                <span className="relative z-10">INITIALIZE</span>
               </motion.button>
             )}
           </div>

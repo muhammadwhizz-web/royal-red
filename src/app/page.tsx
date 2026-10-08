@@ -274,14 +274,14 @@ function SessionsSheet() {
               }}
               onBlur={() => void commitRename(s.id)}
               aria-label="Rename session"
-              className="w-full rounded border border-red-600/50 bg-background px-2 py-1.5 font-mono text-xs outline-none focus:ring-1 focus:ring-red-600/40"
+              className="w-full rounded-lg border border-red-600/50 bg-background px-2 py-1.5 font-mono text-xs outline-none focus:ring-1 focus:ring-red-600/40"
             />
             <p className="mt-1 px-0.5 font-mono text-[9px] text-muted-foreground">enter to save / esc to cancel</p>
           </div>
         ) : (
           <button
             onClick={() => void loadSession(s.id)}
-            className="w-full px-3 py-2 pr-14 text-left"
+            className="lift w-full rounded-xl px-3 py-2 pr-14 text-left"
             aria-label={`Open session ${s.title}`}
           >
             <div className="flex items-center gap-2">
@@ -301,7 +301,7 @@ function SessionsSheet() {
               aria-label={s.pinned ? `Unpin session ${s.title}` : `Pin session ${s.title}`}
               title={s.pinned ? 'Unpin' : 'Pin to top'}
               className={cn(
-                'rounded p-1 transition hover:bg-background',
+                'rounded-lg p-1 transition hover:bg-background',
                 s.pinned
                   ? 'text-red-600 dark:text-red-400'
                   : 'text-muted-foreground hover:text-foreground',
@@ -372,8 +372,11 @@ function SessionsSheet() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-80 p-0">
-        <SheetHeader className="border-b p-4">
+        <SheetHeader className="border-b border-border/60 bg-gradient-to-b from-red-500/[0.06] to-transparent p-4">
           <SheetTitle className="font-mono text-sm tracking-[0.25em]">SESSIONS</SheetTitle>
+          <p className="font-mono text-[10px] text-muted-foreground">
+            every conversation, pinned first / exportable / undo-safe
+          </p>
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-64px)]">
           <div className="p-2">
@@ -383,7 +386,7 @@ function SessionsSheet() {
                 setSessionsOpen(false)
                 toast({ title: 'New session', description: 'ROYAL RED is listening.' })
               }}
-              className="mb-2 flex w-full items-center gap-2 rounded-md border border-red-600/40 bg-red-500/5 px-3 py-2 font-mono text-xs text-red-700 transition hover:bg-red-500/15 dark:text-red-300"
+              className="glass mb-2 flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 font-mono text-xs text-red-700 transition hover:bg-red-500/10 dark:text-red-300"
             >
               <Plus className="h-3.5 w-3.5" /> NEW SESSION
             </button>
@@ -496,14 +499,16 @@ export default function RoyalRedConsole() {
   }, [setPanelHidden])
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-screen flex-col overflow-hidden text-foreground">
+      {/* v1.7 signature backdrop: drifting royal-red aurora under everything */}
+      <div className="royalred-aurora" aria-hidden="true" />
       <BootOverlay />
       <CommandPalette />
       <ThemeCommandBridge />
-      <div className="royalred-scanlines pointer-events-none fixed inset-0 z-40 opacity-40" aria-hidden="true" />
+      <div className="royalred-scanlines pointer-events-none fixed inset-0 z-40 opacity-25" aria-hidden="true" />
 
-      {/* top bar */}
-      <header className="z-30 flex shrink-0 items-center justify-between border-b bg-background/95 px-4 py-2.5 backdrop-blur sm:px-6">
+      {/* top bar — floating glass island */}
+      <header className="glass-strong relative z-30 mx-2 mt-2 flex shrink-0 items-center justify-between rounded-2xl px-3.5 py-2 sm:mx-3 sm:mt-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-4">
           <Signature />
           <span className="hidden shrink-0 font-mono text-[10px] tracking-[0.3em] text-muted-foreground lg:inline">
@@ -557,7 +562,7 @@ export default function RoyalRedConsole() {
       </header>
 
       {/* main area: ctrl+b collapses the preview panel for full-width focus */}
-      <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
+      <ResizablePanelGroup direction="horizontal" className="relative z-10 min-h-0 flex-1">
         <ResizablePanel id="chat" defaultSize={55} minSize={30}>
           <div ref={composerRef} className="royalred-grid-bg flex h-full min-h-0 flex-col">
             <PlanRail />
@@ -577,22 +582,22 @@ export default function RoyalRedConsole() {
         )}
       </ResizablePanelGroup>
 
-      {/* mobile artifact chip */}
+      {/* mobile artifact chip — glass pill */}
       {artifact && (
         <button
           onClick={() => window.open(`/api/royal-red/preview/${artifact.id}/${artifact.entry}`, '_blank')}
-          className="fixed bottom-36 right-4 z-30 max-w-[70vw] truncate rounded-full border border-red-600/50 bg-background/95 px-3.5 py-2 font-mono text-[11px] shadow-lg backdrop-blur md:hidden"
+          className="glass fixed bottom-36 right-4 z-30 max-w-[70vw] truncate rounded-full px-3.5 py-2 font-mono text-[11px] md:hidden"
         >
           ARTIFACT: {artifact.name}
           {typeof artifact.score === 'number' ? ` / ${artifact.score}/10` : ''}
         </button>
       )}
 
-      {/* sticky footer line */}
-      <footer className="z-30 shrink-0 border-t bg-background px-4 py-1.5 text-center font-mono text-[10px] tracking-[0.25em] text-muted-foreground sm:px-6">
-        <span className="sm:hidden"> ROYAL RED // KERNEL v1.6</span>
+      {/* sticky footer line — hairline glass strip */}
+      <footer className="glass relative z-30 mx-2 mb-2 shrink-0 rounded-xl px-4 py-1.5 text-center font-mono text-[10px] tracking-[0.25em] text-muted-foreground sm:mx-3 sm:mb-3 sm:px-6">
+        <span className="sm:hidden"> ROYAL RED // KERNEL v1.7</span>
         <span className="hidden sm:inline">
-           ROYAL RED // KERNEL v1.6 / SANDBOXED / INVARIANTS DOC / PROOF-TESTED: LEDGER · CRITIC · EVENT LOG · WATERFALL · SEAM · ROOTS · RUN QUEUE · CSS GUARD · SUB-AGENTS · BUDGET
+           ROYAL RED // KERNEL v1.7 / GLASS CROWN UI / SANDBOXED / INVARIANTS DOC / PROOF-TESTED: LEDGER · CRITIC · EVENT LOG · WATERFALL · SEAM · ROOTS · RUN QUEUE · CSS GUARD · SUB-AGENTS · BUDGET
         </span>
       </footer>
     </div>

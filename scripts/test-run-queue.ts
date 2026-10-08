@@ -114,13 +114,19 @@ const runA = executePlan(planA, {
 
 // ── assertion 1: the process table tracks all three while they run ──────────
 // run A is identified IN FLIGHT through the process table + its DB row (the
-// run with 60 total steps) — exactly the way an operator would find it
+// run with 60 total steps) — exactly the way an operator would find it.
+// DE-FLAKE (RR5): the observed condition is "all three entries present while
+// at least one is still running" — proof the table is live. Requiring >=2
+// SIMULTANEOUSLY 'running' was a sampling race: B and C finish in ~2ms, and
+// under load the poll can miss that window before the scalpel break fires.
+// The kernel law (every live run registered at beginRun, updated at finish)
+// is unchanged and still proven by the row-level checks below.
 let sawThree = false
 let scalpelLanded = false
 const deadline = Date.now() + 60_000
 while (Date.now() < deadline) {
   const live = listProcessTable(SID)
-  if (live.length >= 3 && live.filter((e) => e.status === 'running').length >= 2) sawThree = true
+  if (live.length >= 3 && live.filter((e) => e.status === 'running').length >= 1) sawThree = true
   if (!scalpelLanded && live.length >= 3) {
     const a = await db.royalRedRun.findFirst({ where: { sessionId: SID, status: 'running', actionsTotal: 60 } })
     if (a && a.actionsDone >= 3) {
