@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useCallback, useRef, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowUp,
   Cpu,
@@ -9,6 +9,7 @@ import {
   FlaskConical,
   Hammer,
   Image as ImageIcon,
+  KeyRound,
   Loader2,
   Paperclip,
   Search,
@@ -67,6 +68,39 @@ export function Composer() {
   const setMode = useRoyalRed((s) => s.setMode)
   const send = useRoyalRed((s) => s.send)
   const streaming = useRoyalRed((s) => s.streaming)
+  const panelTab = useRoyalRed((s) => s.panelTab)
+  // first-run honesty banner: visible only while zero provider keys are stored;
+  // re-checked when the settings panel closes, on focus, and every 20 seconds
+  const [keyed, setKeyed] = useState<boolean | null>(null)
+  const checkKeys = useCallback(async () => {
+    try {
+      const res = await fetch('/api/royal-red/providers')
+      if (!res.ok) return
+      const j = (await res.json()) as { status?: { keyed?: number } }
+      setKeyed((j?.status?.keyed ?? 0) > 0)
+    } catch {
+      // network hiccup: keep the current banner state, the next poll retries
+    }
+  }, [])
+  useEffect(() => {
+    let alive = true
+    const check = () => {
+      if (alive) void checkKeys()
+    }
+    const initial = setTimeout(check, 0)
+    const t = setInterval(check, 20000)
+    window.addEventListener('focus', check)
+    return () => {
+      alive = false
+      clearTimeout(initial)
+      clearInterval(t)
+      window.removeEventListener('focus', check)
+    }
+  }, [checkKeys, panelTab])
+  const openSettingsOnProviders = () => {
+    window.localStorage.setItem('royalred-settings-section', 'providers')
+    useRoyalRed.setState({ panelTab: 'settings', panelHidden: false })
+  }
   const [text, setText] = useState('')
   const [pending, setPending] = useState<PendingUpload[]>([])
   const [uploading, setUploading] = useState(0)
@@ -185,6 +219,26 @@ export function Composer() {
         </div>
       )}
       <div className="mx-auto max-w-3xl px-3 pb-3 pt-2 sm:px-6">
+        {/* first-run banner: calm, honest, gone the moment one key is saved */}
+        {keyed === false && (
+          <div
+            role="status"
+            className="royalred-rise mb-2 flex flex-wrap items-center gap-2.5 rounded-2xl border border-amber-500/30 bg-amber-500/5 px-3.5 py-2.5 backdrop-blur-sm"
+          >
+            <KeyRound className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            <p className="min-w-0 flex-1 font-mono text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
+              Royal Red is running on the built-in fallback. Add an API key in Settings to unlock the full model roster. Settings &gt; Providers.
+            </p>
+            <button
+              type="button"
+              onClick={openSettingsOnProviders}
+              aria-label="Open Settings on the Providers section"
+              className="shrink-0 rounded-full border border-amber-500/50 bg-amber-500/10 px-3 py-1.5 font-mono text-[11px] text-amber-700 transition hover:bg-amber-500/20 dark:text-amber-300"
+            >
+              Open Settings
+            </button>
+          </div>
+        )}
         {/* pending uploads + errors */}
         {(pending.length > 0 || uploading > 0 || uploadError) && (
           <div className="mb-2 flex flex-wrap items-center gap-1.5">

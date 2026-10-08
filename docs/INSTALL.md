@@ -264,3 +264,68 @@ bash install.sh --uninstall
 Both stop the server, remove the application, the command, the desktop
 entry, and the icons, and ask before deleting your data in
 `~/.royal-red/data`. Nothing outside your home directory is touched.
+
+---
+
+## Verified limits
+
+Royal Red never ships a claim it cannot back. Three install paths are fully
+implemented and structurally validated, but this project's sandbox has no
+Docker daemon, no Windows host, and no desktop environment. Here is exactly
+what was verified, what was not, and the single next step for each.
+
+### Docker
+
+Verified in this environment:
+
+- The multi-stage `Dockerfile` builds a standalone Next.js output and copies
+  only what the runtime needs.
+- The first-boot schema path (`prisma db push` on an empty data volume) runs
+  clean when exercised standalone against a fresh SQLite file.
+- The health endpoint `/api/health` returns structured status.
+
+Not verified (needs a real Docker host):
+
+- `docker build` and `docker run` on a real daemon.
+- Volume persistence across container restarts.
+- The container `HEALTHCHECK` actually firing inside Docker.
+
+Next step on a real machine: `docker build -t royal-red . && docker run -p
+3000:3000 -v royalred-data:/data royal-red`, then restart the container once
+and confirm the data in the volume survives.
+
+### WSL2
+
+Verified in this environment:
+
+- Windows/WSL2 detection logic (unit-tested against `/proc/version` shapes).
+- The `wslview` browser opener used to launch the console on the Windows side.
+- The install path for `wslu` (which provides `wslview`) on Ubuntu.
+
+Not verified (needs a real Windows 11 machine with WSL2):
+
+- The end-to-end installer run inside a WSL2 Ubuntu 22.04 distribution.
+- The browser actually opening on the Windows side after install.
+- The console running under WSL2 networking from a Windows browser.
+
+Next step on a real machine: on Windows 11, install Ubuntu 22.04 from the
+Microsoft Store, open it, and run `bash install.sh` from a clone of this
+repository. Confirm the browser opens to the console.
+
+### Desktop icon
+
+Verified in this environment:
+
+- The `royal-red.desktop` file deploys to the correct applications directory
+  and parses as a valid desktop entry.
+- The crown icon ships in the required sizes and the `.desktop` file
+  references the installed path correctly.
+
+Not verified (needs a real desktop environment):
+
+- The crown appearing in the GNOME or KDE Applications menu.
+- Clicking the entry launching the console.
+
+Next step on a real machine: on Ubuntu with GNOME, run `bash install.sh`,
+open the Activities overview, search for "Royal Red", and confirm the crown
+icon appears and launches the console.
