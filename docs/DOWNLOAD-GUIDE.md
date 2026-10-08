@@ -1,6 +1,16 @@
+<div align="center">
+  <img src="../.github/assets/header.svg" alt="Royal Red: a golden crown on deep animated crimson above the wordmark" width="720">
+</div>
+
 # Download and run Royal Red: the complete step-by-step guide
 
 This guide gets Royal Red running on your machine from zero, even if you have never used a terminal before. Follow the path for your operating system. Every step is one command you can copy and paste.
+
+<div align="center">
+  <img src="../.github/assets/stats.svg" alt="96 providers, 1,728 routes, 60 connectors, 66 agent roles" width="720">
+</div>
+
+Prefer print? The same guide exists as a royal-red and gold PDF manual, built by the project's own PDF engine: [Royal-Red-Download-and-Install-Guide.pdf](Royal-Red-Download-and-Install-Guide.pdf).
 
 ## Which path is yours
 

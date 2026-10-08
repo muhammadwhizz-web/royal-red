@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="120" viewBox="0 0 880 120" role="img" aria-label="Royal Red by the numbers: 96 providers, 1,728 routes, 60 connectors, 66 agent roles">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c060b"/>
+      <stop offset="1" stop-color="#0d0305"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6e294"/>
+      <stop offset="0.5" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#926c16"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f6e294" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#f6e294" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#f6e294" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0.75" y="0.75" width="878.5" height="118.5" rx="14" fill="url(#bg)" stroke="#5a1420" stroke-width="1.5"/>
+
+  <!-- sheen sweep -->
+  <rect x="-160" y="2" width="150" height="116" fill="url(#sheen)" opacity="0.07">
+    <animate attributeName="x" from="-160" to="900" dur="7s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- corner accents -->
+  <g stroke="#d4af37" stroke-width="2" fill="none" opacity="0.85">
+    <path d="M14 26 L14 14 L26 14"/>
+    <path d="M854 14 L866 14 L866 26"/>
+    <path d="M866 94 L866 106 L854 106"/>
+    <path d="M26 106 L14 106 L14 94"/>
+  </g>
+
+  <!-- dividers -->
+  <g stroke="#7f1d1d" stroke-width="1">
+    <line x1="220" y1="28" x2="220" y2="92"/>
+    <line x1="440" y1="28" x2="440" y2="92"/>
+    <line x1="660" y1="28" x2="660" y2="92"/>
+  </g>
+
+  <!-- cell 1: 96 providers -->
+  <g>
+    <text x="110" y="62" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="38" font-weight="bold" fill="url(#gold)">96</text>
+    <text x="110" y="88" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="12" letter-spacing="3" fill="#d6a096">PROVIDERS</text>
+    <animate attributeName="opacity" values="0.82;1;0.82" dur="3.2s" begin="0s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- cell 2: 1,728 routes -->
+  <g>
+    <text x="330" y="62" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="38" font-weight="bold" fill="url(#gold)">1,728</text>
+    <text x="330" y="88" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="12" letter-spacing="3" fill="#d6a096">ROUTES</text>
+    <animate attributeName="opacity" values="0.82;1;0.82" dur="3.2s" begin="0.8s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- cell 3: 60 connectors -->
+  <g>
+    <text x="550" y="62" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="38" font-weight="bold" fill="url(#gold)">60</text>
+    <text x="550" y="88" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="12" letter-spacing="3" fill="#d6a096">CONNECTORS</text>
+    <animate attributeName="opacity" values="0.82;1;0.82" dur="3.2s" begin="1.6s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- cell 4: 66 agents -->
+  <g>
+    <text x="770" y="62" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="38" font-weight="bold" fill="url(#gold)">66</text>
+    <text x="770" y="88" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="12" letter-spacing="3" fill="#d6a096">AGENT ROLES</text>
+    <animate attributeName="opacity" values="0.82;1;0.82" dur="3.2s" begin="2.4s" repeatCount="indefinite"/>
+  </g>
+</svg>

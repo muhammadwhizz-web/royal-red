@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="640" viewBox="0 0 880 640" role="img" aria-label="Six royal capabilities: website builder, WordPress themes, PDF engine, 66 agent employees, memory, consent and audit">
+  <defs>
+    <linearGradient id="cardg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c060b"/>
+      <stop offset="1" stop-color="#0d0305"/>
+    </linearGradient>
+    <linearGradient id="gold2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6e294"/>
+      <stop offset="0.5" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#926c16"/>
+    </linearGradient>
+    <radialGradient id="glow2" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#b91c2e" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#b91c2e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- CARD 1: website builder -->
+  <g>
+    <rect x="24" y="24" width="266" height="280" rx="14" fill="url(#cardg)" stroke="#5a1420" stroke-width="1.5">
+      <animate attributeName="stroke" values="#5a1420;#a31226;#5a1420" dur="6s" begin="0s" repeatCount="indefinite"/>
+    </rect>
+    <circle cx="157" cy="92" r="58" fill="url(#glow2)">
+      <animate attributeName="opacity" values="0.35;0.85;0.35" dur="5s" begin="0s" repeatCount="indefinite"/>
+    </circle>
+    <g transform="translate(157,92)" stroke="#d4af37" stroke-width="2.2" fill="none" stroke-linecap="round">
+      <rect x="-23" y="-18" width="46" height="36" rx="5"/>
+      <line x1="-23" y1="-8" x2="23" y2="-8"/>
+      <circle cx="-16" cy="-13" r="1.6" fill="#d4af37" stroke="none"/>
+      <circle cx="-9" cy="-13" r="1.6" fill="#d4af37" stroke="none"/>
+      <line x1="-15" y1="2" x2="15" y2="2"/>
+      <line x1="-15" y1="9" x2="6" y2="9"/>
+    </g>
+    <text x="157" y="192" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="20" font-weight="bold" fill="url(#gold2)">WEBSITE BUILDER</text>
+    <text x="157" y="222" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">multi-page sites with CMS, SEO,</text>
+    <text x="157" y="242" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">sitemap, verified at three widths</text>
+  </g>
+
+  <!-- CARD 2: wordpress themes -->
+  <g>
+    <rect x="306" y="24" width="266" height="280" rx="14" fill="url(#cardg)" stroke="#5a1420" stroke-width="1.5">
+      <animate attributeName="stroke" values="#5a1420;#a31226;#5a1420" dur="6s" begin="1s" repeatCount="indefinite"/>
+    </rect>
+    <circle cx="439" cy="92" r="58" fill="url(#glow2)">
+      <animate attributeName="opacity" values="0.35;0.85;0.35" dur="5s" begin="1s" repeatCount="indefinite"/>
+    </circle>
+    <g transform="translate(439,92)" stroke="#d4af37" stroke-width="2.2" fill="none" stroke-linecap="round">
+      <rect x="6" y="-22" width="30" height="38" rx="4"/>
+      <rect x="-22" y="-14" width="30" height="38" rx="4"/>
+      <line x1="-15" y1="-2" x2="1" y2="-2"/>
+      <line x1="-15" y1="6" x2="1" y2="6"/>
+      <circle cx="19" cy="24" r="7"/>
+      <line x1="24" y1="19" x2="34" y2="9" stroke-width="2.6"/>
+    </g>
+    <text x="439" y="192" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="20" font-weight="bold" fill="url(#gold2)">WORDPRESS THEMES</text>
+    <text x="439" y="222" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">real installable themes, packaged</text>
+    <text x="439" y="242" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">as a zip with the full template set</text>
+  </g>
+
+  <!-- CARD 3: pdf engine -->
+  <g>
+    <rect x="588" y="24" width="266" height="280" rx="14" fill="url(#cardg)" stroke="#5a1420" stroke-width="1.5">
+      <animate attributeName="stroke" values="#5a1420;#a31226;#5a1420" dur="6s" begin="2s" repeatCount="indefinite"/>
+    </rect>
+    <circle cx="721" cy="92" r="58" fill="url(#glow2)">
+      <animate attributeName="opacity" values="0.35;0.85;0.35" dur="5s" begin="2s" repeatCount="indefinite"/>
+    </circle>
+    <g transform="translate(721,92)" stroke="#d4af37" stroke-width="2.2" fill="none" stroke-linecap="round">
+      <path d="M -16 -20 L 4 -20 L 16 -8 L 16 22 L -16 22 Z"/>
+      <path d="M 4 -20 L 4 -8 L 16 -8"/>
+      <line x1="-9" y1="-2" x2="9" y2="-2"/>
+      <line x1="-9" y1="6" x2="9" y2="6"/>
+      <line x1="-9" y1="14" x2="3" y2="14"/>
+    </g>
+    <text x="721" y="192" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="20" font-weight="bold" fill="url(#gold2)">PDF ENGINE</text>
+    <text x="721" y="222" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">vector print files, embedded fonts,</text>
+    <text x="721" y="242" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">a true table of contents</text>
+  </g>
+
+  <!-- CARD 4: 66 agents -->
+  <g>
+    <rect x="24" y="336" width="266" height="280" rx="14" fill="url(#cardg)" stroke="#5a1420" stroke-width="1.5">
+      <animate attributeName="stroke" values="#5a1420;#a31226;#5a1420" dur="6s" begin="3s" repeatCount="indefinite"/>
+    </rect>
+    <circle cx="157" cy="404" r="58" fill="url(#glow2)">
+      <animate attributeName="opacity" values="0.35;0.85;0.35" dur="5s" begin="3s" repeatCount="indefinite"/>
+    </circle>
+    <g transform="translate(157,404)" stroke="#d4af37" stroke-width="2.2" fill="none" stroke-linecap="round">
+      <circle cx="0" cy="-8" r="7"/>
+      <path d="M -12 14 Q -12 2 0 2 Q 12 2 12 14"/>
+      <circle cx="-21" cy="-4" r="5.5"/>
+      <path d="M -30 14 Q -30 4 -21 4 Q -17 4 -15 7"/>
+      <circle cx="21" cy="-4" r="5.5"/>
+      <path d="M 30 14 Q 30 4 21 4 Q 17 4 15 7"/>
+    </g>
+    <text x="157" y="504" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="17" font-weight="bold" fill="url(#gold2)">66 AGENT EMPLOYEES</text>
+    <text x="157" y="534" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">named roles with bound providers,</text>
+    <text x="157" y="554" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">budgets, and full attribution</text>
+  </g>
+
+  <!-- CARD 5: memory -->
+  <g>
+    <rect x="306" y="336" width="266" height="280" rx="14" fill="url(#cardg)" stroke="#5a1420" stroke-width="1.5">
+      <animate attributeName="stroke" values="#5a1420;#a31226;#5a1420" dur="6s" begin="4s" repeatCount="indefinite"/>
+    </rect>
+    <circle cx="439" cy="404" r="58" fill="url(#glow2)">
+      <animate attributeName="opacity" values="0.35;0.85;0.35" dur="5s" begin="4s" repeatCount="indefinite"/>
+    </circle>
+    <g transform="translate(439,404)" stroke="#d4af37" stroke-width="2.2" fill="none" stroke-linecap="round">
+      <rect x="-16" y="-16" width="32" height="32" rx="5"/>
+      <rect x="-7" y="-7" width="14" height="14" rx="2.5"/>
+      <line x1="-8" y1="-22" x2="-8" y2="-16"/><line x1="0" y1="-22" x2="0" y2="-16"/><line x1="8" y1="-22" x2="8" y2="-16"/>
+      <line x1="-8" y1="16" x2="-8" y2="22"/><line x1="0" y1="16" x2="0" y2="22"/><line x1="8" y1="16" x2="8" y2="22"/>
+      <line x1="-22" y1="-8" x2="-16" y2="-8"/><line x1="-22" y1="0" x2="-16" y2="0"/><line x1="-22" y1="8" x2="-16" y2="8"/>
+      <line x1="16" y1="-8" x2="22" y2="-8"/><line x1="16" y1="0" x2="22" y2="0"/><line x1="16" y1="8" x2="22" y2="8"/>
+    </g>
+    <text x="439" y="504" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="20" font-weight="bold" fill="url(#gold2)">MEMORY</text>
+    <text x="439" y="534" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">cross-session store with scopes,</text>
+    <text x="439" y="554" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">promotion, and export</text>
+  </g>
+
+  <!-- CARD 6: consent + audit -->
+  <g>
+    <rect x="588" y="336" width="266" height="280" rx="14" fill="url(#cardg)" stroke="#5a1420" stroke-width="1.5">
+      <animate attributeName="stroke" values="#5a1420;#a31226;#5a1420" dur="6s" begin="5s" repeatCount="indefinite"/>
+    </rect>
+    <circle cx="721" cy="404" r="58" fill="url(#glow2)">
+      <animate attributeName="opacity" values="0.35;0.85;0.35" dur="5s" begin="5s" repeatCount="indefinite"/>
+    </circle>
+    <g transform="translate(721,404)" stroke="#d4af37" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 0 -22 L 18 -15 L 18 2 Q 18 16 0 22 Q -18 16 -18 2 L -18 -15 Z"/>
+      <path d="M -7 -1 L -2 5 L 8 -7"/>
+    </g>
+    <text x="721" y="504" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="20" font-weight="bold" fill="url(#gold2)">CONSENT + AUDIT</text>
+    <text x="721" y="534" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">path prison, consent cards, undo</text>
+    <text x="721" y="554" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="13" fill="#cf9d94">journal, append-only audit log</text>
+  </g>
+</svg>

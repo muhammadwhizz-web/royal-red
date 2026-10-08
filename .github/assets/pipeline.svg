@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="190" viewBox="0 0 880 190" role="img" aria-label="Pipeline: you type one line, the kernel routes it through tools and consent, the 96 provider matrix answers, and a crown-verified receipt comes back">
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c060b"/>
+      <stop offset="1" stop-color="#0d0305"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6e294"/>
+      <stop offset="0.5" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#926c16"/>
+    </linearGradient>
+    <radialGradient id="ring" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#d4af37" stop-opacity="0.5"/>
+      <stop offset="0.7" stop-color="#d4af37" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#d4af37" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- connector lines with flowing dashes -->
+  <g stroke="#7f1d1d" stroke-width="2" stroke-dasharray="7 9">
+    <line x1="172" y1="88" x2="264" y2="88">
+      <animate attributeName="stroke-dashoffset" from="0" to="-32" dur="1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="412" y1="88" x2="504" y2="88">
+      <animate attributeName="stroke-dashoffset" from="0" to="-32" dur="1.1s" begin="0.35s" repeatCount="indefinite"/>
+    </line>
+    <line x1="652" y1="88" x2="744" y2="88">
+      <animate attributeName="stroke-dashoffset" from="0" to="-32" dur="1.1s" begin="0.7s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- traveling gold sparks -->
+  <circle r="3.5" fill="#d4af37">
+    <animateMotion path="M 172 88 L 264 88" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="3.5" fill="#d4af37" opacity="0.8">
+    <animateMotion path="M 412 88 L 504 88" dur="1.4s" begin="0.45s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="3.5" fill="#d4af37" opacity="0.8">
+    <animateMotion path="M 652 88 L 744 88" dur="1.4s" begin="0.9s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- node 1: you -->
+  <g>
+    <rect x="20" y="52" width="152" height="72" rx="12" fill="url(#card)" stroke="#5a1420" stroke-width="1.5"/>
+    <text x="96" y="84" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="17" font-weight="bold" fill="url(#gold)">YOU</text>
+    <text x="96" y="106" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="11.5" fill="#cf9d94">one line typed</text>
+  </g>
+
+  <!-- node 2: kernel -->
+  <g>
+    <rect x="264" y="52" width="148" height="72" rx="12" fill="url(#card)" stroke="#5a1420" stroke-width="1.5"/>
+    <text x="338" y="84" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="17" font-weight="bold" fill="url(#gold)">KERNEL</text>
+    <text x="338" y="106" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="11.5" fill="#cf9d94">tools, consent, budget</text>
+  </g>
+
+  <!-- node 3: providers -->
+  <g>
+    <rect x="504" y="52" width="148" height="72" rx="12" fill="url(#card)" stroke="#5a1420" stroke-width="1.5"/>
+    <text x="578" y="84" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="17" font-weight="bold" fill="url(#gold)">96 MODELS</text>
+    <text x="578" y="106" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="11.5" fill="#cf9d94">1,728 routes, rotation</text>
+  </g>
+
+  <!-- node 4: verified receipt -->
+  <g>
+    <circle cx="808" cy="88" r="46" fill="url(#ring)">
+      <animate attributeName="opacity" values="0.55;1;0.55" dur="2.8s" repeatCount="indefinite"/>
+    </circle>
+    <rect x="744" y="52" width="116" height="72" rx="12" fill="url(#card)" stroke="#b91c2e" stroke-width="1.8"/>
+    <g transform="translate(786,60)">
+      <path d="M2 12 L2 5 L8 9 L14 1 L20 9 L26 5 L26 12 Z" fill="url(#gold)"/>
+      <rect x="2" y="13.5" width="24" height="4" rx="1.8" fill="url(#gold)"/>
+    </g>
+    <text x="802" y="98" text-anchor="middle" font-family="Georgia, 'DejaVu Serif', serif" font-size="15" font-weight="bold" fill="url(#gold)">RECEIPT</text>
+    <text x="802" y="116" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="10.5" fill="#cf9d94">verified, sealed</text>
+  </g>
+
+  <!-- caption -->
+  <text x="440" y="166" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="12" letter-spacing="2.5" fill="#b98d84">EVERY CLAIM IS PROVEN IN A REAL BROWSER BEFORE THE SEAL IS GIVEN</text>
+</svg>

@@ -4,6 +4,8 @@
 
 # ROYAL RED
 
+**An agentic operating system that lives on your machine, verifies its own work, and hands you honest receipts for everything it builds.**
+
 [![version](https://img.shields.io/badge/version-v1.9.1-a31226?style=flat-square)](CHANGELOG.md)
 [![license](https://img.shields.io/badge/license-MIT-a31226?style=flat-square)](LICENSE)
 [![platform](https://img.shields.io/badge/platform-Linux%20%7C%20WSL2-7f1d1d?style=flat-square)](docs/DOWNLOAD-GUIDE.md)
@@ -12,13 +14,25 @@
 [![connectors](https://img.shields.io/badge/connectors-60-7f1d1d?style=flat-square)](docs/SERVICES-CATALOG.md)
 [![install](https://img.shields.io/badge/install-one%20line-b91c2e?style=flat-square)](#install)
 
+[![stars](https://img.shields.io/github/stars/muhammadwhizz-web/royal-red?style=flat-square&color=a31226&label=stars)](https://github.com/muhammadwhizz-web/royal-red/stargazers)
+[![forks](https://img.shields.io/github/forks/muhammadwhizz-web/royal-red?style=flat-square&color=7f1d1d&label=forks)](https://github.com/muhammadwhizz-web/royal-red/network/members)
+[![issues](https://img.shields.io/github/issues/muhammadwhizz-web/royal-red?style=flat-square&color=b91c2e&label=issues)](https://github.com/muhammadwhizz-web/royal-red/issues)
+[![last commit](https://img.shields.io/github/last-commit/muhammadwhizz-web/royal-red/main?style=flat-square&color=a31226&label=last%20commit)](https://github.com/muhammadwhizz-web/royal-red/commits/main)
+[![PRs](https://img.shields.io/badge/PRs-welcome-b91c2e?style=flat-square)](CONTRIBUTING.md)
+
+**[Install](#install) · [The 30-second proof](#the-30-second-proof) · [What you get](#what-you-get) · [How it works](#how-it-works) · [Why Royal Red](#why-royal-red) · [Gallery](#gallery) · [Docs](#documentation) · [License](#license)**
+
 </div>
 
 <img src=".github/assets/divider.svg" alt="" width="100%">
 
-**An agentic operating system that lives on your machine, verifies its own work, and hands you honest receipts for everything it builds.**
-
 Royal Red is not a chat window. It is a full agent kernel with a verification engine, a browser, a provider matrix, a consent system, an audit log, and a Settings cockpit that puts every integration in one place. It builds websites, WordPress themes, and vector PDFs, then proves the result in a real browser before it claims success. When a receipt carries the gold crown seal, the work actually passed. When it does not, the receipt tells you exactly what failed.
+
+<div align="center">
+  <img src=".github/assets/stats.svg" alt="Royal Red by the numbers: 96 providers, 1,728 routes, 60 connectors, 66 agent roles" width="880">
+</div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%">
 
 ## The 30-second proof
 
@@ -39,6 +53,10 @@ curl -fsSL https://raw.githubusercontent.com/muhammadwhizz-web/royal-red/main/in
 ```
 
 The installer: installs Bun if missing, clones the app to `~/.local/share/royal-red/app`, puts your data in `~/.local/share/royal-red/data`, creates the `royal-red` command, adds a desktop entry with a crown icon, and starts the console.
+
+<div align="center">
+  <img src=".github/assets/terminal.svg" alt="Animated terminal showing the one-line install: every step prints ok, and the run ends with: crown installed, now run royal-red" width="720">
+</div>
 
 ### Step by step (what the one-liner does, and how to do it by hand)
 
@@ -116,6 +134,13 @@ Your keys are encrypted at rest with AES-256-GCM before they touch the disk, are
 
 ## What you get
 
+<div align="center">
+  <img src=".github/assets/features.svg" alt="Six royal capabilities as luxury cards with gold icons: website builder, WordPress themes, PDF engine, 66 agent employees, memory, consent and audit" width="880">
+</div>
+
+<details>
+<summary><strong>The full capability table</strong></summary>
+
 | Capability | What it means |
 | --- | --- |
 | 96-provider matrix | OpenAI, Anthropic, Google, xAI, Groq, Mistral, OpenRouter, NVIDIA, Cerebras, SambaNova, Z AI, and 85 more, behind one cost-aware router with mid-stream rotation that survives five provider drops in a single response |
@@ -129,9 +154,17 @@ Your keys are encrypted at rest with AES-256-GCM before they touch the disk, are
 | Memory | cross-session memory store with scopes, promotion, and export |
 | Consent and audit | path prison for the filesystem, consent cards that name exactly what will happen, undo journal, append-only audit log for every action |
 
+</details>
+
 Full architecture: [ROYAL-RED.md](ROYAL-RED.md). Service catalog: [docs/SERVICES-CATALOG.md](docs/SERVICES-CATALOG.md).
 
-## Architecture
+<img src=".github/assets/divider.svg" alt="" width="100%">
+
+## How it works
+
+<div align="center">
+  <img src=".github/assets/pipeline.svg" alt="Animated pipeline: you type one line, the kernel routes it through tools and consent, the 96 model matrix answers, and a crown-verified receipt comes back" width="880">
+</div>
 
 ```mermaid
 flowchart TB
@@ -148,11 +181,33 @@ One kernel process runs everything. Sub-agents share one sandboxed workspace und
 
 <img src=".github/assets/divider.svg" alt="" width="100%">
 
+## Why Royal Red
+
+| | A typical chat window | Royal Red |
+| --- | --- | --- |
+| Where it runs | someone else's cloud | your machine, your disk, your rules |
+| Honesty | "Done!" | a receipt with the crown seal, or the exact failure reason |
+| Models | one provider, one bill | 96 providers, 1,728 routes, mid-stream rotation that survives five provider drops in one response |
+| Your keys | pasted into prompts | AES-256-GCM vault at rest, never returned by any API surface, every change audited |
+| Oversight | a scrolling transcript | consent cards, undo journal, append-only audit log, per-run budgets |
+| Output | text about websites | built websites, WordPress themes, and vector PDFs, verified in a real browser |
+
 ## Screenshots
 
 | Boot screen | Console (dark) | Verified receipt |
 | --- | --- | --- |
 | ![Boot screen](qa/rr6-boot.png) | ![Console](qa/rr6-console-live.png) | ![Receipt](qa/phaseA-receipt.png) |
+
+## Gallery
+
+<div align="center">
+  <img src=".github/assets/hero-art.png" alt="Brand key visual: an ornate gold crown floating above a dark glass dashboard in a red-lit throne room" width="720">
+  <p><em>The crown above the console. Brand key visual, 2026.</em></p>
+  <img src=".github/assets/crown-emblem.png" alt="Brand emblem: an ornate gold crown with ruby jewels on deep royal red" width="360">
+  <p><em>The royal seal. Gold and rubies on deep red.</em></p>
+</div>
+
+<img src=".github/assets/divider.svg" alt="" width="100%">
 
 ## Troubleshooting
 
@@ -228,3 +283,7 @@ MIT. See [LICENSE](LICENSE). You can use, copy, change, merge, publish, and sell
 ## Acknowledgments
 
 Royal Red's design borrows patterns, always cited, from open-source agent projects including cline, continue, aider, browser-use, agent-browser, bytebot, Agent S, and the deepseek-harness. The audit table that maps every pattern to its source and license: [docs/LICENSE-AUDIT.md](docs/LICENSE-AUDIT.md).
+
+<div align="center">
+  <img src=".github/assets/footer.svg" alt="Footer seal: a gold crown between two shimmering lines, MIT licensed, yours to keep" width="680">
+</div>
