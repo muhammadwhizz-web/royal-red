@@ -14,3 +14,7 @@ royalred-workspace/
 server.log
 db/custom.db*
 db/.royal-red-secret
+
+# sandbox environment artifacts (local only, never publish)
+.zscripts/
+--full-page
