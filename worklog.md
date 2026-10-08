@@ -955,3 +955,20 @@ Stage Summary:
 - Everything is staged for a one-command publish: the moment the user provides a fine-grained PAT (Administration+Contents+Metadata rw), ONE command creates the public repo, pushes the 58MB history with tags, sets metadata/topics, and cuts release v1.9.1 with install.sh attached - then people install with the README one-liner.
 - Safety posture: secrets purged from history, secret file self-bootstraps, keys encrypted at rest, fresh clone proven to boot, zero-key first-run verified, honest-status section prevents overclaiming.
 - Note: the wormhole backup NOQBoM contains PRE-purge history (with the old secret + db) - private 24h link only the user holds; a post-purge backup should be cut at next round end.
+
+---
+Task ID: 11
+Agent: orchestrator (Z.ai Code)
+Task: Execute the GitHub publish with the user's PAT - ship muhammadwhizz-web/royal-red, verify end to end
+
+Work Log:
+- Token verified via GET /user: account muhammadwhizz-web (MuhammadWhiz). Used only via env var + ephemeral extraheader; never written to disk or remote config.
+- ship.mjs run 1: substituted owner in README.md, docs/INSTALL.md, docs/DISTRIBUTION.md, install.sh (committed); created PUBLIC repo github.com/muhammadwhizz-web/royal-red; pushed main + tags; set description + 12 topics; created release v1.9.1; asset upload failed (missing Content-Type).
+- Fixed gh() to send Content-Type application/octet-stream on uploads; run 2 hit the non-empty-remote guard (by design); pushed the fix commit directly, run 3 with FORCE=1 reused the release and uploaded install.sh (12,579 bytes).
+- API VERIFIED: repo public, default branch main, tags v1.8.1/v1.9.0/v1.9.1 on the remote, releases/latest = v1.9.1 published 2026-10-08T14:02:58Z with install.sh asset.
+- VISITOR-EXPERIENCE VERIFIED (agent-browser): one-liner URL returns HTTP 200 with the real installer; anonymous git ls-remote resolves (public, no auth); repo page renders with About description, website link, all 12 topics, 3 tags, 69 commits; README sections render (tagline, The 30-second proof, Step by step, First run, capability tables). Screenshot: qa/github-repo-live.png.
+- ADVISED THE USER: revoke/expire the PAT now that shipping is done (it passed through chat); social preview upload is the one manual step (Settings > General > Social preview, use .github/assets/banner.png); LICENSE is still proprietary pending their MIT/Apache decision.
+
+Stage Summary:
+- Royal Red is published and world-class at https://github.com/muhammadwhizz-web/royal-red: public, tagged, released, documented, installable with one line, clonable by anyone, honest-status intact.
+- post-publish housekeeping still open: user revokes token, user uploads social preview, license decision, post-purge fresh backup at next round end.
