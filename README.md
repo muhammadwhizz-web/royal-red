@@ -182,6 +182,7 @@ Details and exact next steps: [docs/INSTALL.md](docs/INSTALL.md), section **Veri
 
 | Document | Contents |
 | --- | --- |
+| [docs/DOWNLOAD-GUIDE.md](docs/DOWNLOAD-GUIDE.md) | the complete step-by-step download and first-run guide |
 | [docs/INSTALL.md](docs/INSTALL.md) | friendly install guide, verified limits |
 | [docs/Royal-Red-Installation-Guide.pdf](docs/Royal-Red-Installation-Guide.pdf) | print manual, produced by Royal Red's own PDF engine |
 | [docs/INVARIANTS.md](docs/INVARIANTS.md) | the project laws and their tests |
