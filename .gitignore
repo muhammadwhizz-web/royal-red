@@ -8,3 +8,9 @@ tool-results
 db/*.db.backup-*
 royalred-workspace/
 .DS_Store
+
+# machine-local state - never publish (history purged 2026-10-08)
+.env
+server.log
+db/custom.db*
+db/.royal-red-secret
