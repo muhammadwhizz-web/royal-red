@@ -4,7 +4,7 @@ This guide assumes you have never used a terminal. Every step is written out.
 If you already know your way around, the short version is:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/royal-red/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muhammadwhizz-web/royal-red/main/install.sh | bash
 royal-red
 ```
 
@@ -56,7 +56,7 @@ Press the Super key (the one with the Windows or Command logo), type
 Paste this line (Ctrl+Shift+V pastes into most terminals) and press Enter:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/royal-red/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muhammadwhizz-web/royal-red/main/install.sh | bash
 ```
 
 What you should see: a series of lines, each ending in `ok`, and finally:
@@ -93,7 +93,7 @@ The same two commands work. The installer detects Fedora and uses `dnf`
 instead of `apt` when it needs to add `curl` or `git`:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/royal-red/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muhammadwhizz-web/royal-red/main/install.sh | bash
 royal-red
 ```
 

@@ -31,7 +31,7 @@ No cuts. The install command, the launcher, the boot screen, INITIALIZE, a typed
 ### One line (Ubuntu, Debian, Fedora, Windows 11 via WSL2)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/royal-red/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muhammadwhizz-web/royal-red/main/install.sh | bash
 ```
 
 The installer: installs Bun if missing, clones the app to `~/.local/share/royal-red/app`, puts your data in `~/.local/share/royal-red/data`, creates the `royal-red` command, adds a desktop entry with a crown icon, and starts the console.
@@ -47,7 +47,7 @@ curl -fsSL https://bun.sh/install | bash
 source ~/.bashrc
 
 # 2. get the app
-git clone https://github.com/YOUR_GITHUB_USERNAME/royal-red.git
+git clone https://github.com/muhammadwhizz-web/royal-red.git
 cd royal-red
 
 # 3. dependencies and database

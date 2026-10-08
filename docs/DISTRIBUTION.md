@@ -22,7 +22,7 @@ as `curl -fsSL https://get.royalred.dev | bash`. Until that DNS decision is
 made, the raw-GitHub form works:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/royal-red/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/muhammadwhizz-web/royal-red/main/install.sh | bash
 ```
 
 Both forms run the same script. The canonical URL is a one-line change.
