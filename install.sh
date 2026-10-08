@@ -4,7 +4,7 @@
 # ==========================================================================
 #
 # Install:
-#   curl -fsSL https://raw.githubusercontent.com/royal-red/royal-red/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/royal-red/main/install.sh | bash
 #   (or, from a checkout or downloaded copy of the repository:)
 #   bash install.sh
 #
@@ -31,7 +31,7 @@
 
 set -u
 
-RR_REPO="${ROYAL_RED_REPO:-https://github.com/royal-red/royal-red.git}"
+RR_REPO="${ROYAL_RED_REPO:-https://github.com/YOUR_GITHUB_USERNAME/royal-red.git}"
 RR_SOURCE="${ROYAL_RED_SOURCE:-}"
 RR_HOME="$HOME/.royal-red"
 APP_DIR="$RR_HOME/app"
