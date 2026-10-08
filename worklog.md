@@ -934,3 +934,24 @@ Work Log:
 Stage Summary:
 - The user now holds a live, round-trip-verified link containing the COMPLETE current project (code + 44-commit-plus history + db + docs + worklog). Restore: extract into /home/z (archive contains my-project/), then bun install, bun run db:push, bun run dev.
 - Both links die after 24h or 100 downloads - the user must download promptly; uploader tooling stays in the repo so any future sandbox can re-derive it.
+
+---
+Task ID: 10
+Agent: orchestrator (Z.ai Code)
+Task: GitHub publishing on the user's behalf - world-class repo prep, history purge, fresh-clone proof, one-command ship script; awaiting the user's PAT to execute
+
+Work Log:
+- PRE-PUSH AUDIT found hard blockers: db/.royal-red-secret (65-byte AES master secret), db/custom.db, .env tracked in git; .next turbopack cache blobs up to 98.9MB in history (~700MB junk). No GitHub auth exists in the sandbox (no gh CLI, no creds) - a user PAT is required by design.
+- HISTORY PURGE (repo never pushed anywhere, so rewrite is safe): git filter-branch index-filter removed .env, db/.royal-red-secret, db/custom.db*, .next, dev.log, dev.pid, server.log, tsbuildinfo, tool-results, royalred-workspace, royalred-box/.awon-trash, *.pem across ALL refs + tags (v1.8.1/v1.9.0/v1.9.1 rewritten). refs/original dropped, reflogs expired, gc. RESULT: zero sensitive paths in any commit; biggest blob now 20MB (legit skill template); .git 1.1GB -> 58MB.
+- SECRET SCAN of tracked tree: pattern scan (sk-/ghp_/xoxb/AKIA/private keys) - all matches are false positives (doc text "xoxb-..." hint; AKIA inside base64 JPEG data URIs in skill design templates). Tree is publishable.
+- BOOTSTRAP PROOF: crypto.ts masterSecret() auto-generates db/.royal-red-secret (0600) or reads ROYALRED_MASTER_SECRET env, so fresh clones boot without the purged secret.
+- FRESH-CLONE SMOKE TEST PASSED: file:// clone (136MB) -> bun install -> .env written -> db:push -> next dev on 3100 -> /api/health {"ok":true,...} + root HTTP 200. Found + fixed: /api/health hardcoded version 1.8.1 -> src/lib/version.ts APP_VERSION (single source).
+- WORLD-CLASS README: generated banner + crown logo (image-generation, 1344x768/1024, crown on crimson); badges; demo GIF; platform step-by-step installs (Ubuntu/Debian, Fedora, WSL2, macOS) both one-liner and manual; first-run walkthrough of the zero-key banner ritual; capability table (96 providers/1,728 routes/60 connectors/20 wired/MCP/skills/66 agents); mermaid architecture; troubleshooting table; update/uninstall (corrected to royal-red uninstall subcommand); HONEST STATUS matrix (Docker/WSL2/desktop verified vs needs-real-machine); full docs table.
+- SHIP SCRIPT (scripts/github/ship.mjs): pure REST (no gh CLI). GET /user -> substitute YOUR_GITHUB_USERNAME in README/docs/install.sh + commit -> create repo if missing (public default, PRIVATE=1 to flip) -> push main+tags via http.extraheader (token never in URL/config/disk, env-only) -> non-empty-remote guard (FORCE=1 escape) -> PATCH description + PUT topics -> release v1.9.1 with honest notes + install.sh asset -> final verification printout. DRY_RUN tested: plan prints, nothing touched; node --check clean; dirty-tree guard on.
+- STALE URL UNIFICATION: docs/INSTALL.md (3), docs/DISTRIBUTION.md (1), install.sh (2) hardcoded royal-red/royal-red URLs -> placeholder; bash -n install.sh OK.
+- OPEN QUESTION for the user (non-blocking): LICENSE is proprietary (with pattern-provenance); user said "everyone can use it" - if MIT/Apache is wanted, one word and it changes before or after push.
+
+Stage Summary:
+- Everything is staged for a one-command publish: the moment the user provides a fine-grained PAT (Administration+Contents+Metadata rw), ONE command creates the public repo, pushes the 58MB history with tags, sets metadata/topics, and cuts release v1.9.1 with install.sh attached - then people install with the README one-liner.
+- Safety posture: secrets purged from history, secret file self-bootstraps, keys encrypted at rest, fresh clone proven to boot, zero-key first-run verified, honest-status section prevents overclaiming.
+- Note: the wormhole backup NOQBoM contains PRE-purge history (with the old secret + db) - private 24h link only the user holds; a post-purge backup should be cut at next round end.
