@@ -918,3 +918,19 @@ Stage Summary:
 - The user's core ask is closed: there is a visible, calm place to enter API keys (composer banner -> Settings > Providers -> key dialog), it saves encrypted, tests the connection, and never blocks saving.
 - Honest limits documented in-repo for Docker/WSL2/desktop icon; distribution story written; repo is clone-ready (templates, changelog, license, contributing all present).
 - Not testable in this sandbox (unchanged, documented): docker daemon run, real WSL2 install, real desktop click; the 96-provider matrix still has no real third-party keys to probe - the fallback chain and key flows are proven with the built-in house provider instead.
+
+---
+Task ID: 9
+Agent: orchestrator (Z.ai Code)
+Task: User-requested fresh off-site backup upload ("upload this project file to wormhole.app and give me the link") - deliver a live, current link
+
+Work Log:
+- Reused the committed clean-room uploader (scripts/offsite/whput2.mjs + whverify2.mjs, deps ad hoc in /home/z/wh-work, script versions diff-verified identical to repo).
+- Packed fresh snapshot: /home/z/backup-rr/royalred-final-backup.tar.gz = 1,222,701,248 bytes, sha256 e460eae0e8385a1dff145dce44b2b78600077e4b674f875f60f2babc5a005505. Contains my-project WITH full .git history through 357e5b2 (skills SKILL.md pack, post-windup commit), db, docs, qa, scripts, src, skills, worklog. Excluded: node_modules, .next, dev.log, dev.pid, tsconfig.tsbuildinfo, tool-results, royalred-workspace, upload. (Prior backup bbD2KK predated 357e5b2.)
+- Uploaded 2026-10-08 13:11 UTC in 163s, 244 pieces: https://wormhole.app/NOQBoM#5MZaju_Zhjdo-aYhqaYr6g (roomId NOQBoM, infoHash cfc268c57888919bf44c6c4c79a95953566fdcc9, 24h / 100 downloads, expires ~2026-10-09 13:11 UTC).
+- TRIPLE VERIFICATION: (1) upload accepted - 244/244 pieces, finish-upload ok; (2) round-trip - whverify2 re-downloaded all 244 pieces, piece sha1s matched torrent metadata, decrypted 1,222,701,248 bytes with sha256 IDENTICAL to source; (3) recipient view - fresh browser context renders "royalred-final-backup.tar.gz 1.2 GB" with Download file button. (Lesson re-confirmed: the recipient page needs the FULL URL including the #key fragment; without it the SPA shows "The secret key is missing".)
+- Old backup https://wormhole.app/bbD2KK#7PIVdN7UozSBUHLPqLHAgg (royalred-windup-backup.tar.gz, 1.2GB, pre-357e5b2) was uploaded ~40min earlier today and remains live as a secondary copy until ~2026-10-09 ~12:45 UTC.
+
+Stage Summary:
+- The user now holds a live, round-trip-verified link containing the COMPLETE current project (code + 44-commit-plus history + db + docs + worklog). Restore: extract into /home/z (archive contains my-project/), then bun install, bun run db:push, bun run dev.
+- Both links die after 24h or 100 downloads - the user must download promptly; uploader tooling stays in the repo so any future sandbox can re-derive it.
