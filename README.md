@@ -1,20 +1,22 @@
 <div align="center">
 
-<img src=".github/assets/banner.png" alt="Royal Red: a golden crown on deep crimson" width="840">
+<img src=".github/assets/header.svg" alt="Royal Red: a golden crown with a moving shine on deep animated crimson, above the wordmark and the line: one command in, one word to launch, one crown when the work is verified" width="880">
 
 # ROYAL RED
 
-**An agentic operating system that lives on your machine, verifies its own work, and hands you honest receipts for everything it builds.**
-
-[![version](https://img.shields.io/badge/version-v1.9.1-8b0f1f?style=flat-square)](CHANGELOG.md)
-[![license](https://img.shields.io/badge/license-proprietary-333333?style=flat-square)](LICENSE)
-[![platform](https://img.shields.io/badge/platform-Linux%20%7C%20WSL2-1f2937?style=flat-square)](docs/INSTALL.md)
-[![runtime](https://img.shields.io/badge/runtime-Bun%20%2B%20Next.js%2016-111111?style=flat-square)](https://bun.sh)
-[![providers](https://img.shields.io/badge/providers-96-7a1220?style=flat-square)](docs/PROVIDERS.md)
+[![version](https://img.shields.io/badge/version-v1.9.1-a31226?style=flat-square)](CHANGELOG.md)
+[![license](https://img.shields.io/badge/license-MIT-a31226?style=flat-square)](LICENSE)
+[![platform](https://img.shields.io/badge/platform-Linux%20%7C%20WSL2-7f1d1d?style=flat-square)](docs/DOWNLOAD-GUIDE.md)
+[![runtime](https://img.shields.io/badge/runtime-Bun%20%2B%20Next.js%2016-7f1d1d?style=flat-square)](https://bun.sh)
+[![providers](https://img.shields.io/badge/providers-96-a31226?style=flat-square)](docs/PROVIDERS.md)
+[![connectors](https://img.shields.io/badge/connectors-60-7f1d1d?style=flat-square)](docs/SERVICES-CATALOG.md)
+[![install](https://img.shields.io/badge/install-one%20line-b91c2e?style=flat-square)](#install)
 
 </div>
 
----
+<img src=".github/assets/divider.svg" alt="" width="100%">
+
+**An agentic operating system that lives on your machine, verifies its own work, and hands you honest receipts for everything it builds.**
 
 Royal Red is not a chat window. It is a full agent kernel with a verification engine, a browser, a provider matrix, a consent system, an audit log, and a Settings cockpit that puts every integration in one place. It builds websites, WordPress themes, and vector PDFs, then proves the result in a real browser before it claims success. When a receipt carries the gold crown seal, the work actually passed. When it does not, the receipt tells you exactly what failed.
 
@@ -25,6 +27,8 @@ Royal Red is not a chat window. It is a full agent kernel with a verification en
 </p>
 
 No cuts. The install command, the launcher, the boot screen, INITIALIZE, a typed prompt, the build, and the receipt.
+
+<img src=".github/assets/divider.svg" alt="" width="100%">
 
 ## Install
 
@@ -108,6 +112,8 @@ Community-supported. The steps are the same as Ubuntu (`brew install git` first)
 
 Your keys are encrypted at rest with AES-256-GCM before they touch the disk, are never returned by any API surface, and every save, rotation, and deletion writes an audit row.
 
+<img src=".github/assets/divider.svg" alt="" width="100%">
+
 ## What you get
 
 | Capability | What it means |
@@ -140,6 +146,8 @@ flowchart TB
 
 One kernel process runs everything. Sub-agents share one sandboxed workspace under a path prison, one consent queue, one undo journal, and one append-only event log with per-run budgets. Every provider decision, consent answer, tool call, and key change lands in the audit log.
 
+<img src=".github/assets/divider.svg" alt="" width="100%">
+
 ## Screenshots
 
 | Boot screen | Console (dark) | Verified receipt |
@@ -157,6 +165,19 @@ One kernel process runs everything. Sub-agents share one sandboxed workspace und
 | The banner about the built-in fallback will not go away | no key is saved yet; Settings, Providers, ADD KEY, save; the banner rechecks every 20 seconds and on every Settings close |
 | A provider shows **Connected** but chat fails | check the provider dashboard for quota or billing; Royal Red routes to the next provider and logs `provider.skipped` with the reason in the audit log |
 | Everything fails and you want a clean slate | `royal-red stop`, then remove `~/.local/share/royal-red/data/royal-red.db`, then `royal-red start` (this erases sessions, memory, and stored keys) |
+
+## Roadmap
+
+Royal Red is under active development on this main branch. Shipped and next, on the record:
+
+| Status | Item |
+| --- | --- |
+| Shipped | 96-provider matrix, Settings cockpit, 60 connectors, MCP client, skills, unified tool layer, real-machine verification receipts |
+| Shipped | one-line installer, desktop entry, Dockerfile, fresh-clone boot proof, MIT license |
+| Next | the 40 definition-only connectors becoming fully wired, OAuth redirect flows for connectors, real-machine confirmation for the Docker, WSL2, and desktop-icon paths |
+| Next | release channel with signed builds, plugin marketplace for community skills |
+
+<img src=".github/assets/divider.svg" alt="" width="100%">
 
 ## Updating and uninstalling
 
@@ -183,6 +204,7 @@ Details and exact next steps: [docs/INSTALL.md](docs/INSTALL.md), section **Veri
 | Document | Contents |
 | --- | --- |
 | [docs/DOWNLOAD-GUIDE.md](docs/DOWNLOAD-GUIDE.md) | the complete step-by-step download and first-run guide |
+| [docs/Royal-Red-Download-and-Install-Guide.pdf](docs/Royal-Red-Download-and-Install-Guide.pdf) | the same guide as a royal-red and gold PDF manual, built by the project's own PDF engine |
 | [docs/INSTALL.md](docs/INSTALL.md) | friendly install guide, verified limits |
 | [docs/Royal-Red-Installation-Guide.pdf](docs/Royal-Red-Installation-Guide.pdf) | print manual, produced by Royal Red's own PDF engine |
 | [docs/INVARIANTS.md](docs/INVARIANTS.md) | the project laws and their tests |
@@ -201,7 +223,7 @@ Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) fi
 
 ## License
 
-Proprietary. See [LICENSE](LICENSE). The license includes a pattern-provenance section describing what Royal Red learned from which open-source project and under which license.
+MIT. See [LICENSE](LICENSE). You can use, copy, change, merge, publish, and sell Royal Red and things built with it. The only condition is keeping the copyright notice. The open-source patterns the design learned from are credited in [docs/LICENSE-AUDIT.md](docs/LICENSE-AUDIT.md).
 
 ## Acknowledgments
 

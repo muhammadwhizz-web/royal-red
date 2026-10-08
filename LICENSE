@@ -1,44 +1,29 @@
-# Royal Red License
+MIT License
 
-Copyright (c) 2026 Royal Red Project. All Rights Reserved.
+Copyright (c) 2026 MuhammadWhiz (muhammadwhizz-web)
 
-ROYAL RED — "the operating system for agents" — is proprietary software.
-The kernel, the console UI (glass crown signature system), the verification
-engine, the provider router, and all accompanying source code, artwork,
-and documentation in this repository are the exclusive work product of the
-Royal Red project.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-## 1. Grant
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-No right is granted to copy, modify, distribute, sublicense, sell, or
-rehost any part of this codebase except as explicitly agreed in writing
-by the project owner.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-## 2. Pattern Provenance (legally bounded, honestly stated)
+--------------------------------------------------------------------------
 
-Royal Red was engineered from scratch. Where design patterns were studied
-from open-source projects, the pattern was reimplemented natively and the
-source cited in commit messages and the worklog. The legal record lives in
-`rr-payload/reports` (LICENSE-AUDIT) and the worklog:
-
-- **deepseek-harness** (MIT, (c) 2026 DeepSeek) — four primitives ported
-  as direct pattern references: append-only event log, 5-layer policy
-  waterfall, single LLM seam, declarative sandbox roots. MIT obligations
-  honored: no warranty, attribution kept in citations.
-- All other studied repos are PATTERN-ONLY (see LICENSE-AUDIT table):
-  GPL/AGPL sources (Fooocus, stable-diffusion-webui) were never forked;
-  the custom-licensed Open WebUI was never copied; the unlicensed
-  AI-Resume-Generator was never touched (product is clean-room).
-
-## 3. Third-party components
-
-Runtime dependencies keep their own licenses (Next.js, React, Tailwind,
-shadcn/ui, Prisma, Zustand, framer-motion, lucide — MIT/Apache family).
-Their license files ship inside `node_modules` and nothing in this
-repository alters their terms.
-
-## 4. Warranty
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM,
-DAMAGES, OR OTHER LIABILITY ARISING FROM THE SOFTWARE.
+A note on provenance. Royal Red's design learned patterns from open-source
+agent projects, always credited: the table that maps every pattern to its
+source project and license lives in docs/LICENSE-AUDIT.md. Third-party
+skills and catalogs shipped inside this repository keep their own licenses
+in their own folders. Nothing above changes those.

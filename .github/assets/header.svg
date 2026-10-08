@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-label="Royal Red">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3d060f">
+        <animate attributeName="stop-color" values="#3d060f;#5c0a14;#3d060f" dur="9s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="0.55" stop-color="#7f1d1d">
+        <animate attributeName="stop-color" values="#7f1d1d;#6b1418;#7f1d1d" dur="9s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="1" stop-color="#260409"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.36" r="0.55">
+      <stop offset="0" stop-color="#a31226" stop-opacity="0.55">
+        <animate attributeName="stop-opacity" values="0.55;0.8;0.55" dur="5s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="1" stop-color="#a31226" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9a8"/>
+      <stop offset="0.5" stop-color="#f0c04a"/>
+      <stop offset="1" stop-color="#b8860b"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#fff8e1" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="crownClip">
+      <path d="M600 44 L648 118 L712 84 L742 168 L458 168 L488 84 L552 118 Z"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1200" height="360" fill="url(#bg)"/>
+  <rect width="1200" height="360" fill="url(#glow)"/>
+  <line x1="0" y1="330" x2="1200" y2="330" stroke="#f0c04a" stroke-opacity="0.35" stroke-width="1"/>
+
+  <!-- crown -->
+  <g>
+    <path d="M600 44 L648 118 L712 84 L742 168 L458 168 L488 84 L552 118 Z" fill="url(#gold)" stroke="#8a5a0a" stroke-width="3"/>
+    <rect x="458" y="168" width="284" height="26" rx="6" fill="url(#gold)" stroke="#8a5a0a" stroke-width="3"/>
+    <circle cx="600" cy="38" r="10" fill="#e04141" stroke="#8a5a0a" stroke-width="2.5"/>
+    <circle cx="488" cy="78" r="7" fill="#e04141" stroke="#8a5a0a" stroke-width="2"/>
+    <circle cx="712" cy="78" r="7" fill="#e04141" stroke="#8a5a0a" stroke-width="2"/>
+    <rect x="576" y="174" width="48" height="14" rx="4" fill="#b91c2e" stroke="#8a5a0a" stroke-width="2"/>
+    <g clip-path="url(#crownClip)">
+      <rect x="-160" y="20" width="110" height="220" fill="url(#shine)" transform="skewX(-18)">
+        <animate attributeName="x" values="-160;1360" dur="4.5s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
+
+  <!-- wordmark -->
+  <text x="600" y="262" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="64" letter-spacing="14" fill="#f6e7c8">ROYAL RED</text>
+  <text x="600" y="306" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" letter-spacing="3" fill="#f0c04a">
+    One command in. One word to launch. One crown when the work is verified.
+    <animate attributeName="opacity" values="0.55;1;0.55" dur="6s" repeatCount="indefinite"/>
+  </text>
+</svg>
