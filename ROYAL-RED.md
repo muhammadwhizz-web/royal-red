@@ -49,9 +49,9 @@ See docs/INVARIANTS.md (v1.1). Do not duplicate them here. They are law: S-1 thr
                                 |
                        +--------v---------+
                        | PROVIDER MATRIX  |
-                       | 66 providers     |
+                       | 96 providers     |
                        | 7 modalities     |
-                       | 1,188 routes     |
+                       | 1,728 routes     |
                        | cost-aware router|
                        +------------------+
 
@@ -70,7 +70,7 @@ One line each:
 - Box: the path prison. All agent file writes stay inside royalred-box. Consent tiers guard the gates. Every op is undoable.
 - LLM seam: every model call flows through one seam. House provider, router fallback, breaker, cost ledger.
 - Verification engine: constraint ledger grading, adversarial critique, visual regression screenshots, real CMS CRUD tests, competitor benchmark. Honest score = min(builder, critic).
-- Provider matrix: 66 providers across 7 modalities, all keys encrypted at rest (AES-256-GCM), routed by cost-aware policy.
+- Provider matrix: 96 providers across 8 modalities, all keys encrypted at rest (AES-256-GCM), routed by cost-aware policy.
 - Event log: append-only, typed, per-session monotonic seq. Replayable. Nothing is ever edited.
 - Undo journal: every move, copy, trash, mkdir, write is journaled and reversible.
 - Memory store: persistent, scoped, cross-session memory with user approval on agent-inferred writes.
@@ -165,9 +165,9 @@ Communication and memory (6):
 | 47 | Notification system | backlog | - | - |
 | 48 | Multi-user collaboration | backlog | - | - |
 
-## 1.6 The 66 providers
+## 1.6 The 96 providers
 
-66 providers across 7 modalities (chat, vision, embedding, image, search, audio, video), all keys encrypted at rest with AES-256-GCM, 1,188 routable routes. See docs/PROVIDERS.md for the full catalog.
+96 providers across 8 modalities (chat, vision, embedding, rerank, image, search, audio, video), all keys encrypted at rest with AES-256-GCM, 1,728 routable routes. See docs/PROVIDERS.md for the full catalog.
 
 ## 1.7 The sub-agent roster (66 agent employees)
 

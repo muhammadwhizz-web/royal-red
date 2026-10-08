@@ -364,6 +364,9 @@ export interface VerifyReceipt {
   at: number
 }
 
+// panel tabs are referenced across the panel, palette and store: one type
+export type PanelTab = 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events' | 'memory' | 'agents' | 'settings'
+
 export interface RoyalRedState {
   booted: boolean
   themeToggleRequest: number
@@ -383,7 +386,7 @@ export interface RoyalRedState {
   artifacts: ArtifactView[]
   activeFile: string | null
   previewKey: number
-  panelTab: 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events' | 'memory' | 'agents'
+  panelTab: PanelTab
   filesScope: 'artifact' | 'workspace'
   panelHidden: boolean
   systemOpen: boolean
@@ -403,7 +406,7 @@ export interface RoyalRedState {
   refreshSessions: () => Promise<void>
   loadMoreSessions: () => Promise<void>
   setActiveFile: (p: string | null) => void
-  setPanelTab: (t: 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events') => void
+  setPanelTab: (t: PanelTab) => void
   setFilesScope: (s: 'artifact' | 'workspace') => void
   setPanelHidden: (v: boolean) => void
   selectArtifact: (id: string) => void

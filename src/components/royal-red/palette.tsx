@@ -18,6 +18,7 @@ import {
   Rss,
   ScanEye,
   Search,
+  Settings as SettingsIcon,
   ShieldCheck,
   Sun,
   Terminal,
@@ -173,6 +174,7 @@ export function CommandPalette() {
               { id: 'events', label: 'event log: replay + integrity', icon: Rss },
               { id: 'memory', label: 'memory: what royal red remembers', icon: Brain },
               { id: 'agents', label: 'agents: the 66 royal roles', icon: Users },
+              { id: 'settings', label: 'settings: keys, connectors, mcp, skills, routing', icon: SettingsIcon },
             ] as const
           ).map((t) => (
             <CommandItem

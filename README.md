@@ -14,7 +14,7 @@
 
 - Builds multi-page websites with working CMS panels, verified end to end in a real browser: structure, accessibility basics, and a deterministic overlap probe at desktop, tablet, and phone widths.
 - Generates PDFs, posters, and documents with premium typography, embedded fonts, a real table of contents, and a hard no-overlap layout law. This project's own installation manual is produced by its PDF engine.
-- Searches the web, reads pages, transcribes audio, watches videos, and analyzes images through a 66-provider matrix with a cost-aware router and mid-stream rotation.
+- Searches the web, reads pages, transcribes audio, watches videos, and analyzes images through a 96-provider matrix with a cost-aware router and mid-stream rotation.
 - Runs entirely on your machine: the agent works inside a fenced workspace, every privileged action asks first with a consent card that names exactly what will happen, and every step lands in an append-only audit log.
 - Remembers what you tell it across sessions, dispatches work to 66 named agent employees, and shows every action's attribution in the console.
 
@@ -62,12 +62,13 @@ Royal Red ships a catalog of 48 services across 7 categories. Highlights:
 - **Voice**: speech to text and text to speech.
 - **Memory**: cross-session memory store with scopes, promotion, and export.
 - **Agent employees**: 66 named roles with bound providers, budgets, and attribution.
+- **Settings cockpit**: 96 providers with encrypted key management, 60 connectors (20 fully wired), MCP client (stdio, http, ws), and Claude-style skills, all reachable from one Settings page.
 
 The full catalog with statuses and API surfaces: [docs/SERVICES-CATALOG.md](docs/SERVICES-CATALOG.md).
 
 ## Architecture
 
-One kernel process runs the conversation loop, the tool bus, and the verification engine. Sub-agents (planner, builder, roster roles) share one sandboxed Box under a path prison, one consent queue, one undo journal, and one append-only event log, with per-run budgets and full attribution. A provider matrix of 66 providers and 1,188 routes sits behind a cost-aware router that survives five mid-stream provider drops. The console is a local web app over that kernel.
+One kernel process runs the conversation loop, the tool bus, and the verification engine. Sub-agents (planner, builder, roster roles) share one sandboxed Box under a path prison, one consent queue, one undo journal, and one append-only event log, with per-run budgets and full attribution. A provider matrix of 96 providers and 1,728 routes sits behind a cost-aware router that survives five mid-stream provider drops. The console is a local web app over that kernel.
 
 ```
 console (browser) <-> kernel: chat, panels, SSE

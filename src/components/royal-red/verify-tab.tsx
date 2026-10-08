@@ -393,7 +393,7 @@ function ProviderConfig() {
 
   const load = async () => {
     try {
-      const res = await fetch('/api/royal-red/providers')
+      const res = await fetch('/api/royal-red/critique-providers')
       if (res.ok) {
         const data = (await res.json()) as { providers: ProviderRow[] }
         setProviders(data.providers)
@@ -409,7 +409,7 @@ function ProviderConfig() {
     }
     setBusy(true)
     try {
-      const res = await fetch('/api/royal-red/providers', {
+      const res = await fetch('/api/royal-red/critique-providers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, activate: true }),
@@ -428,7 +428,7 @@ function ProviderConfig() {
   const toggle = async (p: ProviderRow) => {
     setBusy(true)
     try {
-      await fetch('/api/royal-red/providers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id, active: !p.active }) })
+      await fetch('/api/royal-red/critique-providers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id, active: !p.active }) })
       await load()
     } finally {
       setBusy(false)
@@ -437,7 +437,7 @@ function ProviderConfig() {
   const remove = async (p: ProviderRow) => {
     setBusy(true)
     try {
-      await fetch(`/api/royal-red/providers?id=${p.id}`, { method: 'DELETE' })
+      await fetch(`/api/royal-red/critique-providers?id=${p.id}`, { method: 'DELETE' })
       await load()
     } finally {
       setBusy(false)

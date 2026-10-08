@@ -44,7 +44,17 @@ async function main() {
   const counts = matrixCounts()
   check(`registry has 25+ providers (${counts.providers})`, counts.providers >= 25)
   check('registry covers 5+ modalities', Object.keys(counts.byModality).length >= 5)
-  check('every provider carries cost metadata', PROVIDERS.every((p) => Object.keys(p.cost).length > 0))
+  // Round 7 honesty law: a provider either carries REAL list prices or an
+  // explicit "unknown cost" note (empty cost + priceNote). Inventing a number
+  // is forbidden; the router treats unknown-cost rows as opt-in only.
+  check(
+    'every provider carries cost metadata or an honest unknown-cost note',
+    PROVIDERS.every((p) => Object.keys(p.cost).length > 0 || (p.priceNote ?? '').length > 0),
+  )
+  check(
+    'unknown-cost providers exist and are explicitly noted',
+    PROVIDERS.some((p) => Object.keys(p.cost).length === 0 && (p.priceNote ?? '').includes('published')),
+  )
   check('honest fail-closed entries exist (protocol none)', PROVIDERS.some((p) => p.protocol === 'none'))
   check('local $0 engines present', PROVIDERS.filter((p) => p.local).length >= 10)
   check('openai-compat family covers 15+ providers', PROVIDERS.filter((p) => p.protocol === 'openai-compat').length >= 15)

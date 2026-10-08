@@ -308,6 +308,157 @@ model RoyalRedMemory {
   @@map("AwonMemory")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Settings cockpit (Round 7): 96-provider key management, custom providers,
+// routing preferences, general settings, connectors, MCP servers, skills.
+// Every secret column is AES-256-GCM ciphertext; masked hints only in memory.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// BYO key for one matrix provider. providerId matches the registry id (and
+// custom provider ids). Keys NEVER leave the server; only keyHint does.
+model RoyalRedProviderKey {
+  id           String    @id @default(cuid())
+  providerId   String    @unique
+  apiKeyEnc    String? // base64(iv + tag + ciphertext)
+  keyHint      String? // masked, e.g. sk-...ab12
+  baseUrl      String? // per-provider override (NVIDIA NIM, LiteLLM, Agnes AI...)
+  model        String? // default model override
+  orgId        String?
+  headersJson  String? // additional headers, JSON object
+  disabled     Boolean   @default(false)
+  // measured health, persisted so the cockpit survives restarts
+  lastProbeAt  DateTime?
+  lastProbeOk  Boolean?
+  lastProbeLatencyMs Int?
+  lastError    String?
+  successCount Int       @default(0)
+  failureCount Int       @default(0)
+  avgLatencyMs Float     @default(0)
+  // 429 handling: when a provider sends a reset time, the router deprioritizes
+  // the provider until this instant
+  rateLimitedUntil DateTime?
+  region       String? // eu | us | any
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("AwonProviderKey")
+}
+
+// user-added providers that are not in the shipped matrix. They appear in the
+// matrix alongside shipped providers and route through the openai-compat
+// adapter (or the auth scheme they declare).
+model RoyalRedCustomProvider {
+  id          String   @id @default(cuid())
+  providerId  String   @unique
+  label       String
+  baseUrl     String
+  authScheme  String   @default("bearer") // bearer | header | query | none
+  headerName  String?
+  modalities  String   @default("chat") // comma-separated modality list
+  model       String
+  costIn      Float?
+  costOut     Float?
+  priceNote   String?
+  apiKeyEnc   String?
+  keyHint     String?
+  createdAt   DateTime @default(now())
+
+  @@map("AwonCustomProvider")
+}
+
+// routing preferences (singleton row id="default"). The router reads this on
+// every decision; every change writes a router.preferences.updated audit row.
+model RoyalRedRouterPrefs {
+  id                String   @id @default("default")
+  priorityJson      String? // ordered provider ids the router tries first
+  fallbackBehavior  String   @default("next-on-failure") // next-on-failure | fail-fast | next-on-rate-limit
+  costCeilingUsd    Float    @default(0.5)
+  localFirst        Boolean  @default(false)
+  freeTierFirst     Boolean  @default(false)
+  region            String   @default("any") // any | eu | us
+  allowlistJson     String?
+  denylistJson      String?
+  rateLimitBehavior String   @default("wait-retry") // wait-retry | next-immediately
+  updatedAt         DateTime @updatedAt
+
+  @@map("AwonRouterPrefs")
+}
+
+// general settings key/value store (theme, mode, boot animation, telemetry...)
+model RoyalRedSetting {
+  key       String   @id
+  value     String // JSON or scalar string
+  updatedAt DateTime @updatedAt
+
+  @@map("AwonSetting")
+}
+
+// third-party service integration. credEnc holds the API key / OAuth token /
+// service-account JSON, encrypted. status: connected | not_connected | error.
+model RoyalRedConnector {
+  id          String    @id @default(cuid())
+  connectorId String    @unique // github, slack, google-drive, ...
+  label       String
+  authType    String    @default("api_key") // api_key | oauth2 | pat | service_account | none
+  credEnc     String?
+  credHint    String?
+  configJson  String? // non-secret config (account ids, endpoint overrides)
+  status      String    @default("not_connected")
+  lastCheckAt DateTime?
+  lastError   String?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("AwonConnector")
+}
+
+// a Model Context Protocol server: local process (stdio) or remote (http/ws).
+// toolsJson/resourcesJson/promptsJson hold the discovered manifests.
+model RoyalRedMcpServer {
+  id              String    @id @default(cuid())
+  name            String    @unique // short slug
+  label           String
+  type            String    @default("stdio") // stdio | http | ws
+  command         String? // stdio executable
+  argsJson        String?
+  envJson         String?
+  url             String? // http | ws endpoint
+  tokenEnc        String?
+  enabled         Boolean   @default(true)
+  status          String    @default("not_connected") // connected | error | not_connected
+  toolsJson       String?
+  resourcesJson   String?
+  promptsJson     String?
+  lastConnectedAt DateTime?
+  lastError       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("AwonMcpServer")
+}
+
+// an installed Claude-style skill (SKILL.md package): instructions become a
+// system prompt fragment; declared tools flow through the unified tool layer.
+model RoyalRedSkill {
+  id           String   @id @default(cuid())
+  skillId      String   @unique
+  name         String
+  description  String
+  author       String   @default("royal-red")
+  version      String   @default("1.0.0")
+  source       String   @default("catalog") // catalog | folder | url
+  sourceRef    String?
+  instructions String
+  toolsJson    String?
+  promptsJson  String?
+  enabled      Boolean  @default(true)
+  installedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("AwonSkill")
+}
+
 // ROYAL RED session event log (DeepSeek-harness port #1, MIT pattern).
 // The append-only, typed, replayable source of truth for agent sessions:
 // rows are only ever INSERTED (no update path exists in code), seq is

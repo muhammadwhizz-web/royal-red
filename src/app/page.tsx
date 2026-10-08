@@ -8,6 +8,7 @@ import {
   FileText,
   History,
   Loader2,
+  Lock,
   Moon,
   PanelRightClose,
   PanelRightOpen,
@@ -23,9 +24,11 @@ import {
 import { useTheme } from 'next-themes'
 import { Signature } from '@/components/royal-red/signature'
 import { BootOverlay } from '@/components/royal-red/boot-overlay'
+import { Settings as SettingsIcon, X } from 'lucide-react'
 import { ChatStream, PlanRail } from '@/components/royal-red/chat-stream'
 import { Composer } from '@/components/royal-red/composer'
 import { RightPanel } from '@/components/royal-red/right-panel'
+import { SettingsTab } from '@/components/royal-red/settings-tab'
 import { CommandPalette } from '@/components/royal-red/palette'
 import { useRoyalRed } from '@/components/royal-red/store'
 import type { ChatItem } from '@/lib/royal-red/types'
@@ -455,11 +458,105 @@ function SessionsSheet() {
   )
 }
 
+// session lock: when the user sets a session password in Settings, the console
+// requires it on launch and after the auto-lock window of inactivity
+function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const submit = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/royal-red/settings/security', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unlock', password }),
+      })
+      const json = (await res.json()) as { unlocked?: boolean; ok?: boolean }
+      if (json.unlocked) {
+        window.sessionStorage.setItem('royalred-unlocked', '1')
+        onUnlocked()
+      } else {
+        setError('that password did not match.')
+      }
+    } catch {
+      setError('unlock failed: the server did not answer.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/95 backdrop-blur">
+      <div className="glass-strong royalred-damask w-80 rounded-2xl p-6 text-center">
+        <p className="font-mono text-[10px] tracking-[0.3em] text-muted-foreground">ROYAL RED</p>
+        <p className="mt-2 font-mono text-sm tracking-[0.2em]">CONSOLE LOCKED</p>
+        <Input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') void submit() }}
+          placeholder="session password"
+          aria-label="Session password"
+          autoFocus
+          className="mt-4 font-mono text-xs"
+        />
+        {error && <p className="mt-2 font-mono text-[10px] text-red-500">{error}</p>}
+        <Button className="mt-3 w-full bg-red-600 font-mono text-xs text-white hover:bg-red-700" disabled={busy || !password} onClick={() => void submit()}>
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Lock className="h-3.5 w-3.5" />} UNLOCK
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function SessionLock() {
+  const [locked, setLocked] = useState(false)
+  const [checked, setChecked] = useState(false)
+  const [autoLockMin, setAutoLockMin] = useState(0)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    void fetch('/api/royal-red/settings')
+      .then((r) => r.json())
+      .then((j: { settings?: Record<string, string> }) => {
+        const min = Number(j.settings?.autoLockMin ?? '30')
+        setAutoLockMin(Number.isFinite(min) && min > 0 ? min : 30)
+        if (j.settings?.sessionPasswordHash && window.sessionStorage.getItem('royalred-unlocked') !== '1') setLocked(true)
+      })
+      .catch(() => {})
+      .finally(() => setChecked(true))
+  }, [])
+
+  // auto-lock: inactivity timer, reset on any input
+  useEffect(() => {
+    if (!checked || locked || !autoLockMin) return
+    const arm = () => {
+      if (timer.current) clearTimeout(timer.current)
+      timer.current = setTimeout(() => {
+        window.sessionStorage.removeItem('royalred-unlocked')
+        setLocked(true)
+      }, autoLockMin * 60_000)
+    }
+    arm()
+    const evs: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'wheel']
+    evs.forEach((ev) => window.addEventListener(ev, arm, { passive: true }))
+    return () => {
+      if (timer.current) clearTimeout(timer.current)
+      evs.forEach((ev) => window.removeEventListener(ev, arm))
+    }
+  }, [checked, locked, autoLockMin])
+
+  if (!checked || !locked) return null
+  return <LockScreen onUnlocked={() => setLocked(false)} />
+}
+
 export default function RoyalRedConsole() {
   const mode = useRoyalRed((s) => s.mode)
   const streaming = useRoyalRed((s) => s.streaming)
   const artifact = useRoyalRed((s) => s.artifact)
   const sessionTitle = useRoyalRed((s) => s.sessionTitle)
+  const panelTab = useRoyalRed((s) => s.panelTab)
   const panelHidden = useRoyalRed((s) => s.panelHidden)
   const setPanelHidden = useRoyalRed((s) => s.setPanelHidden)
   const composerRef = useRef<HTMLDivElement>(null)
@@ -503,6 +600,7 @@ export default function RoyalRedConsole() {
       {/* v1.8 signature backdrop: drifting royal-red aurora under everything */}
       <div className="royalred-aurora" aria-hidden="true" />
       <BootOverlay />
+      <SessionLock />
       <CommandPalette />
       <ThemeCommandBridge />
       <div className="royalred-scanlines pointer-events-none fixed inset-0 z-40 opacity-25" aria-hidden="true" />
@@ -556,6 +654,18 @@ export default function RoyalRedConsole() {
           >
             <Terminal className="h-4 w-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            aria-label="Open settings"
+            title="Settings: providers, connectors, MCP, skills, routing"
+            onClick={() => {
+              useRoyalRed.setState({ panelTab: 'settings', panelHidden: false })
+            }}
+          >
+            <SettingsIcon className="h-4 w-4" />
+          </Button>
           <SessionsSheet />
           <ThemeToggle />
         </div>
@@ -593,11 +703,33 @@ export default function RoyalRedConsole() {
         </button>
       )}
 
+      {/* mobile settings cockpit: the desktop preview panel is md+ only, so
+          the settings tab opens as a full-screen overlay on phones */}
+      {panelTab === 'settings' && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background md:hidden" role="dialog" aria-label="Settings">
+          <div className="glass-strong flex shrink-0 items-center justify-between px-4 py-3">
+            <span className="font-mono text-xs tracking-[0.25em]">SETTINGS / COCKPIT</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              aria-label="Close settings"
+              onClick={() => useRoyalRed.setState({ panelTab: 'preview' })}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="min-h-0 flex-1">
+            <SettingsTab />
+          </div>
+        </div>
+      )}
+
       {/* sticky footer line — hairline glass strip */}
       <footer className="glass relative z-30 mx-2 mb-2 shrink-0 rounded-xl px-4 py-1.5 text-center font-mono text-[10px] tracking-[0.25em] text-muted-foreground sm:mx-3 sm:mb-3 sm:px-6">
-        <span className="sm:hidden"> ROYAL RED // KERNEL v1.8</span>
+        <span className="sm:hidden"> ROYAL RED // KERNEL v1.9</span>
         <span className="hidden sm:inline">
-           ROYAL RED // KERNEL v1.8 / MAJESTIC / SANDBOXED / INVARIANTS DOC / PROOF-TESTED: LEDGER · CRITIC · EVENT LOG · WATERFALL · SEAM · ROOTS · RUN QUEUE · CSS GUARD · SUB-AGENTS · BUDGET · MEMORY · ROSTER
+           ROYAL RED // KERNEL v1.9 / 96 PROVIDERS / SETTINGS COCKPIT / MAJESTIC / SANDBOXED / INVARIANTS DOC / PROOF-TESTED: LEDGER · CRITIC · EVENT LOG · WATERFALL · SEAM · ROOTS · RUN QUEUE · CSS GUARD · SUB-AGENTS · BUDGET · MEMORY · ROSTER · CONNECTORS · MCP · SKILLS
         </span>
       </footer>
     </div>

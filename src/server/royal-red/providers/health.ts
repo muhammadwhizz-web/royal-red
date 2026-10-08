@@ -83,6 +83,20 @@ export async function probeProvider(p: ProviderDef, apiKey: string | null, force
     let res: Response
     if (p.protocol === 'anthropic') {
       res = await fetch(`${p.baseUrl}/v1/models`, { headers: { 'x-api-key': apiKey ?? '', 'anthropic-version': '2023-06-01' }, signal: AbortSignal.timeout(6_000) })
+    } else if (p.protocol === 'google-native') {
+      // Gemini AI Studio native: /v1beta/models with the key as a query param
+      res = await fetch(`${p.baseUrl}/models?key=${encodeURIComponent(apiKey ?? '')}&pageSize=1`, { signal: AbortSignal.timeout(6_000) })
+    } else if (p.protocol === 'cohere-native') {
+      res = await fetch(`${p.baseUrl}/v1/models?page_size=1`, { headers: { authorization: `Bearer ${apiKey ?? ''}` }, signal: AbortSignal.timeout(6_000) })
+    } else if (p.protocol === 'cloudflare') {
+      // Workers AI: the key is stored as "token::accountId" (see settings UI)
+      const [token, accountId] = (apiKey ?? '').split('::')
+      if (!token || !accountId) {
+        rec = { state: breakerOpen(p.id) ? 'breaker-open' : 'unconfigured', latencyMs: null, checkedAt: Date.now(), detail: 'needs token::accountId (account id missing)' }
+        health.set(p.id, rec)
+        return rec
+      }
+      res = await fetch(`${p.baseUrl}/accounts/${accountId}/ai/models/search?per_page=1`, { headers: { authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(6_000) })
     } else if (p.protocol === 'a1111') {
       res = await fetch(`${p.baseUrl}/internal/ping`, { signal: AbortSignal.timeout(4_000) })
     } else if (p.protocol === 'search-rest' || p.protocol === 'none') {

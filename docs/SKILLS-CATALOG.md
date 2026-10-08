@@ -37,9 +37,9 @@ sub-agent** (scalpel), **pause/resume session** (state preserved).
 | **Resume** | `resume` | Structured CV (summary, skills, experience) | summary ≤60 words, ≥2 skills, role+company per entry |
 | **Landing page** | build-mode artifact | Full HTML with research notes | 10/10 score, visual baselines, per-constraint ledger receipts |
 
-**Service matrix behind products:** 66 providers × 7 modalities
+**Service matrix behind products:** 96 providers × 8 modalities
 (chat · vision · image · audio · search · embedding · video) =
-**1,188 routable services today** (18 products × routes; projected 2,772 at
+**1,728 routable services today** (18 products × routes; projected 4,032 at
 42 products). The router picks by capability request → cost tier → health,
 with mid-stream rotation (proven: 5 provider switches, partial output kept).
 
@@ -73,7 +73,7 @@ requests, fallback chains, rotation drills, cost ledger.
 ## F. SERVICE CATALOG — the "400+ services" ledger (fill-in section)
 
 The user's vision: 400+ distinct services deliverable end-to-end. Today's
-truth: **1,188 routable provider routes** across 66 providers, and the
+truth: **1,728 routable provider routes** across 96 providers, and the
 matrix GROWS one row per new product. New products are specified by adding
 a `ProductDef` (JSON schema + graded checks) in
 `src/server/royal-red/products/index.ts` — the router, receipts, ledger,

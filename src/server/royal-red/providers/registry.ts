@@ -49,9 +49,9 @@ export const PROVIDERS: ProviderDef[] = [
     requiresKey: true, supportsTools: true, supportsStreaming: true,
   }),
   P({
-    id: 'mistral', label: 'Mistral', protocol: 'openai-compat', modalities: ['chat', 'embedding'],
+    id: 'mistral', label: 'Mistral', protocol: 'openai-compat', modalities: ['chat', 'vision', 'embedding'],
     baseUrl: 'https://api.mistral.ai/v1', model: 'mistral-small-latest', tier: 'mid', local: false,
-    cost: { chatIn: 0.2, chatOut: 0.6 }, priceNote: 'mistral-small list, 2025', envKey: 'MISTRAL_API_KEY',
+    cost: { chatIn: 0.2, chatOut: 0.6, embedding: 0.1 }, priceNote: 'mistral-small list, 2025; mistral-embed list, 2025', envKey: 'MISTRAL_API_KEY',
     requiresKey: true, supportsTools: true, supportsStreaming: true,
   }),
   P({
@@ -61,10 +61,10 @@ export const PROVIDERS: ProviderDef[] = [
     requiresKey: true, supportsTools: true, supportsStreaming: true,
   }),
   P({
-    id: 'groq', label: 'Groq', protocol: 'openai-compat', modalities: ['chat'],
+    id: 'groq', label: 'Groq', protocol: 'openai-compat', modalities: ['chat', 'vision', 'audio'],
     baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile', tier: 'mid', local: false,
-    cost: { chatIn: 0.59, chatOut: 0.79 }, priceNote: 'llama-3.3-70b list, 2025', envKey: 'GROQ_API_KEY',
-    requiresKey: true, supportsTools: true, supportsStreaming: true,
+    cost: { chatIn: 0.59, chatOut: 0.79 }, priceNote: 'llama-3.3-70b list, 2025; whisper audio $0.04/hr', envKey: 'GROQ_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true, freeTier: true,
   }),
   P({
     id: 'groq-small', label: 'Groq Llama 8B', protocol: 'openai-compat', modalities: ['chat'],
@@ -85,10 +85,11 @@ export const PROVIDERS: ProviderDef[] = [
     requiresKey: true, supportsTools: true, supportsStreaming: true,
   }),
   P({
-    id: 'openrouter', label: 'OpenRouter', protocol: 'openai-compat', modalities: ['chat', 'vision'],
+    id: 'openrouter', label: 'OpenRouter', protocol: 'openai-compat', modalities: ['chat', 'vision', 'embedding'],
     baseUrl: 'https://openrouter.ai/api/v1', model: 'openrouter/auto', tier: 'mid', local: false,
     cost: { chatIn: 1, chatOut: 2 }, priceNote: 'auto-routing blended estimate, 2025', envKey: 'OPENROUTER_API_KEY',
     requiresKey: true, supportsTools: true, supportsStreaming: true,
+    endpointNote: 'meta-router: 300+ upstream models behind one key; model field accepts any upstream id',
   }),
   P({
     id: 'xai', label: 'xAI Grok', protocol: 'openai-compat', modalities: ['chat', 'vision'],
@@ -115,10 +116,10 @@ export const PROVIDERS: ProviderDef[] = [
     requiresKey: true, supportsTools: true, supportsStreaming: true,
   }),
   P({
-    id: 'zhipu', label: 'Zhipu GLM', protocol: 'openai-compat', modalities: ['chat'],
+    id: 'zhipu', label: 'Z AI (Zhipu)', protocol: 'openai-compat', modalities: ['chat', 'vision', 'embedding'],
     baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash', tier: 'small', local: false,
-    cost: { chatIn: 0, chatOut: 0 }, priceNote: 'glm-4-flash free tier, 2025', envKey: 'ZHIPU_API_KEY',
-    requiresKey: true, supportsTools: true, supportsStreaming: true,
+    cost: { chatIn: 0, chatOut: 0, embedding: 0 }, priceNote: 'glm-4-flash free tier, 2025', envKey: 'ZHIPU_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true, freeTier: true,
   }),
   P({
     id: 'moonshot', label: 'Moonshot Kimi', protocol: 'openai-compat', modalities: ['chat'],
@@ -391,9 +392,225 @@ export const PROVIDERS: ProviderDef[] = [
     baseUrl: 'https://api.replicate.com/v1', model: 'minimax/video-01', tier: 'mid', local: false,
     cost: { video: 0.05 }, priceNote: 'approx list, 2025', envKey: 'REPLICATE_API_TOKEN', requiresKey: true,
   }),
+  // ============ ROUND 7 EXPANSION: 30 new providers (matrix 66 → 96) ============
+  // Honesty: rows whose rates are not published carry an EMPTY cost object and
+  // a priceNote pointing at the provider pricing page. The router treats them
+  // as "unknown cost" and only routes to them when the user opts in (allowlist
+  // or explicit priority). endpointNote marks endpoints that need user setup.
+
+  // ---- routers and gateways ----
+  P({
+    id: 'ninerouter', label: '9Router', protocol: 'openai-compat', modalities: ['chat', 'vision'],
+    baseUrl: 'https://api.9router.com/v1', model: 'gpt-4o-mini', tier: 'mid', local: false,
+    cost: {}, priceNote: 'rates not published; confirm on the provider pricing page, 2025', envKey: 'NINEROUTER_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true,
+    endpointNote: 'confirm the exact API base URL in the edit dialog if the default does not respond',
+  }),
+  P({
+    id: 'huggingface', label: 'Hugging Face Inference', protocol: 'openai-compat', modalities: ['chat', 'vision', 'embedding', 'image', 'audio'],
+    baseUrl: 'https://router.huggingface.co/v1', model: 'meta-llama/Llama-3.3-70B-Instruct', tier: 'mid', local: false,
+    cost: {}, priceNote: 'per-model provider billing on HF, 2025; free monthly inference credits', envKey: 'HF_TOKEN',
+    requiresKey: true, supportsTools: true, supportsStreaming: true, freeTier: true,
+    endpointNote: 'chat via router.huggingface.co/v1; image and audio routes call the task-specific router paths',
+  }),
+  P({
+    id: 'crazyrouter', label: 'Crazyrouter', protocol: 'openai-compat', modalities: ['chat', 'vision'],
+    baseUrl: 'https://api.crazyrouter.com/v1', model: 'gpt-4o-mini', tier: 'small', local: false,
+    cost: {}, priceNote: 'rates not published; confirm on the provider pricing page, 2025', envKey: 'CRAZYROUTER_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+    endpointNote: 'confirm the exact API base URL in the edit dialog if the default does not respond',
+  }),
+  P({
+    id: 'opper', label: 'Opper', protocol: 'openai-compat', modalities: ['chat', 'embedding'],
+    baseUrl: 'https://api.opper.ai/v1', model: 'opper-default', tier: 'mid', local: false,
+    cost: {}, priceNote: 'usage-based; see opper.ai pricing, 2025', envKey: 'OPPER_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+    endpointNote: 'Opper is a native API with an OpenAI-compatible chat surface; verify the path in the edit dialog',
+  }),
+  P({
+    id: 'litellm-proxy', label: 'LiteLLM Proxy', protocol: 'openai-compat', modalities: ['chat', 'vision', 'embedding', 'audio'],
+    baseUrl: 'http://localhost:4000', model: 'gpt-4o-mini', tier: 'mid', local: false,
+    cost: {}, priceNote: 'self-hosted gateway: rates are whatever the upstream model charges',
+    requiresKey: false, supportsTools: true, supportsStreaming: true,
+    endpointNote: 'set your proxy URL and virtual key in the edit dialog (default assumes localhost:4000)',
+  }),
+  P({
+    id: 'cf-ai-gateway', label: 'Cloudflare AI Gateway', protocol: 'openai-compat', modalities: ['chat', 'embedding'],
+    baseUrl: 'https://gateway.ai.cloudflare.com/v1', model: 'gpt-4o-mini', tier: 'mid', local: false,
+    cost: {}, priceNote: 'gateway passthrough: upstream model rates apply; gateway free, 2025',
+    requiresKey: true, supportsStreaming: true,
+    endpointNote: 'set the full gateway URL in the edit dialog: /v1/<account>/<gateway>/openai',
+  }),
+  P({
+    id: 'portkey', label: 'Portkey', protocol: 'openai-compat', modalities: ['chat', 'embedding'],
+    baseUrl: 'https://api.portkey.ai/v1', model: 'gpt-4o-mini', tier: 'mid', local: false,
+    cost: {}, priceNote: 'gateway passthrough: upstream model rates apply, 2025', envKey: 'PORTKEY_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+    endpointNote: 'needs the x-portkey-api-key header plus an upstream provider key; add headers as JSON in the edit dialog',
+  }),
+
+  // ---- fast inference clouds ----
+  P({
+    id: 'cerebras', label: 'Cerebras', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://api.cerebras.ai/v1', model: 'llama-3.3-70b', tier: 'mid', local: false,
+    cost: { chatIn: 0.85, chatOut: 1.19 }, priceNote: 'llama-3.3-70b approx list, 2025 (wafer-scale speed)', envKey: 'CEREBRAS_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true, freeTier: true,
+  }),
+  P({
+    id: 'sambanova', label: 'SambaNova Cloud', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://api.sambanova.ai/v1', model: 'Meta-Llama-3.3-70B-Instruct', tier: 'mid', local: false,
+    cost: { chatIn: 0.6, chatOut: 1.2 }, priceNote: 'llama-3.3-70b approx list, 2025', envKey: 'SAMBANOVA_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+  }),
+  P({
+    id: 'nvidia-nim', label: 'NVIDIA NIM', protocol: 'openai-compat', modalities: ['chat', 'embedding'],
+    baseUrl: 'https://integrate.api.nvidia.com/v1', model: 'meta/llama-3.3-70b-instruct', tier: 'mid', local: false,
+    cost: {}, priceNote: 'per-model pricing; NIM trial credits, 2025', envKey: 'NVIDIA_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true,
+  }),
+  P({
+    id: 'siliconflow', label: 'SiliconFlow', protocol: 'openai-compat', modalities: ['chat', 'vision', 'embedding', 'image'],
+    baseUrl: 'https://api.siliconflow.cn/v1', model: 'deepseek-ai/DeepSeek-V3', tier: 'mid', local: false,
+    cost: {}, priceNote: 'published in CNY per model, 2025; small models free', envKey: 'SILICONFLOW_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true, freeTier: true,
+  }),
+
+  // ---- native-API providers (own adapters) ----
+  P({
+    id: 'gemini-aistudio', label: 'Gemini AI Studio (native)', protocol: 'google-native', modalities: ['chat', 'vision', 'audio', 'embedding'],
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-2.0-flash', tier: 'mid', local: false,
+    cost: { chatIn: 0.1, chatOut: 0.4, embedding: 0 }, priceNote: 'gemini-2.0-flash list, 2025; free tier available', envKey: 'GEMINI_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true, freeTier: true,
+    endpointNote: 'native v1beta generateContent path; distinct from the OpenAI-compat Gemini row',
+  }),
+  P({
+    id: 'cohere-native', label: 'Cohere (native)', protocol: 'cohere-native', modalities: ['chat', 'embedding', 'rerank'],
+    baseUrl: 'https://api.cohere.com', model: 'command-r-08-2024', tier: 'mid', local: false,
+    cost: { chatIn: 0.15, chatOut: 0.6, embedding: 0.1, rerank: 2 }, priceNote: 'command-r list, 2025; rerank $2 per 1k searches', envKey: 'COHERE_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true,
+    endpointNote: 'native v2 chat, v2 embed and v1 rerank endpoints; distinct from the compat row',
+  }),
+  P({
+    id: 'cloudflare-workers-ai', label: 'Cloudflare Workers AI', protocol: 'cloudflare', modalities: ['chat', 'vision', 'image', 'embedding'],
+    baseUrl: 'https://api.cloudflare.com/client/v4', model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', tier: 'small', local: false,
+    cost: {}, priceNote: 'per-neuron pricing, 2025; 10k neurons per day free', envKey: 'CLOUDFLARE_API_TOKEN',
+    requiresKey: true, supportsStreaming: true, freeTier: true,
+    endpointNote: 'needs your Cloudflare account id: put {"accountId": "..."} in additional headers JSON',
+  }),
+
+  // ---- open model clouds ----
+  P({
+    id: 'modelscope', label: 'ModelScope', protocol: 'openai-compat', modalities: ['chat', 'vision', 'image'],
+    baseUrl: 'https://api-inference.modelscope.cn/v1', model: 'Qwen/Qwen2.5-72B-Instruct', tier: 'mid', local: false,
+    cost: {}, priceNote: 'daily free quota; published in CNY per model, 2025', envKey: 'MODELSCOPE_API_KEY',
+    requiresKey: true, supportsStreaming: true, freeTier: true,
+  }),
+  P({
+    id: 'alibaba-model-studio', label: 'Alibaba Model Studio', protocol: 'openai-compat', modalities: ['chat', 'vision', 'embedding', 'image'],
+    baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus', tier: 'mid', local: false,
+    cost: { chatIn: 0.4, chatOut: 1.2 }, priceNote: 'qwen-plus list, 2025 (international endpoint)', envKey: 'ALIBABA_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true,
+  }),
+  P({
+    id: 'deepinfra', label: 'DeepInfra', protocol: 'openai-compat', modalities: ['chat', 'vision', 'embedding', 'image'],
+    baseUrl: 'https://api.deepinfra.com/v1/openai', model: 'meta-llama/Llama-3.3-70B-Instruct', tier: 'mid', local: false,
+    cost: { chatIn: 0.24, chatOut: 0.4 }, priceNote: 'llama-3.3-70b approx list, 2025', envKey: 'DEEPINFRA_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true,
+  }),
+  P({
+    id: 'novita', label: 'Novita AI', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://api.novita.ai/v3/openai', model: 'meta-llama/llama-3.3-70b-instruct', tier: 'mid', local: false,
+    cost: { chatIn: 0.39, chatOut: 0.4 }, priceNote: 'llama-3.3-70b approx list, 2025', envKey: 'NOVITA_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+  }),
+  P({
+    id: 'hyperbolic', label: 'Hyperbolic', protocol: 'openai-compat', modalities: ['chat', 'vision', 'image'],
+    baseUrl: 'https://api.hyperbolic.xyz/v1', model: 'meta-llama/Llama-3.3-70B-Instruct', tier: 'mid', local: false,
+    cost: { chatIn: 0.2, chatOut: 0.2 }, priceNote: 'llama-3.3-70b approx list, 2025', envKey: 'HYPERBOLIC_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+  }),
+  P({
+    id: 'ai21', label: 'AI21 Labs', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://api.ai21.com/studio/v1', model: 'jamba-1.5-mini', tier: 'small', local: false,
+    cost: { chatIn: 0.2, chatOut: 0.2 }, priceNote: 'jamba-1.5-mini list, 2025', envKey: 'AI21_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true,
+  }),
+
+  // ---- agentic IDE routers ----
+  P({
+    id: 'opencode-zen', label: 'OpenCode Zen', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://opencode.ai/zen/v1', model: 'claude-sonnet-4-20250514', tier: 'frontier', local: false,
+    cost: {}, priceNote: 'gateway: per-model list rates, 2025', envKey: 'OPENCODE_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true,
+    endpointNote: 'confirm the gateway base URL in the edit dialog if the default does not respond',
+  }),
+  P({
+    id: 'kilo-code', label: 'Kilo Code', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://api.kilo.ai/v1', model: 'claude-sonnet-4-20250514', tier: 'frontier', local: false,
+    cost: {}, priceNote: 'gateway: per-model list rates, 2025', envKey: 'KILO_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+    endpointNote: 'confirm the gateway base URL in the edit dialog if the default does not respond',
+  }),
+
+  // ---- free and community tiers ----
+  P({
+    id: 'llm7', label: 'LLM7.io', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://api.llm7.io/v1', model: 'gpt-4o-mini', tier: 'small', local: false,
+    cost: { chatIn: 0, chatOut: 0 }, priceNote: 'free tier, 2025 (token required)', envKey: 'LLM7_API_KEY',
+    requiresKey: true, supportsStreaming: true, freeTier: true,
+  }),
+  P({
+    id: 'chutes', label: 'Chutes.ai', protocol: 'openai-compat', modalities: ['chat', 'image'],
+    baseUrl: 'https://api.chutes.ai/api/v1', model: 'deepseek-ai/DeepSeek-V3', tier: 'mid', local: false,
+    cost: {}, priceNote: 'decentralized compute; per-model rates, 2025', envKey: 'CHUTES_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+    endpointNote: 'confirm the API path in the edit dialog if the default does not respond',
+  }),
+  P({
+    id: 'glhf', label: 'Glhf.chat', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://glhf.chat/api/openai/v1', model: 'meta-llama/Llama-3.3-70B-Instruct', tier: 'mid', local: false,
+    cost: {}, priceNote: 'per-model rates, 2025', envKey: 'GLHF_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+  }),
+
+  // ---- EU-hosted clouds ----
+  P({
+    id: 'ovh-ai-endpoints', label: 'OVHcloud AI Endpoints', protocol: 'openai-compat', modalities: ['chat', 'embedding'],
+    baseUrl: 'https://oai.endpoints.kepler.ai.cloud.ovh.net/v1', model: 'Meta-Llama-3_3-70B-Instruct', tier: 'mid', local: false,
+    cost: {}, priceNote: 'published in EUR per model, 2025', envKey: 'OVHCLOUD_API_KEY',
+    requiresKey: true, supportsStreaming: true, region: 'eu',
+  }),
+  P({
+    id: 'nscale', label: 'Nscale', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://api.nscale.com/v1', model: 'meta-llama/Llama-3.3-70B-Instruct', tier: 'mid', local: false,
+    cost: {}, priceNote: 'per-model rates, 2025', envKey: 'NSCALE_API_KEY',
+    requiresKey: true, supportsStreaming: true, region: 'eu',
+  }),
+  P({
+    id: 'nebius', label: 'Nebius AI', protocol: 'openai-compat', modalities: ['chat', 'embedding'],
+    baseUrl: 'https://api.studio.nebius.ai/v1', model: 'meta-llama/Llama-3.3-70B-Instruct', tier: 'mid', local: false,
+    cost: {}, priceNote: 'per-model rates, 2025', envKey: 'NEBIUS_API_KEY',
+    requiresKey: true, supportsTools: true, supportsStreaming: true, region: 'eu',
+  }),
+
+  // ---- remaining routers ----
+  P({
+    id: 'aion-labs', label: 'Aion Labs', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://api.aion-labs.ai/v1', model: 'gpt-4o-mini', tier: 'mid', local: false,
+    cost: {}, priceNote: 'rates not published; confirm on the provider pricing page, 2025', envKey: 'AIONLABS_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+    endpointNote: 'confirm the exact API base URL in the edit dialog if the default does not respond',
+  }),
+  P({
+    id: 'agnes-ai', label: 'Agnes AI', protocol: 'openai-compat', modalities: ['chat'],
+    baseUrl: 'https://api.agnes.ai/v1', model: 'gpt-4o-mini', tier: 'mid', local: false,
+    cost: {}, priceNote: 'rates not published; confirm on the provider pricing page, 2025', envKey: 'AGNES_API_KEY',
+    requiresKey: true, supportsStreaming: true,
+    endpointNote: 'user-specific endpoint: paste the base URL assigned to your account in the edit dialog',
+  }),
 ]
 
-export const REGISTRY_VERSION = 'royal-red-matrix-v1'
+export const REGISTRY_VERSION = 'royal-red-matrix-v2-96'
 
 export function providerById(id: string): ProviderDef | undefined {
   return PROVIDERS.find((p) => p.id === id)

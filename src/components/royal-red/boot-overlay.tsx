@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { RoyalCrown } from './signature'
 import { useRoyalRed } from './store'
 
-// ROYAL RED boot v1.8: a royal court assembling. The crown arrives with a
+// ROYAL RED boot v1.9: the settings cockpit round. The crown arrives with a
 // gold shimmer, the wordmark renders in the display serif, and one line per
 // subsystem appears in the mono font, each sealed with a small crown the
 // moment it completes. INITIALIZE is engraved stone with gold leaf on hover.
 // No emojis. No em dashes. Reduced-motion respected.
 
 const BOOT_LINES = [
-  'royal red kernel v1.8.1 (majestic) .......... ok',
+  'royal red kernel v1.9.0 (majestic) .......... ok',
   'mounting sandbox workspace .................. ok',
   'loading tool bus: search fs shell accounts .. ok',
   'linking vision core: image gen + vlm eyes ... ok',
@@ -28,7 +28,12 @@ const BOOT_LINES = [
   'consent tiers: T1 read / T2 write / T3 ...... ok',
   'undo journal: 7-day ttl, no rm .............. ok',
   'kill switch: abort queue + sigterm + freeze . ok',
-  'provider matrix: 66 providers, 7 modalities . ok',
+  'provider matrix: 96 providers, 8 modalities . ok',
+  'settings cockpit: keys, connectors, mcp ..... ok',
+  'connectors: 60 services, 20 fully wired .... ok',
+  'mcp client: stdio + http + ws transports ... ok',
+  'skills: claude-style packages, 10 aboard ... ok',
+  'unified tools: one gate, one audit trail ... ok',
   'router: capability requests + fallback ...... ok',
   'rotation: 5 mid-stream drops survive ........ ok',
   'event log: append-only, replayable .......... ok',
@@ -47,7 +52,7 @@ const BOOT_LINES = [
   'wordpress builder: theme + package, honest .. ok',
   'pdf engine: typography, no-overlap, vector .. ok',
   'response protocol: no emoji, no em dash ..... ok',
-  'signature ui v1.8: crown, damask, gold seal . ok',
+  'signature ui v1.9: crown, damask, gold seal . ok',
   'install: one command, launcher, docker ...... ok',
   'typography law: display serif / ui / mono ... ok',
   'all systems nominal',

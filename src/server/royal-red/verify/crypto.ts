@@ -65,3 +65,38 @@ export function maskKey(key: string): string {
   if (k.length <= 8) return '••••'
   return `${k.slice(0, 3)}...${k.slice(-4)}`
 }
+
+// swap the master secret for a new one: persists the file and updates the
+// in-memory cache. Callers MUST re-encrypt every stored ciphertext after this
+// (decrypt with old BEFORE swapping, encrypt with new AFTER) or data is lost.
+export function swapMasterSecret(newSecret: string): void {
+  if (newSecret.length < 16) throw new Error('master secret must be at least 16 characters')
+  const generated = crypto.randomBytes(32).toString('hex')
+  void generated
+  try {
+    fs.mkdirSync(path.dirname(SECRET_FILE), { recursive: true })
+    fs.writeFileSync(SECRET_FILE, newSecret + '\n', { mode: 0o600 })
+  } catch (e) {
+    throw new Error(`could not persist the new master secret: ${e instanceof Error ? e.message : String(e)}`)
+  }
+  cachedSecret = Buffer.from(newSecret, 'utf8')
+}
+
+// one-pass rotation helper: decrypts every blob with the CURRENT secret,
+// swaps to the new one, re-encrypts, and lets the caller persist rows.
+export async function rotateAllSecrets(
+  blobs: Map<string, string | null>,
+  persist: (updates: Array<{ id: string; enc: string | null }>) => Promise<void>,
+  newSecret: string,
+): Promise<number> {
+  // decrypt with the old secret FIRST
+  const plain = new Map<string, string | null>()
+  for (const [id, blob] of blobs) plain.set(id, blob ? decryptSecret(blob) : null)
+  // swap
+  swapMasterSecret(newSecret)
+  // re-encrypt with the new secret and persist
+  const updates: Array<{ id: string; enc: string | null }> = []
+  for (const [id, value] of plain) updates.push({ id, enc: value ? encryptSecret(value) : null })
+  await persist(updates)
+  return updates.filter((u) => u.enc !== null).length
+}

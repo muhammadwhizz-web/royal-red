@@ -32,7 +32,7 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react'
-import { useRoyalRed } from './store'
+import { useRoyalRed, type PanelTab } from './store'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,6 +45,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { VerifyTab } from './verify-tab'
 import { DesktopTab } from './desktop-tab'
 import { ProvidersTab } from './providers-tab'
+import { SettingsTab } from './settings-tab'
 import { RouterTab } from './router-tab'
 import {
   DropdownMenu,
@@ -1331,10 +1332,10 @@ export function RightPanel() {
   return (
     <Tabs
       value={panelTab}
-      onValueChange={(v) => setPanelTab(v as 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events' | 'memory' | 'agents')}
+      onValueChange={(v) => setPanelTab(v as PanelTab)}
       className="flex h-full flex-col"
     >
-      <TabsList className="seg mx-3 mt-3 grid w-auto grid-cols-10 gap-1 p-1">
+      <TabsList className="seg mx-3 mt-3 grid w-auto grid-cols-11 gap-1 p-1">
         {(
           [
             { id: 'preview', label: 'PREVIEW' },
@@ -1347,6 +1348,7 @@ export function RightPanel() {
             { id: 'events', label: 'EVENTS' },
             { id: 'memory', label: 'MEMORY' },
             { id: 'agents', label: 'AGENTS' },
+            { id: 'settings', label: 'SETTINGS' },
           ] as const
         ).map((t) => (
           <TabsTrigger
@@ -1389,6 +1391,9 @@ export function RightPanel() {
       </TabsContent>
       <TabsContent value="agents" className="mt-0 min-h-0 flex-1">
         <AgentsTab />
+      </TabsContent>
+      <TabsContent value="settings" className="mt-0 min-h-0 flex-1">
+        <SettingsTab />
       </TabsContent>
     </Tabs>
   )

@@ -339,11 +339,178 @@ const searchRest: Adapter = {
 }
 
 // ---------------------------------------------------------------------------
+// Gemini AI Studio — NATIVE v1beta generateContent. Canonical OpenAI messages
+// translate to contents/parts; system text becomes systemInstruction. Vision
+// attaches inline_data (base64) or file_data (https url) parts.
+// ---------------------------------------------------------------------------
+
+function geminiParts(req: CapabilityRequest): { system?: string; contents: unknown[] } {
+  const system = (req.messages ?? []).filter((m) => m.role === 'system').map((m) => m.content ?? '').join('\n')
+  const contents: unknown[] = []
+  for (const m of req.messages ?? []) {
+    if (m.role === 'system' || m.role === 'tool') continue
+    const parts: unknown[] = []
+    if (req.modality === 'vision' && req.imageUrl && m.role === 'user') {
+      if (req.imageUrl.startsWith('data:')) {
+        const [meta, b64] = req.imageUrl.split(',')
+        parts.push({ inline_data: { mime_type: meta.slice(5).split(';')[0] || 'image/png', data: b64 } })
+      } else {
+        parts.push({ file_data: { file_uri: req.imageUrl } })
+      }
+      parts.push({ text: m.content ?? 'describe this image' })
+    } else if (m.content) {
+      parts.push({ text: m.content })
+    }
+    if (parts.length) contents.push({ role: m.role === 'assistant' ? 'model' : 'user', parts })
+  }
+  return { system: system || undefined, contents }
+}
+
+const googleNative: Adapter = {
+  protocol: 'google-native',
+  async call(req, p, apiKey) {
+    const started = Date.now()
+    try {
+      const { system, contents } = geminiParts(req)
+      const body: Record<string, unknown> = {
+        contents,
+        generationConfig: { temperature: req.temperature ?? 0.7, maxOutputTokens: req.maxTokens ?? 1024 },
+      }
+      if (system) body.systemInstruction = { parts: [{ text: system }] }
+      const res = await fetch(`${p.baseUrl}/models/${p.model}:generateContent?key=${encodeURIComponent(apiKey ?? '')}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(90_000),
+      })
+      if (!res.ok) {
+        return { ok: false, error: `HTTP ${res.status}: ${(await res.text()).slice(0, 400)}`, latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+      }
+      const json = (await res.json()) as Record<string, unknown>
+      const cand = (json.candidates as Array<Record<string, unknown>> | undefined)?.[0]
+      const parts = ((cand?.content as Record<string, unknown> | undefined)?.parts as Array<Record<string, unknown>>) ?? []
+      const text = parts.map((pt) => (pt.text as string) ?? '').join('')
+      const usage = json.usageMetadata as { promptTokenCount?: number; candidatesTokenCount?: number } | undefined
+      const inTok = usage?.promptTokenCount ?? 0
+      const outTok = usage?.candidatesTokenCount ?? 0
+      const cost = ((inTok / 1e6) * (p.cost.chatIn ?? 0)) + ((outTok / 1e6) * (p.cost.chatOut ?? 0))
+      return {
+        ok: true, text,
+        finishReason: (cand?.finishReason as string) ?? 'STOP',
+        usage: { tokensIn: inTok, tokensOut: outTok, costUsd: cost },
+        latencyMs: Date.now() - started, providerId: p.id, model: p.model,
+      }
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e), latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+    }
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Cohere — NATIVE v2 chat (messages share the OpenAI shape closely), v2 embed,
+// v1 rerank. Tool results arrive as user messages with tool_results content.
+// ---------------------------------------------------------------------------
+
+const cohereNative: Adapter = {
+  protocol: 'cohere-native',
+  async call(req, p, apiKey) {
+    const started = Date.now()
+    try {
+      const headers = { 'content-type': 'application/json', authorization: `Bearer ${apiKey ?? ''}` }
+      if (req.modality === 'embedding' && req.prompt) {
+        const res = await fetch(`${p.baseUrl}/v2/embed`, {
+          method: 'POST', headers, signal: AbortSignal.timeout(30_000),
+          body: JSON.stringify({ model: p.model, embedding_types: ['float'], texts: [req.prompt] }),
+        })
+        if (!res.ok) {
+          return { ok: false, error: `HTTP ${res.status}: ${(await res.text()).slice(0, 400)}`, latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+        }
+        const json = (await res.json()) as { embeddings?: { float?: number[][] } }
+        const vec = json.embeddings?.float?.[0] ?? []
+        return { ok: true, text: `[${vec.length} dims] ${vec.slice(0, 8).map((v) => v.toFixed(3)).join(', ')} ...`, usage: { tokensIn: 0, tokensOut: 0, costUsd: p.cost.embedding ?? 0 }, finishReason: 'ok', latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+      }
+      const body: Record<string, unknown> = {
+        model: p.model,
+        messages: (req.messages ?? []).map((m) => ({ role: m.role === 'tool' ? 'user' : m.role, content: m.content ?? '' })),
+        max_tokens: req.maxTokens ?? 1024,
+        temperature: req.temperature ?? 0.7,
+      }
+      const res = await fetch(`${p.baseUrl}/v2/chat`, {
+        method: 'POST', headers, signal: AbortSignal.timeout(90_000), body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        return { ok: false, error: `HTTP ${res.status}: ${(await res.text()).slice(0, 400)}`, latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+      }
+      const json = (await res.json()) as Record<string, unknown>
+      const msg = json.message as Record<string, unknown> | undefined
+      const blocks = (msg?.content as Array<Record<string, unknown>>) ?? []
+      const text = blocks.filter((b) => b.type === 'text').map((b) => b.text as string).join('')
+      const usage = json.usage as { tokens?: { input_tokens?: number; output_tokens?: number } } | undefined
+      const inTok = usage?.tokens?.input_tokens ?? 0
+      const outTok = usage?.tokens?.output_tokens ?? 0
+      const cost = ((inTok / 1e6) * (p.cost.chatIn ?? 0)) + ((outTok / 1e6) * (p.cost.chatOut ?? 0))
+      return { ok: true, text, finishReason: (json.finish_reason as string) ?? 'COMPLETE', usage: { tokensIn: inTok, tokensOut: outTok, costUsd: cost }, latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e), latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+    }
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Cloudflare Workers AI — native /accounts/{accountId}/ai/run/{model} REST.
+// The account id is user config (additional headers JSON: {"accountId": ...}).
+// Because the adapter signature only carries the key, the account id rides in
+// the provider's baseUrl override set from the Settings page, or the key
+// parameter may be "token:accountId" (the settings UI documents this).
+// ---------------------------------------------------------------------------
+
+const cloudflare: Adapter = {
+  protocol: 'cloudflare',
+  async call(req, p, apiKey) {
+    const started = Date.now()
+    try {
+      const [token, accountId] = (apiKey ?? '').split('::')
+      if (!token || !accountId) {
+        return { ok: false, error: 'Cloudflare needs both the API token and the account id (saved as token::accountId in the key dialog)', latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+      }
+      const url = `${p.baseUrl}/accounts/${accountId}/ai/run/${p.model}`
+      const headers = { 'content-type': 'application/json', authorization: `Bearer ${token}` }
+      let res: Response
+      if (req.modality === 'image' && req.prompt) {
+        res = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ prompt: req.prompt }), signal: AbortSignal.timeout(120_000) })
+      } else {
+        const messages = (req.messages ?? []).filter((m) => m.role !== 'system' || m.content).map((m) => ({ role: m.role, content: m.content ?? '' }))
+        res = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ messages, max_tokens: req.maxTokens ?? 1024 }), signal: AbortSignal.timeout(90_000) })
+      }
+      if (!res.ok) {
+        return { ok: false, error: `HTTP ${res.status}: ${(await res.text()).slice(0, 400)}`, latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+      }
+      const json = (await res.json()) as Record<string, unknown>
+      if (json.success !== true) {
+        return { ok: false, error: `cloudflare error: ${JSON.stringify(json.errors ?? json).slice(0, 300)}`, latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+      }
+      const result = json.result as Record<string, unknown> | undefined
+      let text = ''
+      if (req.modality === 'image') text = (result?.image as string) ?? ''
+      else if (typeof result?.response === 'string') text = result.response
+      else if (Array.isArray((result as Record<string, unknown> | undefined)?.data)) text = `[embedding] ${((result as { data: unknown[] }).data[0] as number[] | undefined)?.length ?? 0} dims`
+      else text = JSON.stringify(result ?? {}).slice(0, 500)
+      return { ok: true, text, finishReason: 'ok', usage: { tokensIn: 0, tokensOut: 0, costUsd: 0 }, latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e), latencyMs: Date.now() - started, providerId: p.id, model: p.model }
+    }
+  },
+}
+
+// ---------------------------------------------------------------------------
 
 export const LIVE_ADAPTERS: Record<string, Adapter> = {
   'openai-compat': openaiCompat,
   anthropic,
   google,
+  'google-native': googleNative,
+  'cohere-native': cohereNative,
+  cloudflare,
   a1111,
   'search-rest': searchRest,
 }

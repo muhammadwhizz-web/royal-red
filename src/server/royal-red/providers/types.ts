@@ -5,14 +5,17 @@
 // providers. Canonical message format is OpenAI chat — every adapter
 // translates, nothing provider-specific leaks between layers.
 
-export type Modality = 'chat' | 'vision' | 'image' | 'audio' | 'search' | 'embedding' | 'video'
+export type Modality = 'chat' | 'vision' | 'image' | 'audio' | 'search' | 'embedding' | 'video' | 'rerank'
 
 export type QualityTier = 'small' | 'mid' | 'frontier'
 
 export type AdapterProtocol =
   | 'openai-compat' // openai, groq, together, fireworks, openrouter, deepseek, xai, mistral, ollama, vllm, lmstudio, localai, ...
   | 'anthropic'
-  | 'google'
+  | 'google' // Gemini via its OpenAI-compat surface
+  | 'google-native' // Gemini AI Studio v1beta generateContent (native)
+  | 'cohere-native' // Cohere v2 chat / v2 embed / v1 rerank (native)
+  | 'cloudflare' // Cloudflare Workers AI /ai/run REST (native)
   | 'a1111' // AUTOMATIC1111 /sdapi/v1 (local image appliance)
   | 'search-rest' // tavily / brave / serper / exa POST conventions
   | 'none' // registry entry only, execution adapter not built (fail closed)
@@ -147,6 +150,7 @@ export interface ProviderDef {
     search?: number // per call
     embedding?: number // per 1M tokens
     video?: number // per second
+    rerank?: number // per 1k queries
   }
   priceNote?: string
   /** env var name checked when no BYO key is stored for this provider */
@@ -154,6 +158,12 @@ export interface ProviderDef {
   requiresKey: boolean
   supportsTools?: boolean
   supportsStreaming?: boolean
+  /** honest endpoint note: shown in Settings when the URL needs user setup */
+  endpointNote?: string
+  /** provider publishes a usable free tier (router: free-tier preference) */
+  freeTier?: boolean
+  /** hosting region the provider itself constrains (router: region-aware) */
+  region?: 'eu' | 'us' | 'any'
   /** config key in the RoyalRedProviderConfig table this provider binds to */
   credProviderId?: string
 }
