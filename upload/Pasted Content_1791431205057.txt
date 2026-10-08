@@ -1,0 +1,545 @@
+ROYAL RED ROUND 6 — MEMORY FILE, AGENT EMPLOYEES, MAJESTIC UI, WEBSITE BUILDER, WORDPRESS, PDFS, AND THE 40+ SERVICES
+
+This round is large. It has eight objectives. Do them in the order listed. Every objective ends with a working, tested, committed state. Do not skip ahead. Do not ship a partial objective as complete.
+
+0. Non-negotiable design law for this entire round
+Before any objective, read these and follow them for the rest of Royal Red's life:
+
+UI law:
+
+No emojis anywhere. Not in the UI, not in boot sequences, not in receipts, not in agent messages, not in tool outputs. Emojis look childish and undercut the "majestic royal OS" feeling.
+
+Icons must be real SVGs — vector, hand-drawn or from a licensed icon set (Lucide, Phosphor, Heroicons — pick one and stick to it). No emoji glyphs, no unicode symbols, no font icons that can fail to load.
+
+The visual language is: majestic royal red, premium materials, fabrics and texture, crown motifs used sparingly, hacking-terminal fonts for data and code.
+
+The crown is the signature mark. One crown, used deliberately. Not five crowns, not crown wallpaper. When a user sees the crown, it means "verified" or "sealed" or "the sovereign did this."
+
+Color law:
+
+Primary palette: deep royal red (#7f1d1d to #b91c1c range for dark mode, #991b1b to #dc2626 for light mode accents), rich burgundy for surfaces, deep crimson for primary actions.
+
+Accent palette: gold/bronze (#a16207 to #eab308) used only for the crown and sealed/verified marks. Not used for anything else.
+
+Neutral palette: near-black (#0a0606) for the deepest background, warm off-white (#faf5f0) for light mode backgrounds. No pure white, no pure black. Everything is warm-tinted.
+
+Premium materials: subtle gradients that feel like velvet or leather, fine noise texture on surfaces (very subtle — 2–3% opacity), soft inner shadows on cards that feel embossed, gold foil effect only on the crown and verified seals.
+
+Fabric hints: a subtle woven or damask pattern can appear on header/footer/boot backgrounds at very low opacity. Never obtrusive. Never over content.
+
+Typography law:
+
+Display font (headings, crown wordmark, boot sequence): a majestic serif with high contrast — try Cormorant Garamond, Playfair Display, or EB Garamond. Royal, editorial, feels engraved.
+
+UI font (body, panels, buttons): a refined sans — try Inter, Geist, or Söhne. Neutral, modern.
+
+Data/code font (all numbers, code blocks, event logs, tool outputs, receipt values): a hacking-terminal mono — try JetBrains Mono, IBM Plex Mono, or Berkeley Mono. This is what makes Royal Red feel like a real OS: the data layer is monospaced and feels like terminal output.
+
+Font loading: self-host every font. Never load from Google Fonts at runtime (privacy + reliability). Subset the fonts. Preload the display font.
+
+Component law:
+
+Buttons: physical press feedback (translate-y + shadow change). No flat buttons.
+
+Cards: subtle inner shadow, 1px hairline border in gold at 12% opacity, 16px corner radius.
+
+Modals: aurora backdrop blur, crown watermark at 3% opacity behind content.
+
+Every interactive element: keyboard-navigable, focus ring in gold, aria-* correct.
+
+Reference points: Linear, Arc browser, Raycast, Vercel dashboard, Apple's Pro Apps, and the boot sequences from classic UNIX systems. Not Figma, not Notion, not Slack.
+
+1. ROYAL-RED.md — the memory file
+Create ROYAL-RED.md at repo root. This is the file every future session reads first to reconstruct context. It is the living memory of Royal Red.
+
+Structure:
+
+1.1 What Royal Red is — one paragraph. An agentic OS inside the user's computer, verifies its own work, honest receipts, majestic royal aesthetic. The one-sentence pitch.
+
+1.2 The invariants — link to docs/INVARIANTS.md. Do not duplicate. Just point.
+
+1.3 The architecture in one diagram — ASCII or Mermaid. Kernel, Box, browser hands, verification engine, event log, provider matrix, router, sub-agents, UI console. Every subsystem named, one line each on what it does.
+
+1.4 The current version and boot state — v1.8.0 after this round. Where the boot sequence lives. What it displays.
+
+1.5 The 40+ services catalog — the list from Section 6 below. For each service: name, status (shipped / planned / in-progress), where it lives, the API it exposes.
+
+1.6 The 66 providers — reference PROVIDERS panel. One line: "66 providers across 7 modalities, all encrypted at rest, see docs/PROVIDERS.md for the full catalog."
+
+1.7 The sub-agent roster — the 66 agent employees (Section 4 below). Each has a name, a role, and the provider it's bound to.
+
+1.8 How to extend Royal Red — the rules for adding a service, adding a provider, adding a sub-agent, adding a UI panel, adding an invariant.
+
+1.9 The provenance log — every competitor pattern that has been ported, with file:line citation and license verdict. Link to docs/LICENSE-AUDIT.md.
+
+1.10 The decision log — every major decision made (Option A vs B on second key, which providers to prioritize, why certain features exist). Append-only.
+
+1.11 The next round's objective — one paragraph. Updated at the end of each round so a fresh session knows what to do.
+
+This file is written in plain English, no emojis, hacking-terminal aesthetic where data appears. It is the memory. Treat it as canonical.
+
+Also create MEMORY.md — a shorter, faster-loading companion that contains only the current state (last 5 rounds summarized, current invariants summary, current version). This is what a fresh session reads first.
+
+2. The memory system — real, persistent, cross-session
+Royal Red needs a memory system that persists across sessions, across projects, across sub-agents. Not just session history. Real memory.
+
+2.1 The memory store. New schema: RoyalRedMemory. Fields: id, scope (global / project / session / agent), key, value, source (user / agent / inferred), confidence, createdAt, updatedAt, expiresAt (nullable), tags.
+
+2.2 The write path. When a user says "remember X," the kernel writes to RoyalRedMemory at the appropriate scope. When the agent infers something worth remembering (a user preference, a project convention), it proposes the memory and the user approves.
+
+2.3 The read path. Before every turn, the kernel loads all memories in scope and injects them into the agent's context — but only the relevant ones. Relevance by tag match + recency + confidence. Cap the injected memory at a token budget.
+
+2.4 The UI. A new panel: MEMORY. Shows all memories by scope. User can view, edit, delete, promote (session → project → global), demote, tag, expire. Search. Filter. Export as JSON.
+
+2.5 The API. GET /api/royal-red/memory?scope=... — list. POST — write. PATCH /:id — update. DELETE /:id — delete. All audit-logged.
+
+2.6 The privacy rule. Memories never leave the machine unless the user exports them. No cloud sync in this round. If cloud sync is added later, it must be end-to-end encrypted and opt-in.
+
+Acceptance: user types "remember that I prefer royal red in dark mode." Restart the console. Ask "what theme do I prefer?" — Royal Red answers correctly. The memory appears in the MEMORY panel with scope global, source user.
+
+3. Agent employees — 66 sub-agents, one per provider
+The user asked for "66 different API keys have 66 employees." Interpret this carefully:
+
+3.1 Do not literally instantiate 66 sub-agents per session. That would waste tokens and compute. Instead, build a roster of 66 named agent roles, each bound to a provider from the matrix. At any moment, the kernel can spin up one agent per role — up to 4 concurrent (per the budget in docs/PHASE5-BUDGET.md) — and route the role's tasks to its bound provider.
+
+3.2 Each agent employee has: a name (evocative, royal-themed, no emojis — e.g. "Sovereign Planner," "Royal Builder," "Crown Critic," "Warden," "Scribe," "Herald," "Archivist," "Chancellor," "Emissary," "Cartographer" — 66 names total), a role (planner / builder / critic / researcher / verifier / archivist / router / navigator / etc.), a bound provider (the specific provider that role uses), a bound model (the specific model), a budget, a capability list.
+
+3.3 The 66 roles. Group them into ~12 categories:
+
+Planning & orchestration (5 roles): Supreme Planner, Deputy Planner, Orchestrator, Router, Budget Keeper
+
+Building (10 roles): Website Builder, Code Builder, Component Builder, Page Builder, CMS Builder, WordPress Builder, PDF Builder, Poster Builder, Document Builder, Slide Builder
+
+Critique & verification (8 roles): Crown Critic, Visual Verifier, Accessibility Verifier, SEO Verifier, Performance Verifier, Honesty Auditor, Constraint Checker, Receipt Writer
+
+Research (8 roles): Web Researcher, Page Reader, Video Watcher, Image Analyst, Source Verifier, Citation Writer, Market Analyst, Competitor Scout
+
+Writing & content (8 roles): Copywriter, Editor, Typographer, SEO Writer, Headline Writer, Meta Writer, Scribe, Translator
+
+Data & analysis (6 roles): Data Analyst, Chart Builder, Report Writer, Table Builder, CSV Handler, Spreadsheet Builder
+
+Operations (6 roles): File Manager, Archive Manager, Download Handler, Upload Handler, Trash Keeper, Undo Officer
+
+Browser hands (5 roles): Navigator, Clicker, Typer, Reader, Screenshotter
+
+Desktop hands (4 roles): Window Watcher, Screen Reader, Click Officer, Keyboard Officer
+
+Memory & state (3 roles): Archivist, Memory Keeper, Historian
+
+Communication (2 roles): Herald, Notifier
+
+Specialist (1 role): The Sovereign — the final arbiter when two agents disagree
+
+3.4 Each agent is visible. New panel: AGENTS. Shows all 66 roles as a roster. Each has: name, role, bound provider, current status (idle / running / blocked / disabled), current task, last 5 actions. User can reassign a role's provider, disable a role, or force-start a role.
+
+3.5 Each agent action is attributed. Every audit row gains agentRole in addition to subAgentId. The event log shows which role did what.
+
+3.6 The dispatch rule. When the planner decides a task needs a website builder, it requests the Website Builder role. The kernel checks the budget, checks the isolation spec, spins up the role, and returns the result. If the role's provider is unavailable (no key), the kernel reports honestly: "Website Builder requires OpenAI key. Either provide one or reassign this role to a provider with a key."
+
+Acceptance: user asks for a landing page. The event log shows: Supreme Planner → Constraint Checker → Website Builder → SEO Writer → Crown Critic → Visual Verifier → Receipt Writer. Each event attributed to the role. The AGENTS panel shows the roster with 6 roles touched, 60 idle.
+
+4. The majestic UI v1.8 — real crown, real fabric, real premium
+Rebuild the UI to the design law in Section 0. This is the round where the UI stops looking "modern web app" and starts looking "majestic royal operating system."
+
+4.1 The crown. Replace the current crown SVG with a majestic, hand-drawn royal crown — the kind that looks like it belongs on a royal seal. Five points, jewels, gold foil with subtle gradient, ribbon at the base. Used as: the wordmark tile (top-left), the verified seal (on any receipt that passed verification), the boot screen emblem (large, centered, subtle animation as it "arrives"), and the favicon.
+
+4.2 The boot sequence. Rewrite to feel like a royal court assembling:
+
+A single crown arrives center-screen with a subtle gold shimmer
+
+Below it, the wordmark ROYAL RED in the display serif, letter-spaced wide
+
+Boot lines appear in the mono font, one per subsystem, with a small crown that "seals" each line as it completes
+
+The INITIALIZE button appears last, engraved, with gold leaf on hover
+
+4.3 The console header. A floating glass island with: crown tile + wordmark on the left, mode badge in the middle, session info + theme toggle + palette on the right. Gold hairline border. Subtle damask texture at 2% opacity.
+
+4.4 The composer. A glass dock with the display serif for the placeholder text ("Speak, and it shall be done" — but no emojis, no exclamation marks). The send button is a small crown that fills with gold on hover.
+
+4.5 The panels. Every panel gets the glass treatment with gold hairline borders and mono-font data. Tables in mono. Numbers aligned right. Timestamps in mono. The VERIFY panel's receipts show the crown seal when a build passes.
+
+4.6 The chat stream. User bubbles: warm off-white, subtle inner shadow. Agent bubbles: glass with gold hairline. Tool event rows: mono font, small crown on the left that fills when the tool completes. Error rows: burgundy, no red-alert styling, dignified.
+
+4.7 The session history sheet. Rows have a small crown on pinned sessions. Dates in mono. Mode dots are gold, not colored.
+
+4.8 The command palette. Mono font. Sections labeled with small crowns. Every action is one keystroke.
+
+4.9 Light mode. Ivory background, warm gold accents, red used only for primary actions and the crown. Feels like parchment and gold leaf, not "white and red."
+
+4.10 Motion. Everything is restrained. No bouncing, no spring, no confetti. Slow fades, subtle slides, the crown shimmer. Respects reduced-motion.
+
+4.11 Self-hosted fonts. Display serif, UI sans, and mono all self-hosted. No Google Fonts runtime. Font subsetting. Preload the display font.
+
+Acceptance: screenshot of boot, console in dark mode, console in light mode, a VERIFY receipt with the crown seal, the AGENTS panel, the MEMORY panel. All four screenshots must look like they could ship as a premium product's marketing images.
+
+5. The website builder — user prompt to finished multi-page website
+This is the biggest functional objective of the round. The user types a website prompt. Royal Red auto-generates a website with:
+
+5.1 Multi-page structure. Not a single-page demo. Real pages: Home, About, Services/Products, Contact, plus pages the prompt implies (Menu, Portfolio, Blog, Pricing, Team, FAQ — driven by constraint extraction).
+
+5.2 A real CMS panel. Built into the generated website. Admin login. CRUD for the content types the site needs (posts, products, menu items, team members — inferred from the prompt). The CMS must be actually functional: the verification loop logs in, creates a record, verifies the site reflects it, deletes it, verifies removal. No decorative CMS ever ships.
+
+5.3 Signature typography. Every generated site gets a typographic system: display font + body font + mono for data. Fonts are chosen per industry (a law firm gets different fonts than a coffee brand). Self-hosted. The font choices are part of the constraint ledger.
+
+5.4 Signature navbar. Not a generic bootstrap bar. A custom navbar with: logo, links, drop-down menus (multi-level), search (if applicable), CTA button. Animated but restrained.
+
+5.5 Signature footer. Multi-column, real content (not "© 2026 Company"). Newsletter signup, social links, sitemap, legal links, contact info. Every footer element must be real.
+
+5.6 Premium color for each section. The constraint ledger extracts a palette. Each section (hero, features, testimonials, pricing, footer) gets a deliberate background treatment — not all white, not all one color. The palette is verified: no section is "unstyled default."
+
+5.7 Responsive. Desktop, tablet, mobile — all verified by screenshot at three viewports.
+
+5.8 Accessibility. WCAG AA minimum. axe-core audit runs as part of verification. Fails block the build.
+
+5.9 SEO. Meta tags, Open Graph, sitemap.xml, robots.txt, structured data (JSON-LD) for the appropriate schema type. All generated.
+
+5.10 Performance. Lazy-load images, defer non-critical JS, self-host fonts, no external CDNs unless the user approves. Core Web Vitals captured.
+
+5.11 The verification pipeline for websites:
+
+Constraint ledger (features, pages, style, brand)
+
+Build
+
+Screenshot every page at desktop/tablet/mobile
+
+VLM critique per page ("does this hero look premium? does this footer look real? is anything overlapping?")
+
+Constraint checker (each constraint pass/fail)
+
+Accessibility audit (axe-core)
+
+SEO audit (meta tags present, sitemap valid, structured data valid)
+
+Performance audit (Core Web Vitals)
+
+CMS login + CRUD test
+
+10-competitor feature matrix comparison (if the user requests or if the category is well-known)
+
+Honest score with per-constraint receipts
+
+The crown seal appears only if every step passes
+
+5.12 Overlap detection. Before the crown seal, a visual regression check verifies no element overlaps another on any of the three viewports. Overlapping hero text over a button, footer overlap, mobile menu overlap — all caught. This is a hard gate.
+
+Acceptance: user types "build me a website for a coffee shop in Lahore that sells single-origin beans and has a subscription." Royal Red produces a multi-page site with CMS, verified at 10/10, with the crown seal on the receipt.
+
+6. WordPress builder — real WordPress site generation
+The user explicitly asked for WordPress site generation. This is separate from the HTML website builder because WordPress has its own ecosystem.
+
+6.1 What "build a WordPress site" means. Royal Red must produce a real, installable WordPress site — either:
+
+Option A: a WordPress theme (custom theme folder with style.css, functions.php, index.php, single.php, page.php, header.php, footer.php, front-page.php, etc.) that the user can upload to any WordPress install
+
+Option B: a full WordPress package (theme + required plugins + recommended config) as a zip the user installs via WP admin
+
+Ship both. Default to Option A. Add Option B as an option.
+
+6.2 The theme must be real. It must:
+
+Pass the WordPress Theme Check plugin
+
+Use wp_enqueue_scripts for CSS/JS, never hardcoded <link> tags
+
+Register at least one menu location, one sidebar, and support post-thumbnails, title-tag, custom-logo
+
+Include functions.php with the theme setup function, enqueue functions, and register_nav_menus
+
+Include template files for: home, single post, page, archive, search, 404
+
+Include a style.css with the WordPress theme header comment
+
+Include the site's signature typography and colors as CSS custom properties
+
+6.3 The verification pipeline for WordPress:
+
+Install the theme into a WordPress sandbox (a Docker container if available, otherwise a PHP sandbox with a real WordPress install)
+
+Activate the theme
+
+Navigate to the front-end, take screenshots
+
+Log into WP admin, create a test post, verify it appears on the front-end
+
+Create a test page, verify it appears
+
+Check the customizer options (if any)
+
+Run Theme Check plugin — must pass
+
+Run axe-core on the front-end
+
+Score honestly
+
+If any step fails, the theme does not ship.
+
+6.4 The signature elements apply to WordPress too. Custom navbar, custom footer, signature typography, premium per-section colors. The generated theme looks like a real premium WordPress theme, not a Hello Elementor child.
+
+Acceptance: user types "build me a WordPress theme for a photography portfolio." Royal Red produces a theme zip, verifies it in the WordPress sandbox, produces a 10/10 receipt with the crown seal, and gives the user the download.
+
+7. PDF, poster, and document generation — the visual best, no overlap, no em dashes
+The user asked for PDFs, posters, and documents that are visually impeccable.
+
+7.1 PDFs. The hand-rolled PDF engine already exists. Extend it:
+
+Real typography: embedded fonts (subset), proper kerning, real hyphenation
+
+Multi-page with running headers/footers, page numbers
+
+Tables with proper column widths, right-aligned numbers
+
+Charts (bar, line, pie) rendered as vector, not raster
+
+Images placed with correct DPI, no upscaling
+
+No overlap, ever — the layout engine computes bounding boxes and refuses to place two elements in the same space. If the content doesn't fit, it flows to the next page.
+
+7.2 Posters. A4, A3, Letter, Tabloid, and custom sizes. Print-ready: 300 DPI minimum for raster elements, vector for text and shapes. Bleed marks optional. CMYK color mode option. The poster layout engine respects a grid; no element overlaps another. Preview as PNG at 150 DPI.
+
+7.3 Documents. Reports, proposals, contracts, letters. Real typographic hierarchy (title, subtitle, section, subsection, body, caption, footnote). Page numbers, table of contents (auto-generated from headings), bibliography (if research is cited).
+
+7.4 The no-em-dash rule. This is a hard rule. The kernel's text output — PDFs, documents, agent messages, receipts, website copy — must never contain an em dash (—) or an en dash (–). Use a comma, semicolon, colon, parentheses, or a hyphen with spaces. Enforce at the kernel level: before any text is written to a PDF, document, or the console, scan for em/en dashes and either fix them or fail the write. Add a test.
+
+7.5 The overlap rule. The layout engine for PDFs, posters, and documents computes bounding boxes. Two elements overlapping = build failure. Add a test that generates a poster with intentionally overlong text and asserts the layout engine pushes content to a second page rather than overlapping.
+
+Acceptance: user types "make me a poster for a royal red product launch." Royal Red produces a print-ready A3 poster, verified visually, no overlap, no em dashes, with a 10/10 receipt.
+
+8. The 40+ services catalog
+The user asked to enumerate the 40+ services Royal Red needs to do. Here they are, grouped. For each: name, status (shipped / planned / backlog), where it lives, and what it does.
+
+Website & CMS (10 services):
+
+HTML website builder — shipped (needs upgrade per Section 5)
+
+CMS panel generator — shipped (needs verification upgrade)
+
+WordPress theme builder — new, Section 6
+
+WordPress full package builder — new, Section 6
+
+Landing page builder — shipped (needs upgrade)
+
+E-commerce page builder — backlog
+
+Blog builder — backlog
+
+Portfolio builder — backlog
+
+Docs site builder — backlog
+
+Multi-language site builder — backlog
+
+Content & documents (10 services):
+
+PDF generator — shipped (needs typography upgrade)
+
+Poster generator — new, Section 7
+
+Document generator — new, Section 7
+
+Slide deck generator — shipped (needs premium template)
+
+Resume builder — shipped (needs typography upgrade)
+
+Invoice generator — backlog
+
+Contract generator — backlog
+
+Letter generator — backlog
+
+Book/ebook generator — backlog
+
+Menu generator — backlog
+
+Visual & media (8 services):
+
+Logo generator — shipped
+
+Image generator (via image providers) — shipped
+
+Image analyzer (VLM) — shipped
+
+Video analyzer (ffmpeg + VLM) — shipped
+
+Video editor — backlog
+
+Icon generator — backlog
+
+Illustration generator — backlog
+
+Chart generator — backlog (needs to become real)
+
+Research & data (8 services):
+
+Web search — shipped
+
+Page reader — shipped
+
+Multi-page research report — shipped
+
+Competitor analysis — shipped (10-site benchmark)
+
+Market analysis — backlog
+
+Data analysis (CSV, spreadsheets) — shipped (basic)
+
+Chart from data — backlog
+
+Trend analysis — backlog
+
+Automation (6 services):
+
+Browser automation — shipped
+
+Desktop automation — shipped (Phase 4)
+
+File automation — shipped
+
+Email drafting — backlog
+
+Calendar scheduling — backlog
+
+Task management integration — backlog
+
+Communication & memory (6 services):
+
+Memory system — new, Section 2
+
+Session history — shipped
+
+Event log — shipped
+
+Voice interface — backlog (Phase 6)
+
+Notification system — backlog
+
+Multi-user collaboration — backlog
+
+Total: 48 services. Ship the bolded ones this round (WordPress theme, WordPress package, poster, document, memory system). Upgrade the ones marked "needs upgrade" to premium quality. Leave the rest as backlog with clear status.
+
+9. Response quality — beat Claude, Codex, DeepSeek harness, and "buff code"
+The user asked for Royal Red's responses to be "best from Claude, Codex, DeepSeek harness, and buff code."
+
+9.1 Response protocol. Every agent response is now governed by a response protocol:
+
+Lead with the answer. No preamble, no "Great question!"
+
+No em dashes or en dashes. Ever. Kernel-enforced.
+
+No emojis. Ever. Kernel-enforced.
+
+No padding. If three words suffice, use three words. If a paragraph is needed, one paragraph, not five.
+
+Structured when structure helps. Lists for parallel items, prose for narrative. Never a list where prose is clearer, never prose where a table is clearer.
+
+Citations for facts. If the response contains a fact that came from a source, cite it with a link or a reference ID.
+
+Honest about uncertainty. "I don't know" is a valid response. "I'm not sure, here's what I'd check" is a better response. Guessing is forbidden.
+
+No marketing tone. No "powerful," "seamless," "revolutionary." Speak plainly.
+
+9.2 Code quality. When Royal Red writes code:
+
+Type-safe. TypeScript strict mode. Python type hints. No any, no unknown untyped.
+
+Tested. Every function the agent writes gets at least one test unless the user explicitly says "no tests."
+
+Documented. Every public function has a docstring. No noise comments (// increment i).
+
+Named well. No data, info, temp, foo. Real names.
+
+No copy-paste. If the same code appears twice, extract it.
+
+Error handling. No bare try/catch that swallows. Errors are either handled or propagated.
+
+No dead code. No commented-out blocks. No unused imports.
+
+9.3 The "buff code" interpretation. The user said "buff code." Interpret this as: code that is strong, robust, tested, and defensively written. Not clever, not terse-for-the-sake-of-terseness. Code that a senior engineer would review without comments.
+
+9.4 The comparison protocol. After every build, Royal Red produces a comparison receipt:
+
+What Claude Code would have done (based on its known patterns)
+
+What Codex CLI would have done
+
+What DeepSeek harness would have done
+
+What Royal Red did, and why it is better on the specific dimensions that matter: verification, honesty, completeness, no overlap, no em dashes, accessibility, performance
+
+This is not marketing. It is a receipt. The user can audit it.
+
+Acceptance: user asks Royal Red to "write a function that reverses a string in TypeScript." Royal Red produces: the function, a test, a docstring, no em dashes, no emojis, no padding, and a one-line note that this is trivial and no comparison is needed.
+
+10. What NOT to do this round
+Do not add more providers. 66 is the ceiling.
+
+Do not add more sub-agent types beyond the 66 named roles. The roster is complete.
+
+Do not ship any UI with an emoji. Anywhere. Ever.
+
+Do not ship any text with an em dash or en dash. Anywhere. Ever.
+
+Do not ship a CMS that isn't verified end-to-end. Decorative CMS is now a build failure.
+
+Do not ship a website with overlapping elements. Overlap is a hard gate.
+
+Do not skip the WordPress sandbox verification. A theme that only "looks right" and isn't tested in real WordPress does not ship.
+
+Do not weaken any invariant to make the new features work. If an invariant blocks something, the design is wrong, not the invariant.
+
+Do not claim a round complete without: commit hash, worklog entry ID, off-site backup URL, and all suites green.
+
+Do not build the whole 48 services in one round. Ship the five bolded ones + upgrade the four marked "needs upgrade." The rest stay on the backlog with status.
+
+11. What to report back
+A single report with:
+
+ROYAL-RED.md and MEMORY.md — created, first paragraphs shown
+
+Memory system — schema, API, UI, acceptance test result
+
+66 agent employees — roster, dispatch rule, AGENTS panel screenshot, acceptance test
+
+Majestic UI v1.8 — five screenshots (boot, console dark, console light, VERIFY receipt with crown seal, AGENTS panel), all self-hosted fonts confirmed, zero emojis confirmed
+
+Website builder — coffee shop acceptance test end-to-end, per-constraint receipts, crown seal
+
+WordPress builder — photography portfolio acceptance test end-to-end, real WordPress sandbox verification, theme zip download
+
+PDF / poster / document — one poster, one document, one PDF, all verified no-overlap and no-em-dash
+
+The 48 services catalog — status per service, five new shipped, four upgraded
+
+Response quality protocol — the protocol document, one example of a buff-code response
+
+All suites re-run — kernel units, router, soft spots, acceptance, arch invariants, build integrity, run queue, waterfall, artifact versions, plus the new memory tests, agent-roster tests, em-dash test, overlap test, WordPress tests, and website tests
+
+Commit hash, worklog entry ID, off-site backup URL — pasted again
+
+Boot version — v1.8
+
+Any new bugs — file:line and fix status
+
+12. The one thing to keep in mind
+This round is the largest yet. It has eight objectives and two hard rules that apply to all of them: no emojis, no em dashes. It asks for real WordPress generation, real memory, real agent employees, a majestic UI, and premium PDFs. And it asks for the response quality to be better than Claude, Codex, and DeepSeek harness on the dimensions that actually matter.
+
+Do not ship anything partial as complete. If the WordPress sandbox can't run in this environment, say so honestly and deliver the theme with a "verification pending real WordPress" label — do not fake the verification. If the crown SVG isn't majestic enough, iterate on it three times before showing it.
+
+The aesthetic and the honesty are the product. Claude Code can write code. Codex can write code. What they cannot do is prove what they did, in a UI that feels like it belongs on a throne, with receipts that carry a crown seal. That's the differentiator. Ship it.
+
+Execute in order. Section 1 first.
+
+What this means for you, briefly
+This is the round where Royal Red stops being "a really good prototype" and starts becoming "a product with a signature look and a real feature set."
+
+The five new things you get: memory, 66 named agent employees, a majestic premium UI, a website builder that actually produces multi-page sites with working CMS, and WordPress theme generation. Plus premium PDFs, posters, and documents with no overlap and no em dashes.
+
+The design law is now locked. No emojis, real SVG icons, royal red + gold, premium fabrics and materials, hacking-terminal mono for data, self-hosted fonts. Every future round inherits this.
+
+The 48-service catalog is your roadmap. You now have a written list of every service Royal Red should do, grouped into seven categories, with a status per service. This becomes the "what's next" for the next ten rounds.
+
+Two things this round forces: the CMS must actually work (no more decorative CMS), and the website must be multi-page (no more single-page demos). These were soft spots for ten rounds. This is where they close.
+
+Send it verbatim. Section 1 first.

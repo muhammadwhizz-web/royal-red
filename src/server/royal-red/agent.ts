@@ -22,6 +22,7 @@ import { runVerification, verifyCritique } from './verify/engine'
 import { appendEvent, durableEmitter } from './event-log'
 import { seamComplete } from './llm/seam'
 import { runOrchestratedTurn, shouldOrchestrate } from './orchestrator'
+import { parseRememberCommand, writeMemory, memoryInjection, auditMemory } from './memory'
 
 type Emit = (e: RoyalRedSseEvent) => void
 
@@ -160,6 +161,26 @@ export async function runRoyalRedTurn(opts: {
       : opts.requestedMode
   emit({ type: 'mode', value: mode })
 
+  // Round 6, Section 2: "remember that ..." is a MEMORY WRITE fast path. The
+  // command is sealed into the persistent store before anything else happens,
+  // confirmed in plain language, and the turn ends without burning a model
+  // call. Restart-proof: the next turn (in any session) reads it back.
+  const remember = parseRememberCommand(stripModePrefix(opts.userText))
+  if (remember) {
+    const saved = await writeMemory({ scope: 'global', key: remember.key, value: remember.value, source: 'user' })
+    emit({ type: 'memory_saved', id: saved.id, key: saved.key, scope: saved.scope })
+    await auditMemory('memory:user-write', saved.key)
+    void appendEvent({ sessionId, type: 'memory/saved', payload: { key: saved.key, scope: saved.scope, source: 'user' } })
+    const confirmText = `Sealed in memory (${saved.scope} scope): "${saved.value}". I will honor this from now on, in this and every future session.`
+    emit({ type: 'say', text: confirmText })
+    await db.royalRedMessage.create({
+      data: { sessionId, role: 'assistant', content: confirmText, meta: JSON.stringify({ mode, memory: { id: saved.id, key: saved.key } }) },
+    })
+    void appendEvent({ sessionId, type: 'turn/ended', payload: { reason: 'memory-write' } })
+    emit({ type: 'done' })
+    return
+  }
+
   // load prior compacted history
   const prior = await db.royalRedMessage.findMany({
     where: { sessionId },
@@ -175,6 +196,10 @@ export async function runRoyalRedTurn(opts: {
   const chat: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
     { role: 'system', content: system },
   ]
+  // Round 6, Section 2 (read path): memories in scope are injected before the
+  // turn runs, under a strict char budget. A memory failure never breaks a turn.
+  const memoryBlock = await memoryInjection(userText, sessionId)
+  if (memoryBlock) chat.push({ role: 'system', content: memoryBlock })
   if (history.length) chat.push({ role: 'user', content: `CONVERSATION SO FAR:\n${compactHistory(history)}` })
 
   // Phase 2.1 - CONSTRAINT LEDGER: build commands get a structured constraint

@@ -19,6 +19,7 @@
 //     complete record, not a side table.
 
 import { db } from '@/lib/db'
+import { enforceTextLaw } from './text-law'
 
 // ---------- typed event vocabulary (merge-extensible: add, never rename) ----------
 
@@ -51,6 +52,10 @@ export const ROYAL_RED_EVENT_TYPES = [
   'budget/warning',
   'session/paused',
   'session/resumed',
+  // Round 6 (memory store + agent employees) — merge-extensible additions
+  'memory/saved',
+  'memory/forgotten',
+  'roster/dispatched',
   'error',
 ] as const
 
@@ -131,6 +136,16 @@ export function durableEmitter(
   }
   return (e) => {
     try {
+      // TEXT LAW (Round 6): assistant say text leaving the kernel to the
+      // console AND the durable log carries no emojis and no em/en dashes.
+      // Applied at the seam so the agent loop and the orchestrator are both
+      // covered by one enforcement point.
+      if (e.type === 'say' && typeof e.text === 'string' && e.text) {
+        const law = enforceTextLaw(e.text)
+        if (law.changed) {
+          ;(e as { text: string }).text = law.text
+        }
+      }
       emit(e)
     } catch {}
     const mapped = SSE_TO_EVENT[e.type]

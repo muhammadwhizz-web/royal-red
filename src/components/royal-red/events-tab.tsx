@@ -173,7 +173,7 @@ export function EventsTab() {
               { k: 'llm calls', v: p ? `${p.llmAttempts}${p.llmFailures ? `/${p.llmFailures} err` : ''}` : undefined },
               { k: 'rotations', v: p?.rotations },
               { k: 'consents', v: p ? `${p.consentsAsked}${p.consentsDenied ? `/${p.consentsDenied} no` : ''}` : undefined },
-              { k: 'policy', v: p ? `${p.policyDecisions.allow}✓ ${p.policyDecisions.deny}✗ ${p.policyDecisions.ask}?` : undefined },
+              { k: 'policy', v: p ? `allow ${p.policyDecisions.allow} / deny ${p.policyDecisions.deny} / ask ${p.policyDecisions.ask}` : undefined },
               { k: 'receipts', v: p?.verifyReceipts },
               { k: 'cost', v: p ? `$${p.totalCostUsd.toFixed(4)}` : undefined },
               { k: 'errors', v: p?.errors },

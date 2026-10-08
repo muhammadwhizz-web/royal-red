@@ -92,6 +92,10 @@ model RoyalRedAudit {
   // unattributed": every sub-agent row names WHO did it and WHO sent it.
   subAgentId  String?
   parentRunId String?
+  // Round 6 (agent employees): the named royal role behind the action, e.g.
+  // "Supreme Planner" or "Royal Builder". Adds a human-readable layer on top
+  // of subAgentId so the AGENTS panel and the audit log speak the same names.
+  agentRole   String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])
@@ -169,6 +173,9 @@ model RoyalRedRun {
   sessionId    String
   status       String   @default("running") // running | done | aborted
   tool         String // which primitive started the run (e.g. box_move batch)
+  // Round 6: the roster role name behind the run ("Supreme Planner"), aligned
+  // with RoyalRedAudit.agentRole. Null for runs that predate the roster.
+  agentRole    String?
   planJson     String? // full dry-run plan snapshot at approval time
   planHash     String? // sha256 of the plan; execution must match or refuse
   actionsTotal Int      @default(0)
@@ -274,6 +281,31 @@ model RoyalRedCostEntry {
   @@index([providerId])
   @@index([runId])
   @@map("AwonCostEntry")
+}
+
+// ROYAL RED memory store (Round 6, Section 2). Persistent, scoped memory that
+// survives sessions and projects. User writes are trusted; agent-inferred
+// writes are proposals until approved (source=user vs source=agent with
+// confidence < 1). Memories never leave the machine: no cloud sync path exists.
+model RoyalRedMemory {
+  id         String    @id @default(cuid())
+  scope      String    @default("global") // global | project | session | agent
+  // empty string = no specific reference (global scope). Non-nullable on
+  // purpose: SQLite treats NULLs as distinct in unique indexes, which would
+  // break the (scope, scopeRef, key) dedupe the write path relies on.
+  scopeRef   String    @default("")
+  key        String    // short searchable name, e.g. "theme preference"
+  value      String    // the memory itself, plain English
+  source     String    @default("user") // user | agent | inferred
+  confidence Float     @default(1) // 0..1; agent inferences start lower
+  tags       String?   // comma-separated lowercase tags
+  expiresAt  DateTime? // null = never expires
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([scope, scopeRef, key])
+  @@index([scope, updatedAt])
+  @@map("AwonMemory")
 }
 
 // ROYAL RED session event log (DeepSeek-harness port #1, MIT pattern).

@@ -16,6 +16,7 @@
 //
 // NO UNATTRIBUTED ACTION: every spawn/deny/finish here writes an audit row
 // carrying runId + subAgentId + parentRunId.
+import { dispatchForCapability } from './roster'
 
 import { db } from '@/lib/db'
 import { appendEvent } from './event-log'
@@ -107,10 +108,20 @@ export async function spawnSubRun(params: {
     return { denied: caps }
   }
 
+  // Round 6 (agent employees): every sub-agent run belongs to a NAMED royal
+  // role. The planner dispatches by capability ("needs a website builder"),
+  // the roster resolves the name, and the name rides on the run row, the
+  // audit rows, and a roster/dispatched event. Attribution law upgraded.
+  const rosterRole =
+    params.role === 'planner'
+      ? 'Supreme Planner'
+      : dispatchForCapability(params.task)?.name ?? 'Code Builder'
+
   const runId = await beginRun(params.sessionId, `subagent:${params.role}`, emptyPlan(), {
     parentRunId: params.parentRunId,
     role: params.role,
     depth,
+    agentRole: rosterRole,
   })
   const subAgentId = `${params.role}:${runId}`
   beginBudget(runId, params.role as BudgetRole)
@@ -118,7 +129,13 @@ export async function spawnSubRun(params: {
     sessionId: params.sessionId,
     runId,
     type: 'subagent/spawned',
-    payload: { role: params.role, subAgentId, parentRunId: params.parentRunId, depth, task: params.task.slice(0, 400) },
+    payload: { role: params.role, agentRole: rosterRole, subAgentId, parentRunId: params.parentRunId, depth, task: params.task.slice(0, 400) },
+  })
+  await appendEvent({
+    sessionId: params.sessionId,
+    runId,
+    type: 'roster/dispatched',
+    payload: { agentRole: rosterRole, kernelRole: params.role, task: params.task.slice(0, 200) },
   })
   await db.royalRedAudit.create({
     data: {
@@ -126,7 +143,8 @@ export async function spawnSubRun(params: {
       runId,
       subAgentId,
       parentRunId: params.parentRunId,
-      detail: `role=${params.role} depth=${depth} task="${params.task.slice(0, 160)}" — ${caps.detail}`,
+      agentRole: rosterRole,
+      detail: `role=${params.role} agentRole="${rosterRole}" depth=${depth} task="${params.task.slice(0, 160)}" — ${caps.detail}`,
       ok: true,
     },
   })
@@ -138,11 +156,12 @@ export async function spawnSubRun(params: {
  * SINGLE run/ended choke point — exactly one terminal event per run, ever).
  */
 export async function finishSubRun(sub: SpawnedSubRun, status: 'done' | 'aborted', note: string): Promise<void> {
+  const rosterRole = (await db.royalRedRun.findUnique({ where: { id: sub.runId }, select: { agentRole: true } }))?.agentRole ?? null
   await appendEvent({
     sessionId: (await db.royalRedRun.findUnique({ where: { id: sub.runId }, select: { sessionId: true } }))?.sessionId ?? '',
     runId: sub.runId,
     type: status === 'aborted' ? 'subagent/aborted' : 'subagent/finished',
-    payload: { role: sub.role, subAgentId: sub.subAgentId, parentRunId: sub.parentRunId, note: note.slice(0, 300) },
+    payload: { role: sub.role, agentRole: rosterRole, subAgentId: sub.subAgentId, parentRunId: sub.parentRunId, note: note.slice(0, 300) },
   })
   await db.royalRedAudit.create({
     data: {
@@ -150,7 +169,8 @@ export async function finishSubRun(sub: SpawnedSubRun, status: 'done' | 'aborted
       runId: sub.runId,
       subAgentId: sub.subAgentId,
       parentRunId: sub.parentRunId,
-      detail: `${sub.role} ${status}: ${note.slice(0, 200)}`,
+      agentRole: rosterRole,
+      detail: `${sub.role}${rosterRole ? ` (${rosterRole})` : ''} ${status}: ${note.slice(0, 200)}`,
       ok: status === 'done',
     },
   })

@@ -39,6 +39,8 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EventsTab } from './events-tab'
+import { MemoryTab } from './memory-tab'
+import { AgentsTab } from './agents-tab'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { VerifyTab } from './verify-tab'
 import { DesktopTab } from './desktop-tab'
@@ -1329,10 +1331,10 @@ export function RightPanel() {
   return (
     <Tabs
       value={panelTab}
-      onValueChange={(v) => setPanelTab(v as 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events')}
+      onValueChange={(v) => setPanelTab(v as 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events' | 'memory' | 'agents')}
       className="flex h-full flex-col"
     >
-      <TabsList className="seg mx-3 mt-3 grid w-auto grid-cols-8 gap-1 p-1">
+      <TabsList className="seg mx-3 mt-3 grid w-auto grid-cols-10 gap-1 p-1">
         {(
           [
             { id: 'preview', label: 'PREVIEW' },
@@ -1343,6 +1345,8 @@ export function RightPanel() {
             { id: 'providers', label: 'PROVIDERS' },
             { id: 'router', label: 'ROUTER' },
             { id: 'events', label: 'EVENTS' },
+            { id: 'memory', label: 'MEMORY' },
+            { id: 'agents', label: 'AGENTS' },
           ] as const
         ).map((t) => (
           <TabsTrigger
@@ -1379,6 +1383,12 @@ export function RightPanel() {
       </TabsContent>
       <TabsContent value="events" className="mt-0 min-h-0 flex-1">
         <EventsTab />
+      </TabsContent>
+      <TabsContent value="memory" className="mt-0 min-h-0 flex-1">
+        <MemoryTab />
+      </TabsContent>
+      <TabsContent value="agents" className="mt-0 min-h-0 flex-1">
+        <AgentsTab />
       </TabsContent>
     </Tabs>
   )

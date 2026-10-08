@@ -462,7 +462,7 @@ function ConsentCard({ item }: { item: Extract<ChatItem, { kind: 'consent' }> })
         <ul className="mt-2 max-h-40 space-y-0.5 overflow-auto rounded border border-border/70 bg-muted/30 p-2.5 font-mono text-[11px] text-muted-foreground">
           {item.payload.steps.slice(0, 12).map((s, i) => (
             <li key={i} className="truncate">
-              ↩ {s}
+              <span className="text-red-600 dark:text-red-400">&gt;</span> {s}
             </li>
           ))}
           {item.payload.steps.length > 12 && <li>+ {item.payload.steps.length - 12} more</li>}

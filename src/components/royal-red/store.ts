@@ -29,6 +29,7 @@ const HELP_MARKDOWN = `### local command line
 | /export pdf | transcript as a paginated PDF |
 | /export csv | transcript as a spreadsheet |
 | /pdf, /csv | quick aliases for the exporters |
+| /wp <prompt> | generate a WordPress theme zip (static audit, honest label) |
 | /stats | console telemetry card (sessions, artifacts, workspace) |
 | /plan | the current execution plan as a card |
 | /verify | proof-test the current artifact (ledger, critique, screenshots, cms) |
@@ -183,6 +184,70 @@ function handleLocalCommand(raw: string, push: (item: ChatItem) => void): boolea
     case 'csv':
       exportTranscript('csv', push)
       return true
+    case 'wp': {
+      // Round 6: the WordPress builder, one keystroke away. /wp <prompt>
+      // generates a real theme zip + static audit, honestly labeled.
+      const prompt = rest.trim()
+      push({ kind: 'user', id: nextId(), text })
+      if (!prompt) {
+        push({ kind: 'assistant', id: nextId(), text: 'Describe the site, e.g. `/wp photography portfolio for a studio in Lahore`.' })
+        return true
+      }
+      const rowId = nextId()
+      push({ kind: 'event', id: rowId, label: 'WORDPRESS BUILDER dispatched', status: 'running' })
+      void (async () => {
+        try {
+          const res = await fetch('/api/royal-red/wordpress', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ prompt, sessionId: useRoyalRed.getState().sessionId ?? undefined }),
+          })
+          const j = (await res.json()) as {
+            error?: string
+            slug?: string
+            themeName?: string
+            mode?: string
+            files?: string[]
+            checks?: { name: string; pass: boolean; detail?: string }[]
+            verificationLabel?: string
+            summary?: string
+            zipRelPath?: string
+            zipBytes?: number
+            status?: string
+          }
+          if (!res.ok || j.error) throw new Error(j.error ?? 'builder failed')
+          const md = [
+            `### wordpress theme: ${j.themeName}`,
+            '',
+            `| | |`,
+            '| --- | --- |',
+            `| slug | ${j.slug} |`,
+            `| package | ${j.mode} (${Math.round((j.zipBytes ?? 0) / 1024)} KB zip) |`,
+            `| files | ${(j.files ?? []).length} |`,
+            `| static audit | ${(j.checks ?? []).filter((c) => c.pass).length}/${(j.checks ?? []).length} |`,
+            `| verification | ${j.verificationLabel} (honest) |`,
+            '',
+            '**theme check**',
+            ...(j.checks ?? []).map((c) => `- ${c.pass ? 'ok' : 'FAIL'}: ${c.name}`),
+            '',
+            `zip landed in the FILES panel (workspace): ${j.zipRelPath}`,
+          ].join('\n')
+          useRoyalRed.setState((s2) => ({
+            items: s2.items.map((i): ChatItem => (i.id === rowId ? { kind: 'assistant', id: rowId, text: md } : i)),
+          }))
+        } catch (e) {
+          const items = useRoyalRed
+            .getState()
+            .items.map((i): ChatItem =>
+              i.id === rowId
+                ? { kind: 'event', id: rowId, label: 'WORDPRESS BUILDER failed', detail: (e as Error).message.slice(0, 200), status: 'err' }
+                : i,
+            )
+          useRoyalRed.setState({ items })
+        }
+      })()
+      return true
+    }
     case 'plan': {
       push({ kind: 'user', id: nextId(), text })
       const plan = useRoyalRed.getState().plan
@@ -210,7 +275,7 @@ function handleLocalCommand(raw: string, push: (item: ChatItem) => void): boolea
           '',
           '| | |',
           '| --- | --- |',
-          '| kernel | ROYAL RED V1.0, linux native |',
+          '| kernel | ROYAL RED V1.8 (MAJESTIC), linux native |',
           '| shape | an operating system for agents, living inside this page |',
           '| modes | builder, research, system, assist |',
           '| senses | image generation, vision checks, video watching, web search, page reading |',
@@ -318,7 +383,7 @@ export interface RoyalRedState {
   artifacts: ArtifactView[]
   activeFile: string | null
   previewKey: number
-  panelTab: 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events'
+  panelTab: 'preview' | 'files' | 'verify' | 'system' | 'desktop' | 'providers' | 'router' | 'events' | 'memory' | 'agents'
   filesScope: 'artifact' | 'workspace'
   panelHidden: boolean
   systemOpen: boolean
@@ -797,6 +862,18 @@ export const useRoyalRed = create<RoyalRedState>((set, get) => ({
         break
       }
       // ── Phase 5 slice 1: sub-agent lifecycle ─────────────────────────────
+      case 'memory_saved': {
+        const items = s.items.filter((i) => i.kind !== 'phase')
+        items.push({
+          kind: 'event',
+          id: nextId(),
+          label: `MEMORY SEALED — ${String(e.key ?? '')}`,
+          detail: `scope ${e.scope ?? 'global'} · visible in the MEMORY panel`,
+          status: 'ok',
+        })
+        set({ items })
+        break
+      }
       case 'subagent': {
         const items = s.items.filter((i) => i.kind !== 'phase')
         const label =

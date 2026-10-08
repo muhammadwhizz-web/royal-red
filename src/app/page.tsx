@@ -500,15 +500,15 @@ export default function RoyalRedConsole() {
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden text-foreground">
-      {/* v1.7 signature backdrop: drifting royal-red aurora under everything */}
+      {/* v1.8 signature backdrop: drifting royal-red aurora under everything */}
       <div className="royalred-aurora" aria-hidden="true" />
       <BootOverlay />
       <CommandPalette />
       <ThemeCommandBridge />
       <div className="royalred-scanlines pointer-events-none fixed inset-0 z-40 opacity-25" aria-hidden="true" />
 
-      {/* top bar — floating glass island */}
-      <header className="glass-strong relative z-30 mx-2 mt-2 flex shrink-0 items-center justify-between rounded-2xl px-3.5 py-2 sm:mx-3 sm:mt-3 sm:px-5">
+      {/* top bar — floating glass island with the damask fabric hint */}
+      <header className="glass-strong royalred-damask relative z-30 mx-2 mt-2 flex shrink-0 items-center justify-between rounded-2xl px-3.5 py-2 sm:mx-3 sm:mt-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-4">
           <Signature />
           <span className="hidden shrink-0 font-mono text-[10px] tracking-[0.3em] text-muted-foreground lg:inline">
@@ -595,9 +595,9 @@ export default function RoyalRedConsole() {
 
       {/* sticky footer line — hairline glass strip */}
       <footer className="glass relative z-30 mx-2 mb-2 shrink-0 rounded-xl px-4 py-1.5 text-center font-mono text-[10px] tracking-[0.25em] text-muted-foreground sm:mx-3 sm:mb-3 sm:px-6">
-        <span className="sm:hidden"> ROYAL RED // KERNEL v1.7</span>
+        <span className="sm:hidden"> ROYAL RED // KERNEL v1.8</span>
         <span className="hidden sm:inline">
-           ROYAL RED // KERNEL v1.7 / GLASS CROWN UI / SANDBOXED / INVARIANTS DOC / PROOF-TESTED: LEDGER · CRITIC · EVENT LOG · WATERFALL · SEAM · ROOTS · RUN QUEUE · CSS GUARD · SUB-AGENTS · BUDGET
+           ROYAL RED // KERNEL v1.8 / MAJESTIC / SANDBOXED / INVARIANTS DOC / PROOF-TESTED: LEDGER · CRITIC · EVENT LOG · WATERFALL · SEAM · ROOTS · RUN QUEUE · CSS GUARD · SUB-AGENTS · BUDGET · MEMORY · ROSTER
         </span>
       </footer>
     </div>

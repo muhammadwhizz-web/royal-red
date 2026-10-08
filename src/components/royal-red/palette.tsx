@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import {
   ArrowLeftRight,
+  Brain,
   Download,
   FileDown,
   FlaskConical,
@@ -20,6 +21,7 @@ import {
   ShieldCheck,
   Sun,
   Terminal,
+  Users,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import {
@@ -169,6 +171,8 @@ export function CommandPalette() {
               { id: 'providers', label: 'providers: api keys + health', icon: KeyRound },
               { id: 'router', label: 'router: matrix + rotation drill', icon: ArrowLeftRight },
               { id: 'events', label: 'event log: replay + integrity', icon: Rss },
+              { id: 'memory', label: 'memory: what royal red remembers', icon: Brain },
+              { id: 'agents', label: 'agents: the 66 royal roles', icon: Users },
             ] as const
           ).map((t) => (
             <CommandItem

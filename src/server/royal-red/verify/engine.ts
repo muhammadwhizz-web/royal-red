@@ -30,6 +30,7 @@ import {
 } from './visual'
 import { verifyCms, type CmsReport } from './cms'
 import { runBenchmark, type BenchmarkReport, type TaxonomyId } from './benchmark'
+import { verifyStructure, type StructureReport } from './structure'
 
 export interface LedgerReceipt {
   runId: string
@@ -201,7 +202,7 @@ export async function runVerification(
   userPrompt: string,
   builderScore: number | null,
   opts: VerificationOptions = {},
-): Promise<{ runId: string; ledger: LedgerReceipt | null; critique: CritiqueReceipt | null; visual: VisualReceipt | null; cms: CmsReport | null; benchmark: BenchmarkReport | null }> {
+): Promise<{ runId: string; ledger: LedgerReceipt | null; critique: CritiqueReceipt | null; visual: VisualReceipt | null; structure: StructureReport | null; cms: CmsReport | null; benchmark: BenchmarkReport | null }> {
   const runId = newRunId()
   const artifact = await db.royalRedArtifact.findUnique({ where: { id: artifactId }, select: { files: true, entry: true } })
   if (!artifact) throw new Error(`artifact ${artifactId} not found`)
@@ -243,6 +244,31 @@ export async function runVerification(
     emit?.({ type: 'verify', kind: 'visual', status: 'error', summary: `visual regression failed: ${(e as Error).message.slice(0, 120)}` })
   }
 
+  // 2a. structure gate (Round 6): multi-page law, SEO surfaces, a11y baseline,
+  // and the OVERLAP HARD GATE at three viewports. Failures here are honest,
+  // named, and block the crown seal.
+  emit?.({ type: 'verify', kind: 'structure', status: 'run' })
+  let structure: StructureReport | null = null
+  let structureFindings: string | null = null
+  try {
+    structure = await verifyStructure(sessionId, artifactId, runId, artifact.files)
+    await saveVerification(sessionId, artifactId, 'structure', structure.status, structure.score, structure)
+    emit?.({
+      type: 'verify',
+      kind: 'structure',
+      status: structure.status,
+      summary: structure.summary,
+      data: structure,
+    })
+    if (structure.status !== 'pass') {
+      // findings ride into the critique input; appended after the VLM notes
+      structureFindings = structure.summary
+    }
+  } catch (e) {
+    await saveVerification(sessionId, artifactId, 'structure', 'error', null, { runId, error: (e as Error).message.slice(0, 300) })
+    emit?.({ type: 'verify', kind: 'structure', status: 'error', summary: `structure gate failed: ${(e as Error).message.slice(0, 120)}` })
+  }
+
   // 2b. VLM notes on the desktop shot feed the critique (semantic layer)
   if (visual) {
     const desktop = visual.shots.find((s) => s.viewport === 'desktop' && s.ok)
@@ -271,6 +297,8 @@ export async function runVerification(
       } catch {}
     }
   }
+  // structure findings join AFTER the vlm note so neither clobbers the other
+  if (structureFindings) shotNotes = [...shotNotes, `STRUCTURE GATE FINDINGS: ${structureFindings}`.slice(0, 800)]
 
   // 3. adversarial critique
   emit?.({ type: 'verify', kind: 'critique', status: 'run' })
@@ -365,5 +393,5 @@ export async function runVerification(
     })
     .catch(() => {})
 
-  return { runId, ledger, critique, visual, cms, benchmark }
+  return { runId, ledger, critique, visual, structure, cms, benchmark }
 }

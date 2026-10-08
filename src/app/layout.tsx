@@ -1,17 +1,35 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// ROYAL RED typography law (Round 6): self-hosted fonts only. No Google Fonts
+// runtime, no network fetch on compile. Three voices:
+//   display  Cormorant Garamond  headings, wordmark, boot sequence
+//   ui       Inter               body, panels, buttons
+//   data     JetBrains Mono      numbers, code, logs, receipts
+const display = localFont({
+  src: "./fonts/cormorant-garamond-latin.woff2",
+  variable: "--font-display",
+  weight: "300 700",
+  display: "swap",
+  preload: true,
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const ui = localFont({
+  src: "./fonts/inter-latin.woff2",
+  variable: "--font-ui",
+  weight: "100 900",
+  display: "swap",
+  preload: true,
+});
+
+const data = localFont({
+  src: "./fonts/jetbrains-mono-latin.woff2",
+  variable: "--font-data",
+  weight: "100 800",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -24,8 +42,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0606" },
+    { media: "(prefers-color-scheme: light)", color: "#faf5f0" },
   ],
 };
 
@@ -37,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${display.variable} ${ui.variable} ${data.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}

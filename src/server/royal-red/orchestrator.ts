@@ -146,7 +146,7 @@ export async function runOrchestratedTurn(opts: {
   beginBudget(topRunId, 'top')
   const emit = durableEmitter(sessionId, rawEmit as (e: { type: string } & Record<string, unknown>) => void, topRunId) as Emit
   const auditTop = (action: string, detail: string, ok = true) =>
-    db.royalRedAudit.create({ data: { action, runId: topRunId, detail: detail.slice(0, 300), ok } })
+    db.royalRedAudit.create({ data: { action, runId: topRunId, detail: detail.slice(0, 300), ok, agentRole: 'Orchestrator' } })
 
   emit({ type: 'mode', value: 'build' })
   emit({ type: 'phase', value: 'orchestrating: constraint ledger' })

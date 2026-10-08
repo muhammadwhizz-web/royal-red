@@ -65,7 +65,7 @@ export async function beginRun(
   sessionId: string,
   tool: string,
   plan: DryRunPlan,
-  extras?: { parentRunId?: string; role?: string; depth?: number },
+  extras?: { parentRunId?: string; role?: string; depth?: number; agentRole?: string },
 ): Promise<string> {
   ensureBoxTree()
   const id = `run_${randomUUID().slice(0, 12)}`
@@ -81,6 +81,8 @@ export async function beginRun(
       parentRunId: extras?.parentRunId ?? null,
       role: extras?.role ?? null,
       depth: extras?.depth ?? 0,
+      // Round 6: the named royal role behind the run ("Supreme Planner")
+      agentRole: extras?.agentRole ?? null,
     },
   })
   // RUN QUEUE (Phase-5 groundwork): every run is a first-class process. It is
@@ -88,7 +90,7 @@ export async function beginRun(
   // log with its runId, so N concurrent runs per session are trackable and
   // their log rows are attributable without convention or guesswork.
   registerRun({ runId: id, sessionId, label: tool, startedAt: new Date().toISOString() })
-  void appendEvent({ sessionId, runId: id, type: 'run/started', payload: { tool, steps: plan.summary.proposable, role: extras?.role ?? null, parentRunId: extras?.parentRunId ?? null } })
+  void appendEvent({ sessionId, runId: id, type: 'run/started', payload: { tool, steps: plan.summary.proposable, role: extras?.role ?? null, agentRole: extras?.agentRole ?? null, parentRunId: extras?.parentRunId ?? null } })
   return id
 }
 

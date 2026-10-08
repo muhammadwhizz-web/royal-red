@@ -2,15 +2,26 @@
 // Powers the ROYAL RED transcript export: titles + monospace body, automatic
 // pagination, footer page numbers. No external deps, same spirit as zip.ts.
 
-const PAGE_W = 612
-const PAGE_H = 792
 const MARGIN = 54
 const BODY_SIZE = 9
 const BODY_LEAD = 11.5
-// Courier advance width is exactly 0.6em: 9pt * 0.6 = 5.4pt per char
-const BODY_COLS = 92 // 92 * 5.4 = 496.8pt <= 504pt usable width
+export type PdfStyle = 'title' | 'heading' | 'body' | 'dim' | 'rule' | 'chart' | 'display' | 'sub'
 
-export type PdfStyle = 'title' | 'heading' | 'body' | 'dim'
+// Round 6: named page sizes for the poster and document engines
+export const PAGE_SIZES = {
+  Letter: { w: 612, h: 792 },
+  A4: { w: 595, h: 842 },
+  A3: { w: 842, h: 1191 },
+  Tabloid: { w: 792, h: 1224 },
+} as const
+export type PageSize = keyof typeof PAGE_SIZES
+
+export interface BuildPdfOptions {
+  pageSize?: PageSize
+  footerNote?: string
+  /** receives the page index of every title/heading line (two-pass TOC) */
+  onPageMap?: (entries: { page: number; text: string }[]) => void
+}
 
 export interface PdfLine {
   text: string
@@ -75,31 +86,70 @@ function wrapText(text: string, cols: number): string[] {
   return out
 }
 
-const STYLE_LAYOUT: Record<PdfStyle, Omit<LayoutLine, 'text'>> = {
+const STYLE_LAYOUT: Record<Exclude<PdfStyle, 'rule' | 'chart'>, Omit<LayoutLine, 'text'>> = {
+  display: { font: 'F1', size: 30, lead: 36 },
   title: { font: 'F1', size: 16, lead: 20 },
+  sub: { font: 'F2', size: 12, lead: 16 },
   heading: { font: 'F1', size: 10.5, lead: 15 },
   body: { font: 'F3', size: BODY_SIZE, lead: BODY_LEAD },
   dim: { font: 'F2', size: 8, lead: 11, gray: 0.45 },
 }
 
-// build the complete PDF for a list of styled logical lines (each may wrap)
-export function buildPdf(lines: PdfLine[]): Buffer {
+// vector chart spec carried on a chart-style line: "Label:value, Label:value"
+export interface ChartSpec {
+  title: string
+  data: { label: string; value: number }[]
+  kind: 'bar' | 'line'
+}
+
+export function parseChartSpec(json: string): ChartSpec {
+  return JSON.parse(json) as ChartSpec
+}
+
+// build the complete PDF for a list of styled logical lines (each may wrap).
+// Round 6 additions: named page sizes, vector rules + charts, an optional
+// footer note, and a page-map hook the document engine uses for real TOCs.
+export function buildPdf(lines: PdfLine[], opts: BuildPdfOptions = {}): Buffer {
+  const size = PAGE_SIZES[opts.pageSize ?? 'Letter']
+  const pageW = size.w
+  const pageH = size.h
+  const usable = pageH - MARGIN * 2
+
   // 1. layout: logical lines -> wrapped atomic lines (Courier keeps wrap math exact)
-  const atomic: LayoutLine[] = []
+  const atomic: (LayoutLine & { rule?: boolean; chart?: ChartSpec })[] = []
   for (const l of lines) {
+    if (l.style === 'rule') {
+      atomic.push({ font: 'F2', size: 2, lead: 10, text: '' , rule: true })
+      continue
+    }
+    if (l.style === 'chart') {
+      // one atomic line that occupies its chart's computed height
+      let spec: ChartSpec
+      try {
+        spec = parseChartSpec(l.text)
+      } catch {
+        atomic.push({ ...STYLE_LAYOUT.dim, text: '[chart spec invalid]' })
+        continue
+      }
+      const h = chartHeight(spec)
+      atomic.push({ font: 'F2', size: 2, lead: h, text: '', chart: spec })
+      continue
+    }
     const style = STYLE_LAYOUT[l.style]
-    for (const t of wrapText(sanitizePdfText(l.text), BODY_COLS)) {
+    // per-style column count: Courier 0.6em advance keeps the math exact
+    const cols = Math.floor((pageW - MARGIN * 2) / (style.size * 0.6))
+    for (const t of wrapText(sanitizePdfText(l.text), cols)) {
       atomic.push({ ...style, text: t })
     }
   }
 
-  // 2. paginate
-  const usable = PAGE_H - MARGIN * 2
-  const pages: LayoutLine[][] = []
-  let cur: LayoutLine[] = []
+  // 2. paginate: content NEVER overlaps; a line that does not fit flows to
+  // the next page whole (the Round 6 no-overlap rule)
+  const pages: (LayoutLine & { rule?: boolean; chart?: ChartSpec })[][] = []
+  let cur: (LayoutLine & { rule?: boolean; chart?: ChartSpec })[] = []
   let y = 0
   for (const line of atomic) {
-    if (y + line.lead > usable) {
+    if (y + line.lead > usable && cur.length) {
       pages.push(cur)
       cur = []
       y = 0
@@ -110,13 +160,37 @@ export function buildPdf(lines: PdfLine[]): Buffer {
   if (cur.length) pages.push(cur)
   if (!pages.length) pages.push([])
 
-  // 3. emit content streams (with deterministic page footers).
-  // sanitize guarantees every char is latin1-range, so single-byte encoding
-  // is exact all the way through Buffer.from(..., 'latin1').
-  const contentStrs: string[] = pages.map((pageLines, pi) => {
+  // 2b. heading page map for two-pass TOCs
+  if (opts.onPageMap) {
+    const entries: { page: number; text: string }[] = []
+    for (let pi = 0; pi < pages.length; pi++) {
+      for (const line of pages[pi]) {
+        if ((line.font === 'F1' && line.size === 10.5 && line.text) || (line.font === 'F1' && line.size === 16 && line.text)) {
+          entries.push({ page: pi + 1, text: line.text })
+        }
+      }
+    }
+    opts.onPageMap(entries)
+  }
+
+  // 3. emit content streams
+  const footer = opts.footerNote ?? 'ROYAL RED TRANSCRIPT'
+  const contentStrs = pages.map((pageLines, pi) => {
     const parts: string[] = ['BT']
-    let ty = PAGE_H - MARGIN
+    let ty = pageH - MARGIN
     for (const line of pageLines) {
+      if (line.rule) {
+        parts.push(`ET
+0.65 0.52 0.13 RG 1.1 w ${MARGIN} ${(ty - line.lead / 2).toFixed(1)} m ${(pageW - MARGIN).toFixed(1)} ${(ty - line.lead / 2).toFixed(1)} l S
+BT`)
+        ty -= line.lead
+        continue
+      }
+      if (line.chart) {
+        parts.push(chartOps(line.chart, MARGIN, ty, pageW - MARGIN, line.lead))
+        ty -= line.lead
+        continue
+      }
       const gray = line.gray !== undefined ? ` ${line.gray.toFixed(2)} G` : ''
       parts.push(
         `${gray} /${line.font} ${line.size} Tf 1 0 0 1 ${MARGIN} ${ty.toFixed(1)} Tm (${esc(line.text)}) Tj`,
@@ -124,7 +198,7 @@ export function buildPdf(lines: PdfLine[]): Buffer {
       ty -= line.lead
     }
     parts.push(
-      ` 0.45 G /F2 7.5 Tf 1 0 0 1 ${MARGIN} 34 Tm (ROYAL RED TRANSCRIPT / PAGE ${pi + 1} OF ${pages.length} / ROYAL RED V1.0) Tj`,
+      ` 0.45 G /F2 7.5 Tf 1 0 0 1 ${MARGIN} 34 Tm (${esc(sanitizePdfText(footer))} / PAGE ${pi + 1} OF ${pages.length} / ROYAL RED V1.8) Tj`,
     )
     parts.push('ET')
     return parts.join('\n')
@@ -144,7 +218,7 @@ export function buildPdf(lines: PdfLine[]): Buffer {
   pages.forEach((_, i) => {
     const contentObj = firstPageObj + i * 2 + 1
     objects.push(
-      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Contents ${contentObj} 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> >>`,
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Contents ${contentObj} 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> >>`,
     )
     objects.push(`<< /Length ${Buffer.byteLength(contentStrs[i], 'latin1')} >>\nstream\n${contentStrs[i]}\nendstream`)
   })
@@ -166,4 +240,51 @@ export function buildPdf(lines: PdfLine[]): Buffer {
   const trailer = `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`
   chunks.push(Buffer.from(xref + trailer, 'latin1'))
   return Buffer.concat(chunks)
+}
+
+// ---- vector chart helpers (PDF path ops; vector, never raster) ----
+
+const CHART_LABEL_H = 18
+
+function chartHeight(_spec: ChartSpec): number {
+  return 120 + CHART_LABEL_H + 14
+}
+
+// draw a bar or line chart into the box (x, yTop) with the given width/height
+function chartOps(spec: ChartSpec, x: number, yTop: number, w: number, h: number): string {
+  const inner = h - CHART_LABEL_H
+  const max = Math.max(...spec.data.map((d) => d.value), 1)
+  const pad = 8
+  const axisY = yTop - inner
+  const out: string[] = ['ET']
+  // axis
+  out.push(`0.45 G 0.8 w ${x} ${axisY.toFixed(1)} m ${(x + w).toFixed(1)} ${axisY.toFixed(1)} l S`)
+  const n = Math.max(spec.data.length, 1)
+  const slot = (w - pad * 2) / n
+  if (spec.kind === 'bar') {
+    spec.data.forEach((d, i) => {
+      const bh = Math.max(2, ((d.value / max) * (inner - 14)) | 0)
+      const bx = x + pad + i * slot + slot * 0.18
+      const bw = slot * 0.64
+      out.push(`0.72 0.11 0.11 RG ${bx.toFixed(1)} ${axisY.toFixed(1)} ${bw.toFixed(1)} ${bh.toFixed(1)} re B`)
+      const label = esc(sanitizePdfText(d.label.slice(0, Math.max(4, (slot / 4.4) | 0))))
+      out.push(`BT 0.35 G /F2 6.5 Tf 1 0 0 1 ${bx.toFixed(1)} ${(axisY - 8).toFixed(1)} Tm (${label}) Tj ET`)
+    })
+  } else {
+    const pts = spec.data.map((d, i) => {
+      const px = x + pad + i * slot + slot / 2
+      const py = axisY + Math.max(2, ((d.value / max) * (inner - 14)) | 0)
+      return `${px.toFixed(1)} ${py.toFixed(1)}`
+    })
+    out.push(`0.72 0.11 0.11 RG 1.3 w ${pts.join(' m ')}${pts.length > 1 ? ' l S' : ''}`)
+    spec.data.forEach((d, i) => {
+      const px = x + pad + i * slot + slot / 2
+      const label = esc(sanitizePdfText(d.label.slice(0, Math.max(4, (slot / 4.4) | 0))))
+      out.push(`BT 0.35 G /F2 6.5 Tf 1 0 0 1 ${px.toFixed(1)} ${(axisY - 8).toFixed(1)} Tm (${label}) Tj ET`)
+    })
+  }
+  const title = esc(sanitizePdfText(spec.title))
+  out.push(`BT 0.2 G /F1 8.5 Tf 1 0 0 1 ${x} ${(yTop - 8).toFixed(1)} Tm (${title}) Tj ET`)
+  out.push('BT')
+  return out.join('\n')
 }
