@@ -58,6 +58,7 @@ async function gh(method, url, body, isUpload = false) {
     'User-Agent': 'royal-red-ship',
   }
   if (body && !isUpload) headers['Content-Type'] = 'application/json'
+  if (isUpload) headers['Content-Type'] = 'application/octet-stream'
   const res = await fetch(url, {
     method,
     headers,
