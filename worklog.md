@@ -987,3 +987,19 @@ Work Log:
 Stage Summary:
 - The user can never lose the project: GitHub holds it forever, a verified fresh snapshot exists off-site, the guide ships inside the repo, and the ship + backup tooling is in-repo and one command each.
 - Future work law (user's words: "we will also work and push our main future"): every round ends with commit + push to main + (on milestones) a tag + fresh wormhole snapshot. The push path is proven: git -c extraheader push, or GITHUB_TOKEN from /home/z/.royal-red-ship.env bun scripts/github/ship.mjs.
+
+---
+Task ID: 13
+Agent: orchestrator (Z.ai Code)
+Task: Best step-by-step download+install guide, fully-red animated world-class repo page, step-by-step guide as a beautiful PDF from the own engine, license to MIT
+
+Work Log:
+- PDF GUIDE (own engine, zero external tools): scripts/generate-download-guide.ts generates docs/Royal-Red-Download-and-Install-Guide.pdf - 12 pages A4, vector crown cover, two-pass TOC with true page numbers (sections 1-10), running headers, footer "ROYAL RED, MIT LICENSED, YOURS TO KEEP", deep royal red headings + gold accents (engine palette #7f1d1d / #a16207), embedded fonts, text law violations 0. Content: paths for Windows WSL2 (5 steps), Linux one-liner, clone path (developers/macOS), ZIP path, first-run ritual, day-one usage, update/uninstall, troubleshooting, MIT + links. All URLs are the REAL repo (muhammadwhizz-web/royal-red).
+- RED REPO PAGE: .github/assets/header.svg - animated SVG banner (CSS/SMIL inside SVG, renders animated on GitHub): deep crimson gradient that shifts over 9s, radial glow pulsing behind a vector gold crown with red jewels, a shine sweep crossing the crown every 4.5s, serif ROYAL RED wordmark, gold tagline with gentle opacity pulse. .github/assets/divider.svg - thin crimson bar with a traveling gold highlight, placed between all major README sections. Badge row switched to the red palette (a31226/7f1d1d/b91c2e) + new connectors + install-one-line badges.
+- README additions: Roadmap section (shipped vs next, on the record), PDF guide row in the docs table, License section rewritten for MIT.
+- MIT LICENSE: LICENSE rewritten (copyright MuhammadWhiz, muhammadwhizz-web) with a provenance note pointing at docs/LICENSE-AUDIT.md; package.json license field set to MIT; README badge + section updated. CONTRIBUTING.md had no license references to change.
+- PUSHED + VISUALLY VERIFIED: e123283 on origin/main (75 commits). agent-browser screenshots: qa/github-repo-red.png (repo top, About + topics) and qa/github-readme-red.png (README showing the animated crown header, red badges, divider) - renders exactly as designed.
+
+Stage Summary:
+- The repo page is now fully royal-red, animated, and world-class; the install guide exists as markdown AND as a 12-page red-and-gold PDF produced by the project's own engine; the license is MIT so everyone can use, change, and sell the work (keep the notice).
+- Unchanged and still true: fresh-clone boot proof, zero-key first-run UX, honest-status law, verified wormhole snapshot dLaWn9.
