@@ -2,7 +2,13 @@
 import fs from 'fs'
 import path from 'path'
 
-export const WORKSPACE_ROOT = '/home/z/my-project/royalred-workspace'
+// Portable root (Phase A): the workspace follows the app, so an install under
+// ~/.royal-red/app or a Docker container works identically to the dev checkout.
+// ROYAL_RED_WORKSPACE overrides (the launcher and the Docker entrypoint set it
+// to the persistent data directory); otherwise it lives beside the code.
+export const WORKSPACE_ROOT = process.env.ROYAL_RED_WORKSPACE
+  ? path.resolve(process.env.ROYAL_RED_WORKSPACE)
+  : path.join(process.cwd(), 'royalred-workspace')
 
 export function ensureWorkspace(): void {
   fs.mkdirSync(path.join(WORKSPACE_ROOT, 'artifacts'), { recursive: true })

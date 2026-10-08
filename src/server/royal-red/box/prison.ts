@@ -19,8 +19,11 @@ import path from 'path'
 import { scopeSpec as rootsScopeSpec } from './roots'
 
 // the box lives INSIDE the project directory so a sandbox reset still finds it
-// next to the code, and the host home is never part of its tree
-export const BOX_ROOT = '/home/z/my-project/royalred-box'
+// next to the code, and the host home is never part of its tree. Portable root
+// (Phase A): ROYAL_RED_BOX overrides, otherwise it follows the app directory.
+export const BOX_ROOT = process.env.ROYAL_RED_BOX
+  ? path.resolve(process.env.ROYAL_RED_BOX)
+  : path.join(process.cwd(), 'royalred-box')
 export const BOX_HOME = path.join(BOX_ROOT, 'home', 'royalred')
 export const BOX_TRASH = path.join(BOX_ROOT, '.awon-trash')
 export const BOX_TMP = path.join(BOX_ROOT, '.tmp')

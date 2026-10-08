@@ -1,0 +1,26 @@
+Fonts bundled for the ROYAL RED PDF engine (Phase A).
+
+All four families are licensed under the SIL Open Font License 1.1:
+  CormorantGaramond-SemiBold.ttf   Cormorant Garamond SemiBold
+  CormorantGaramond-Bold.ttf       Cormorant Garamond Bold
+  Inter-Regular.ttf                Inter Regular
+  Inter-SemiBold.ttf               Inter SemiBold
+  JetBrainsMono-Regular.ttf        JetBrains Mono Regular
+  JetBrainsMono-Medium.ttf         JetBrains Mono Medium
+
+Downloaded from Google Fonts (fonts.gstatic.com) on 2026-10-08.
+
+The SIL Open Font License 1.1 permits use, redistribution, and bundling
+(including inside documents) with the license text and copyright notice
+retained. The full license text is available at:
+https://openfontlicense.org
+
+Copyright holders:
+  Cormorant Garamond   Copyright 2015 The Cormorant Project Authors
+  Inter                Copyright 2016 The Inter Project Authors
+  JetBrains Mono       Copyright 2020 The JetBrains Mono Project Authors
+
+These files are used only at PDF generation time to embed font subsets
+into documents produced by the ROYAL RED document engine. They are never
+served to browsers (the UI self-hosts its own woff2 copies under
+src/app/fonts, fetched under the same license).

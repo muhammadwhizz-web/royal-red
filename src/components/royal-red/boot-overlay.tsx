@@ -12,7 +12,7 @@ import { useRoyalRed } from './store'
 // No emojis. No em dashes. Reduced-motion respected.
 
 const BOOT_LINES = [
-  'royal red kernel v1.8.0 (majestic) .......... ok',
+  'royal red kernel v1.8.1 (majestic) .......... ok',
   'mounting sandbox workspace .................. ok',
   'loading tool bus: search fs shell accounts .. ok',
   'linking vision core: image gen + vlm eyes ... ok',
@@ -48,6 +48,7 @@ const BOOT_LINES = [
   'pdf engine: typography, no-overlap, vector .. ok',
   'response protocol: no emoji, no em dash ..... ok',
   'signature ui v1.8: crown, damask, gold seal . ok',
+  'install: one command, launcher, docker ...... ok',
   'typography law: display serif / ui / mono ... ok',
   'all systems nominal',
 ]

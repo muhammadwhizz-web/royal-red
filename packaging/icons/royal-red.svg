@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ROYAL RED crown icon (Phase A). Same geometry as the RoyalCrown SVG
+     component in src/components/royal-red/signature.tsx: five points, five
+     jewels, base band, center gem, ribbon tails. Gold foil on transparent. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 40" width="48" height="40">
+  <defs>
+    <linearGradient id="rrc-body" x1="6" y1="4" x2="42" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f7dd8a"/>
+      <stop offset="0.45" stop-color="#d4a437"/>
+      <stop offset="1" stop-color="#a16207"/>
+    </linearGradient>
+    <linearGradient id="rrc-band" x1="5" y1="29" x2="43" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d4a437"/>
+      <stop offset="0.5" stop-color="#f7dd8a"/>
+      <stop offset="1" stop-color="#a16207"/>
+    </linearGradient>
+    <linearGradient id="rrc-sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- crown body: five points rising from the base -->
+  <path d="M7.5 29.5 L4.8 11.5 L13.4 19.5 L15 7.2 L21 17.6 L24 4.2 L27 17.6 L33 7.2 L34.6 19.5 L43.2 11.5 L40.5 29.5 Z"
+        fill="url(#rrc-body)" stroke="rgba(124, 81, 3, 0.65)" stroke-width="1" stroke-linejoin="round"/>
+  <path d="M7.5 29.5 L4.8 11.5 L13.4 19.5 L15 7.2 L21 17.6 L24 4.2 L27 17.6 L33 7.2 L34.6 19.5 L43.2 11.5 L40.5 29.5 Z"
+        fill="url(#rrc-sheen)" opacity="0.22"/>
+  <!-- tip jewels -->
+  <circle cx="4.8" cy="10" r="1.7" fill="url(#rrc-band)" stroke="rgba(124, 81, 3, 0.65)" stroke-width="0.6"/>
+  <circle cx="15" cy="5.8" r="1.9" fill="url(#rrc-band)" stroke="rgba(124, 81, 3, 0.65)" stroke-width="0.6"/>
+  <circle cx="24" cy="3" r="2.1" fill="#ef4444" stroke="rgba(124, 81, 3, 0.65)" stroke-width="0.6"/>
+  <circle cx="33" cy="5.8" r="1.9" fill="url(#rrc-band)" stroke="rgba(124, 81, 3, 0.65)" stroke-width="0.6"/>
+  <circle cx="43.2" cy="10" r="1.7" fill="url(#rrc-band)" stroke="rgba(124, 81, 3, 0.65)" stroke-width="0.6"/>
+  <!-- base band -->
+  <rect x="6.2" y="29.5" width="35.6" height="4.6" rx="1.6" fill="url(#rrc-band)" stroke="rgba(124, 81, 3, 0.65)" stroke-width="0.8"/>
+  <!-- center gem on the band -->
+  <rect x="21.6" y="30.6" width="4.8" height="2.4" rx="1.2" fill="#b91c1c" stroke="rgba(124, 81, 3, 0.65)" stroke-width="0.5"/>
+  <!-- ribbon tails under the band -->
+  <path d="M18 34.1 L15.4 38.4 L19.4 37.2 L21 34.1 Z" fill="url(#rrc-body)" stroke="rgba(124, 81, 3, 0.65)" stroke-width="0.5" stroke-linejoin="round"/>
+  <path d="M30 34.1 L32.6 38.4 L28.6 37.2 L27 34.1 Z" fill="url(#rrc-body)" stroke="rgba(124, 81, 3, 0.65)" stroke-width="0.5" stroke-linejoin="round"/>
+</svg>

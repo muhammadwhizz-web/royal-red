@@ -56,9 +56,10 @@ export function buildDocument(spec: DocumentSpec): DocumentResult {
 
   const tocLines = (numbers: number[] | null): PdfLine[] =>
     sections.map((s, i) => ({
-      text: numbers ? `${s.heading}  ${'.'.repeat(Math.max(2, 58 - Math.min(s.heading.length, 52)))} ${numbers[i]}` : `${s.heading}  ${'.'.repeat(Math.max(2, 58 - Math.min(s.heading.length, 52)))} --`,
-      style: 'toc' as never, // rendered below through a real style
-    })).map((l) => ({ ...l, style: 'dim' as const }))
+      text: s.heading,
+      style: 'toc' as const,
+      tocPage: numbers ? numbers[i] : undefined,
+    }))
 
   const bodyLines = (): PdfLine[] => {
     const out: PdfLine[] = []
@@ -75,6 +76,13 @@ export function buildDocument(spec: DocumentSpec): DocumentResult {
   buildPdf([...frontMatter(), ...tocLines(null), { text: '', style: 'body' }, ...bodyLines()], {
     pageSize: 'Letter',
     footerNote: spec.footerNote ?? 'ROYAL RED DOCUMENT',
+    headerTitle: 'ROYAL RED DOCUMENT',
+    info: {
+      title: spec.title,
+      author: spec.author ?? 'Royal Red',
+      subject: 'Royal Red document',
+      keywords: 'royal red, document, verified',
+    },
     onPageMap: (entries) => {
       headingPages = entries
     },
@@ -91,6 +99,13 @@ export function buildDocument(spec: DocumentSpec): DocumentResult {
   const pdf = buildPdf([...frontMatter(), ...tocLines(toc.map((t) => t.page)), { text: '', style: 'body' }, ...bodyLines()], {
     pageSize: 'Letter',
     footerNote: spec.footerNote ?? 'ROYAL RED DOCUMENT',
+    headerTitle: 'ROYAL RED DOCUMENT',
+    info: {
+      title: spec.title,
+      author: spec.author ?? 'Royal Red',
+      subject: 'Royal Red document',
+      keywords: 'royal red, document, verified',
+    },
   })
 
   // honest page count: read it from the emitted /Count

@@ -1,0 +1,22 @@
+# ROYAL RED docker build context excludes (Phase A).
+# Keep the context small and secret-free: never ship local databases, logs,
+# QA screenshots, or the workspace into the image.
+
+node_modules
+.next
+.git
+db
+*.log
+dev.log
+server.log
+qa
+tool-results
+upload
+royalred-box
+royalred-workspace
+skills
+docs/Royal-Red-Installation-Guide.pdf
+Dockerfile
+.dockerignore
+.env
+.env.*

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Royal Red
+GenericName=Agentic Operating System
+Comment=Start the Royal Red console and open it in your browser
+Exec=royal-red
+Icon=royal-red
+Terminal=false
+Categories=Development;Utility;System;
+Keywords=royal red;agent;ai;console;
+StartupNotify=true

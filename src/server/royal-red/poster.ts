@@ -9,7 +9,7 @@
 //
 // All text passes the text law before it reaches the PDF.
 
-import { buildPdf, PAGE_SIZES, type PageSize, type PdfLine } from './pdf'
+import { buildPdf, PAGE_SIZES, wrappedLineCount, type PageSize, type PdfLine } from './pdf'
 import { enforceTextLaw } from './text-law'
 
 export interface PosterSpec {
@@ -65,23 +65,28 @@ export function buildPoster(spec: PosterSpec): PosterResult {
 
   if (spec.kicker) {
     const t = law(spec.kicker.toUpperCase())
-    place('kicker', 14, () => lines.push({ text: t, style: 'sub' }))
+    const lead = wrappedLineCount(t, 'sub', size) * 17
+    place('kicker', lead, () => lines.push({ text: t, style: 'sub' }))
     lines.push({ text: '', style: 'rule' })
   }
   {
     const title = law(spec.title)
-    const lead = 36 + 6
+    const lead = wrappedLineCount(title, 'display', size) * 40 + 6
     place('title', lead, () => lines.push({ text: title, style: 'display' }))
   }
   if (spec.subtitle) {
     const s = law(spec.subtitle)
-    place('subtitle', 32, () => lines.push({ text: s, style: 'sub' }))
-    place('gold rule', 12, () => lines.push({ text: '', style: 'rule' }))
+    place('subtitle', wrappedLineCount(s, 'sub', size) * 17, () => lines.push({ text: s, style: 'sub' }))
+    place('gold rule', 10, () => lines.push({ text: '', style: 'rule' }))
   }
   for (const b of spec.blocks) {
     const h = law(b.heading)
     const body = law(b.body)
-    place(`block: ${h.slice(0, 24)}`, 15 + 12 + Math.ceil(body.length / 44) * 11.5, () => {
+    const lead =
+      wrappedLineCount(h, 'heading', size) * 17 +
+      wrappedLineCount(body, 'body', size) * 13.5 +
+      10 // the rule that closes the block
+    place(`block: ${h.slice(0, 24)}`, lead, () => {
       lines.push({ text: h, style: 'heading' })
       lines.push({ text: body, style: 'body' })
       lines.push({ text: '', style: 'rule' })
@@ -89,12 +94,18 @@ export function buildPoster(spec: PosterSpec): PosterResult {
   }
   {
     const f = law(spec.footer)
-    place('footer', 22, () => lines.push({ text: f, style: 'dim' }))
+    place('footer', wrappedLineCount(f, 'dim', size) * 11.5, () => lines.push({ text: f, style: 'dim' }))
   }
 
   const pdf = buildPdf(lines, {
     pageSize: size,
     footerNote: 'ROYAL RED POSTER',
+    info: {
+      title: spec.title,
+      author: 'Royal Red',
+      subject: 'Royal Red poster',
+      keywords: 'royal red, poster, vector',
+    },
   })
 
   return { pdf, pages: page, boxes, size, textLawRewrites: lawHits.length }

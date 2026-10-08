@@ -1,0 +1,329 @@
+#!/usr/bin/env bash
+# ROYAL RED launcher (Phase A).
+# Source of truth: bin/royal-red in the repository. The installer copies this
+# file to ~/.local/bin/royal-red.
+#
+# Commands:
+#   royal-red            start the server in the background and open the console
+#   royal-red stop       stop the server gracefully
+#   royal-red restart    stop, then start
+#   royal-red status     running? which port? since when?
+#   royal-red logs       follow the server log
+#   royal-red update     pull, install, migrate, restart
+#   royal-red uninstall  remove Royal Red (asks before deleting data)
+#   royal-red --version  print the version
+#   royal-red --help     this list
+#
+# No emojis. No em dashes. Every failure prints what failed and what to do.
+
+set -u
+
+VERSION="1.8.1"
+RR_HOME="${ROYAL_RED_HOME:-$HOME/.royal-red}"
+APP_DIR="$RR_HOME/app"
+DATA_DIR="$RR_HOME/data"
+LOG_DIR="$RR_HOME/logs"
+RUN_DIR="$RR_HOME/run"
+CONFIG_FILE="$RR_HOME/config.toml"
+PID_FILE="$RUN_DIR/server.pid"
+LOG_FILE="$LOG_DIR/server.log"
+MAX_PORT=3010
+
+# bun lives in ~/.bun/bin after the installer runs
+export PATH="$HOME/.bun/bin:$PATH"
+
+say() { printf '%s\n' "$*"; }
+die() { printf 'royal-red: %s\n' "$*" >&2; exit 1; }
+
+# ---- configuration -------------------------------------------------------
+
+config_get() {
+  # config_get KEY DEFAULT: reads a simple "key = value" pair from config.toml
+  local key="$1" def="$2" val=""
+  if [ -f "$CONFIG_FILE" ]; then
+    val=$(sed -n "s/^[[:space:]]*$key[[:space:]]*=[[:space:]]*\"\{0,1\}\([^\"#]*\)\"\{0,1\}[[:space:]]*.*/\1/p" "$CONFIG_FILE" | head -n 1 | tr -d '[:space:]')
+  fi
+  [ -n "$val" ] || val="$def"
+  printf '%s' "$val"
+}
+
+PORT="$(config_get port 3000)"
+MODE="$(config_get mode auto)"
+
+resolved_port() {
+  # the port the running server actually bound (the fallback may have walked
+  # away from the configured one); falls back to the configured port
+  if [ -f "$RUN_DIR/port" ]; then
+    cat "$RUN_DIR/port"
+  else
+    printf '%s' "$PORT"
+  fi
+}
+
+# ---- helpers -------------------------------------------------------------
+
+pid_alive() {
+  [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null
+}
+
+health_ok() { # health_ok PORT
+  curl -fsS -o /dev/null --max-time 2 "http://127.0.0.1:$1/api/health" 2>/dev/null
+}
+
+port_in_use() { # port_in_use PORT
+  # a port is in use only when something ACCEPTS the connection; a refused
+  # connection means the port is free
+  curl -s --max-time 1 -o /dev/null "http://127.0.0.1:$1/" 2>/dev/null
+}
+
+pick_port() {
+  # the configured port first, then 3000 through 3010 in order, then fail
+  local p candidates="$PORT"
+  for p in $(seq 3000 "$MAX_PORT"); do candidates="$candidates $p"; done
+  for p in $candidates; do
+    if ! port_in_use "$p"; then
+      PORT="$p"
+      return 0
+    fi
+  done
+  die "no free port between 3000 and $MAX_PORT. Stop the service using them, or set port = \"3001\" (or another) in $CONFIG_FILE"
+}
+
+detect_browser() {
+  # WSL2 first (wslview reaches the Windows browser), then Linux, then macOS
+  if command -v wslview >/dev/null 2>&1; then printf 'wslview'; return 0; fi
+  if grep -qi microsoft /proc/sys/fs/binfmt_misc/WSLInterop 2>/dev/null ||
+    uname -r | grep -qi microsoft 2>/dev/null; then
+    printf 'WSL_NO_WSLU'
+    return 0
+  fi
+  if command -v xdg-open >/dev/null 2>&1; then printf 'xdg-open'; return 0; fi
+  if command -v open >/dev/null 2>&1; then printf 'open'; return 0; fi
+  return 1
+}
+
+open_browser() { # open_browser URL
+  local url="$1" b=""
+  if b=$(detect_browser); then
+    if [ "$b" = "WSL_NO_WSLU" ]; then
+      say "royal-red: WSL detected but wslview is missing, so the browser was not opened."
+      say "royal-red: install it with: sudo apt install wslu   (Ubuntu)"
+      say "royal-red: then open $url manually this once."
+      return 0
+    fi
+    "$b" "$url" >/dev/null 2>&1 &
+  else
+    say "royal-red: no browser opener found. Open $url manually."
+  fi
+}
+
+rotate_log() {
+  [ -f "$LOG_FILE" ] || return 0
+  local sz
+  sz=$(stat -c %s "$LOG_FILE" 2>/dev/null || echo 0)
+  [ "$sz" -lt 10485760 ] && return 0
+  local i
+  for i in 4 3 2 1; do
+    [ -f "$LOG_FILE.$i" ] && mv -f "$LOG_FILE.$i" "$LOG_FILE.$((i + 1))"
+  done
+  mv -f "$LOG_FILE" "$LOG_FILE.1"
+}
+
+server_env() {
+  # the environment every server process runs with: data paths follow the
+  # data directory, never the app directory
+  export DATABASE_URL="file:$DATA_DIR/royal-red.db"
+  export ROYAL_RED_WORKSPACE="$DATA_DIR/workspace"
+  export ROYAL_RED_BOX="$DATA_DIR/box"
+  export PORT="$PORT"
+}
+
+start_server() {
+  [ -d "$APP_DIR" ] || die "Royal Red is not installed at $APP_DIR. Run the installer first (see docs/INSTALL.md)."
+  command -v bun >/dev/null 2>&1 || die "bun is not installed. Run the installer again, or install bun: curl -fsSL https://bun.sh/install | bash"
+  mkdir -p "$LOG_DIR" "$RUN_DIR" "$DATA_DIR"
+  rotate_log
+
+  pick_port
+  printf '%s' "$PORT" >"$RUN_DIR/port"
+  server_env
+
+  local mode="$MODE"
+  if [ "$mode" = "auto" ]; then
+    if [ -f "$APP_DIR/.next/standalone/server.js" ]; then mode="prod"; else mode="dev"; fi
+  fi
+
+  say "royal-red: starting on port $PORT ($mode mode), logs at $LOG_FILE"
+  (
+    cd "$APP_DIR" || exit 1
+    if [ "$mode" = "prod" ]; then
+      setsid env DATABASE_URL="$DATABASE_URL" ROYAL_RED_WORKSPACE="$ROYAL_RED_WORKSPACE" \
+        ROYAL_RED_BOX="$ROYAL_RED_BOX" PORT="$PORT" NODE_ENV=production \
+        bun .next/standalone/server.js >>"$LOG_FILE" 2>&1 &
+    else
+      # dev mode: no build step; first page load compiles on demand
+      setsid env DATABASE_URL="$DATABASE_URL" ROYAL_RED_WORKSPACE="$ROYAL_RED_WORKSPACE" \
+        ROYAL_RED_BOX="$ROYAL_RED_BOX" PORT="$PORT" \
+        "$APP_DIR/node_modules/.bin/next" dev -p "$PORT" >>"$LOG_FILE" 2>&1 &
+    fi
+    echo $! >"$PID_FILE"
+  )
+
+  local waited=0 limit=120
+  while [ "$waited" -lt "$limit" ]; do
+    if health_ok "$PORT"; then
+      local url="http://localhost:$PORT"
+      say "Royal Red is running at $url (pid $(cat "$PID_FILE"))"
+      open_browser "$url"
+      return 0
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+  say "royal-red: the server did not become healthy within ${limit}s. Last log lines:"
+  tail -n 15 "$LOG_FILE" >&2 || true
+  die "start failed. Read the log with: royal-red logs"
+}
+
+stop_server() {
+  if pid_alive; then
+    local pid
+    pid=$(cat "$PID_FILE")
+    say "royal-red: stopping pid $pid"
+    kill "$pid" 2>/dev/null
+    local i=0
+    while kill -0 "$pid" 2>/dev/null && [ "$i" -lt 20 ]; do
+      sleep 0.5
+      i=$((i + 1))
+    done
+    kill -9 "$pid" 2>/dev/null || true
+    rm -f "$PID_FILE"
+    # the launcher pid is the setsid parent; make sure the server itself is
+    # gone. Patterns are scoped to THIS app's path so an unrelated process
+    # (another project's dev server on the same port) is never touched
+    pkill -f "$APP_DIR/.next/standalone/server.js" 2>/dev/null || true
+    pkill -f "$APP_DIR/node_modules/.bin/next dev" 2>/dev/null || true
+    rm -f "$RUN_DIR/port"
+    say "royal-red: stopped"
+  else
+    rm -f "$PID_FILE"
+    pkill -f "$APP_DIR/.next/standalone/server.js" 2>/dev/null || true
+    rm -f "$RUN_DIR/port"
+    say "royal-red: not running"
+  fi
+}
+
+status_server() {
+  PORT="$(resolved_port)"
+  if pid_alive && health_ok "$PORT"; then
+    local pid etime
+    pid=$(cat "$PID_FILE")
+    etime=$(ps -o etime= -p "$pid" 2>/dev/null | tr -d ' ')
+    say "running: yes"
+    say "pid: $pid"
+    say "url: http://localhost:$PORT"
+    say "uptime: ${etime:-unknown}"
+  elif pid_alive; then
+    say "running: starting (pid $(cat "$PID_FILE"), port $PORT not answering yet)"
+  else
+    say "running: no"
+    say "start it with: royal-red"
+  fi
+}
+
+show_logs() {
+  [ -f "$LOG_FILE" ] || die "no log file yet at $LOG_FILE (start the server first)"
+  exec tail -n 200 -F "$LOG_FILE"
+}
+
+update_app() {
+  [ -d "$APP_DIR/.git" ] || die "no git repository at $APP_DIR (reinstall with install.sh)"
+  command -v git >/dev/null 2>&1 || die "git is not installed. Install it: sudo apt install git (Ubuntu) or sudo dnf install git (Fedora)"
+  say "royal-red: checking for local changes"
+  if [ -n "$(git -C "$APP_DIR" status --porcelain 2>/dev/null | head -n 5)" ]; then
+    say "royal-red: local changes found:"
+    git -C "$APP_DIR" status --porcelain | head -n 10
+    printf 'royal-red: overwrite local changes? [y/N] '
+    read -r answer
+    case "$answer" in
+      y | Y) git -C "$APP_DIR" reset --hard ;;
+      *) die "update cancelled. Your local changes are untouched." ;;
+    esac
+  fi
+  say "royal-red: pulling latest"
+  git -C "$APP_DIR" pull --ff-only || die "git pull failed. Try: git -C $APP_DIR fetch origin && git -C $APP_DIR reset --hard origin/main"
+  say "royal-red: installing dependencies"
+  (cd "$APP_DIR" && bun install) || die "bun install failed"
+  say "royal-red: updating the database schema"
+  (cd "$APP_DIR" && DATABASE_URL="file:$DATA_DIR/royal-red.db" bun run db:push) || die "db:push failed"
+  say "royal-red: restarting"
+  stop_server
+  start_server
+}
+
+uninstall_all() {
+  say "royal-red: this removes the application, the command, the desktop entry, and the icons."
+  stop_server || true
+  rm -rf "$APP_DIR"
+  rm -f "$HOME/.local/bin/royal-red"
+  rm -f "$HOME/.local/share/applications/royal-red.desktop"
+  rm -f "$HOME/.local/share/icons/hicolor/256x256/apps/royal-red.png" \
+    "$HOME/.local/share/icons/hicolor/128x128/apps/royal-red.png" \
+    "$HOME/.local/share/icons/hicolor/48x48/apps/royal-red.png" \
+    "$HOME/.local/share/icons/hicolor/32x32/apps/royal-red.png" \
+    "$HOME/.local/share/icons/hicolor/16x16/apps/royal-red.png" \
+    "$HOME/.local/share/icons/hicolor/scalable/apps/royal-red.svg"
+  rm -rf "$RUN_DIR"
+  if [ -d "$DATA_DIR" ]; then
+    printf 'royal-red: delete your data too (%s)? This cannot be undone. [y/N] ' "$DATA_DIR"
+    read -r answer
+    case "$answer" in
+      y | Y)
+        rm -rf "$RR_HOME"
+        say "royal-red: everything removed."
+        ;;
+      *)
+        say "royal-red: data kept at $DATA_DIR. Remove it manually when you are sure."
+        ;;
+    esac
+  else
+    rm -rf "$RR_HOME"
+  fi
+  say "royal-red: uninstalled."
+}
+
+case "${1:-start}" in
+  start)
+    if pid_alive && health_ok "$(resolved_port)"; then
+      say "Royal Red is already running at http://localhost:$(resolved_port)"
+      open_browser "http://localhost:$(resolved_port)"
+      exit 0
+    fi
+    start_server
+    ;;
+  stop) stop_server ;;
+  restart) stop_server; start_server ;;
+  status) status_server ;;
+  logs) show_logs ;;
+  update) update_app ;;
+  uninstall) uninstall_all ;;
+  --version | version) say "Royal Red $VERSION" ;;
+  --help | help | -h)
+    say "Royal Red $VERSION - the agentic operating system that verifies its own work"
+    say ""
+    say "  royal-red            start the server and open the console"
+    say "  royal-red stop       stop the server"
+    say "  royal-red restart    stop, then start"
+    say "  royal-red status     is it running, which port, since when"
+    say "  royal-red logs       follow the server log (Ctrl C to stop)"
+    say "  royal-red update     pull, install, migrate, restart"
+    say "  royal-red uninstall  remove Royal Red (asks before deleting data)"
+    say "  royal-red --version  print the version"
+    say "  royal-red --help     this list"
+    say ""
+    say "Configuration: $RR_HOME/config.toml (port, mode = auto | dev | prod)"
+    ;;
+  *)
+    die "unknown command: $1 (try royal-red --help)"
+    ;;
+esac
